@@ -1,4 +1,4 @@
-/* "$Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/mkversion.c,v 1.2 2004-05-01 19:05:15 drolon Exp $ */
+/* "$Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/mkversion.c,v 1.3 2004-07-08 19:48:07 drolon Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
