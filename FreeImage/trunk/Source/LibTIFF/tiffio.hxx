@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_flush.c,v 1.6 2005-03-22 23:04:13 drolon Exp $ */
+/* $Id: tiffio.hxx,v 1.1 2005-03-22 23:04:15 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -24,44 +24,19 @@
  * OF THIS SOFTWARE.
  */
 
-/*
- * TIFF Library.
- */
-#include "tiffiop.h"
-
-int
-TIFFFlush(TIFF* tif)
-{
-
-	if (tif->tif_mode != O_RDONLY) {
-		if (!TIFFFlushData(tif))
-			return (0);
-		if ((tif->tif_flags & TIFF_DIRTYDIRECT) &&
-		    !TIFFWriteDirectory(tif))
-			return (0);
-	}
-	return (1);
-}
+#ifndef _TIFFIO_HXX_
+#define	_TIFFIO_HXX_
 
 /*
- * Flush buffered data to the file.
- *
- * Frank Warmerdam'2000: I modified this to return 1 if TIFF_BEENWRITING
- * is not set, so that TIFFFlush() will proceed to write out the directory.
- * The documentation says returning 1 is an error indicator, but not having
- * been writing isn't exactly a an error.  Hopefully this doesn't cause
- * problems for other people. 
+ * TIFF I/O library definitions which provide C++ streams API.
  */
-int
-TIFFFlushData(TIFF* tif)
-{
-	if ((tif->tif_flags & TIFF_BEENWRITING) == 0)
-		return (0);
-	if (tif->tif_flags & TIFF_POSTENCODE) {
-		tif->tif_flags &= ~TIFF_POSTENCODE;
-		if (!(*tif->tif_postencode)(tif))
-			return (0);
-	}
-	return (TIFFFlushData1(tif));
-}
 
+#include <iostream>
+#include "tiff.h"
+
+extern	TIFF* TIFFStreamOpen(const char*, std::ostream *);
+extern	TIFF* TIFFStreamOpen(const char*, std::istream *);
+
+#endif /* _TIFFIO_HXX_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_predict.h,v 1.5 2004-12-22 20:34:05 drolon Exp $ */
+/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_predict.h,v 1.6 2005-03-22 23:04:14 drolon Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
