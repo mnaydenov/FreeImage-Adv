@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.4 2004-10-16 15:34:33 drolon Exp $ */
+/* $Id: tif_write.c,v 1.5 2004-12-22 20:34:06 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -624,7 +624,8 @@ TIFFAppendToStrip(TIFF* tif, tstrip_t strip, tidata_t data, tsize_t cc)
 		/*
 		 * No current offset, set the current strip.
 		 */
-		if (td->td_nstrips || td->td_stripoffset[strip] != 0) {
+		assert(td->td_nstrips > 0);
+		if (td->td_stripoffset[strip] != 0) {
 			/*
 			 * Prevent overlapping of the data chunks. We need
                          * this to enable in place updating of the compressed

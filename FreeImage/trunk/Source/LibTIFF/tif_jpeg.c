@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.4 2004-10-16 15:34:33 drolon Exp $ */
+/* $Id: tif_jpeg.c,v 1.5 2004-12-22 20:34:04 drolon Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -73,6 +73,17 @@ int TIFFFillTile(TIFF*, ttile_t);
 
 #include "../LibJPEG/jpeglib.h"
 #include "../LibJPEG/jerror.h"
+
+/*
+ * We are using width_in_blocks which is supposed to be private to
+ * libjpeg. Unfortunately, the libjpeg delivered with Cygwin has
+ * renamed this member to width_in_data_units.  Since the header has
+ * also renamed a define, use that unique define name in order to
+ * detect the problem header and adjust to suit.
+ */
+#if defined(D_MAX_DATA_UNITS_IN_MCU)
+#define width_in_blocks width_in_data_units
+#endif
 
 /*
  * On some machines it may be worthwhile to use _setjmp or sigsetjmp
@@ -151,7 +162,7 @@ static  int JPEGInitializeLibJPEG( TIFF * tif );
 #define	FIELD_JPEGTABLES	(FIELD_CODEC+0)
 
 static const TIFFFieldInfo jpegFieldInfo[] = {
-    { TIFFTAG_JPEGTABLES,	 -1,-1,	TIFF_UNDEFINED,	FIELD_JPEGTABLES,
+    { TIFFTAG_JPEGTABLES,	 -3,-3,	TIFF_UNDEFINED,	FIELD_JPEGTABLES,
       FALSE,	TRUE,	"JPEGTables" },
     { TIFFTAG_JPEGQUALITY,	 0, 0,	TIFF_ANY,	FIELD_PSEUDO,
       TRUE,	FALSE,	"" },
@@ -1485,10 +1496,7 @@ JPEGVGetField(TIFF* tif, ttag_t tag, va_list ap)
 
 	switch (tag) {
 	case TIFFTAG_JPEGTABLES:
-		/* unsigned short is bogus --- should be uint32 ??? */
-		/* TIFFWriteNormalTag needs fixed  XXX */
-		*va_arg(ap, unsigned short*) =
-                        (unsigned short) sp->jpegtables_length;
+		*va_arg(ap, uint32*) = sp->jpegtables_length;
 		*va_arg(ap, void**) = sp->jpegtables;
 		break;
 	case TIFFTAG_JPEGQUALITY:

@@ -1,4 +1,4 @@
-/* $Id: tif_tile.c,v 1.4 2004-10-16 15:34:33 drolon Exp $ */
+/* $Id: tif_tile.c,v 1.5 2004-12-22 20:34:06 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -208,6 +208,10 @@ TIFFVTileSize(TIFF* tif, uint32 nrows)
 					  "TIFFVTileSize"));
 		tsize_t samplingarea =
 		    td->td_ycbcrsubsampling[0]*td->td_ycbcrsubsampling[1];
+		if (samplingarea == 0) {
+			TIFFError(tif->tif_name, "Invalid YCbCr subsampling");
+			return 0;
+		}
 		nrows = TIFFroundup(nrows, td->td_ycbcrsubsampling[1]);
 		/* NB: don't need TIFFhowmany here 'cuz everything is rounded */
 		tilesize = multiply(tif, nrows, rowsize, "TIFFVTileSize");
