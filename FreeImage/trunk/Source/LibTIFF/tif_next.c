@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_next.c,v 1.3 2004-06-27 11:43:02 drolon Exp $ */
+/* $Id: tif_next.c,v 1.4 2004-10-16 15:34:33 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -87,7 +87,7 @@ NeXTDecode(TIFF* tif, tidata_t buf, tsize_t occ, tsample_t s)
 			 */
 			off = (bp[0] * 256) + bp[1];
 			n = (bp[2] * 256) + bp[3];
-			if (cc < 4+n)
+			if (cc < 4+n || off+n > scanline)
 				goto bad;
 			_TIFFmemcpy(row+off, bp+4, n);
 			bp += 4+n;
@@ -140,3 +140,5 @@ TIFFInitNeXT(TIFF* tif, int scheme)
 	return (1);
 }
 #endif /* NEXT_SUPPORT */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_dumpmode.c,v 1.3 2004-06-27 11:43:02 drolon Exp $ */
+/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_dumpmode.c,v 1.4 2004-10-16 15:34:33 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -30,7 +30,6 @@
  * "Null" Compression Algorithm Support.
  */
 #include "tiffiop.h"
-#include <assert.h>
 
 /*
  * Encode a hunk of pixels.
