@@ -29,7 +29,7 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: trees.c,v 1.1 2004-03-16 21:45:10 drolon Exp $ */
+/* @(#) $Id: trees.c,v 1.2 2004-05-01 19:05:16 drolon Exp $ */
 
 /* #define GEN_TREES_H */
 
