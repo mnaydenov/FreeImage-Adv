@@ -1,4 +1,4 @@
-/* $Id: tif_read.c,v 1.6 2005-03-22 23:04:15 drolon Exp $ */
+/* $Id: tif_read.c,v 1.7 2005-07-06 20:11:16 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -621,6 +621,14 @@ _TIFFSwab16BitData(TIFF* tif, tidata_t buf, tsize_t cc)
     (void) tif;
     assert((cc & 1) == 0);
     TIFFSwabArrayOfShort((uint16*) buf, cc/2);
+}
+
+void
+_TIFFSwab24BitData(TIFF* tif, tidata_t buf, tsize_t cc)
+{
+    (void) tif;
+    assert((cc % 3) == 0);
+    TIFFSwabArrayOfTriples((uint8*) buf, cc/3);
 }
 
 void

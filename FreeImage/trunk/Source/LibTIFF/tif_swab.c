@@ -1,4 +1,4 @@
-/* $Id: tif_swab.c,v 1.6 2005-03-22 23:04:15 drolon Exp $ */
+/* $Id: tif_swab.c,v 1.7 2005-07-06 20:11:17 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -66,6 +66,22 @@ TIFFSwabArrayOfShort(uint16* wp, register unsigned long n)
 		cp = (unsigned char*) wp;
 		t = cp[1]; cp[1] = cp[0]; cp[0] = t;
 		wp++;
+	}
+}
+#endif
+
+#ifndef TIFFSwabArrayOfTriples
+void
+TIFFSwabArrayOfTriples(uint8* tp, unsigned long n)
+{
+	unsigned char* cp;
+	unsigned char t;
+
+	/* XXX unroll loop some */
+	while (n-- > 0) {
+		cp = (unsigned char*) tp;
+		t = cp[2]; cp[2] = cp[0]; cp[0] = t;
+		tp += 3;
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_close.c,v 1.6 2005-03-22 23:04:12 drolon Exp $ */
+/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_close.c,v 1.7 2005-07-06 20:11:13 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -74,7 +74,7 @@ TIFFCleanup(TIFF* tif)
 	/* Clean up custom fields */
 	if (tif->tif_nfields > 0) 
 	{
-	    int  i;
+	    size_t i;
 
 	    for (i = 0; i < tif->tif_nfields; i++) 
 	    {

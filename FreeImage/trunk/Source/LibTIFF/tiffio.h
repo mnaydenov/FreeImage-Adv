@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.6 2005-03-22 23:04:15 drolon Exp $ */
+/* $Id: tiffio.h,v 1.7 2005-07-06 20:11:17 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -401,6 +401,7 @@ extern	void TIFFSwabShort(uint16*);
 extern	void TIFFSwabLong(uint32*);
 extern	void TIFFSwabDouble(double*);
 extern	void TIFFSwabArrayOfShort(uint16*, unsigned long);
+extern	void TIFFSwabArrayOfTriples(uint8*, unsigned long);
 extern	void TIFFSwabArrayOfLong(uint32*, unsigned long);
 extern	void TIFFSwabArrayOfDouble(double*, unsigned long);
 extern	void TIFFReverseBits(unsigned char *, unsigned long);

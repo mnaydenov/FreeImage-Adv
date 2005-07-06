@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.6 2005-03-22 23:04:13 drolon Exp $ */
+/* $Id: tif_dirwrite.c,v 1.7 2005-07-06 20:11:14 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -884,7 +884,7 @@ TIFFWriteFloatArray(TIFF* tif, TIFFDirEntry* dir, float* v)
 static int
 TIFFWriteDoubleArray(TIFF* tif, TIFFDirEntry* dir, double* v)
 {
-	TIFFCvtNativeToIEEEDouble(tif, n, v);
+	TIFFCvtNativeToIEEEDouble(tif, dir->tdir_count, v);
 	return (TIFFWriteData(tif, dir, (char*) v));
 }
 

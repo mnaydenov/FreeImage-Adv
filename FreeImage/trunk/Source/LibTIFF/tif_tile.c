@@ -1,4 +1,4 @@
-/* $Id: tif_tile.c,v 1.6 2005-03-22 23:04:15 drolon Exp $ */
+/* $Id: tif_tile.c,v 1.7 2005-07-06 20:11:17 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -35,7 +35,7 @@ static uint32
 summarize(TIFF* tif, size_t summand1, size_t summand2, const char* where)
 {
 	/*
-	 * XXX: We are using casting to uint32 here, bacause sizeof(size_t)
+	 * XXX: We are using casting to uint32 here, because sizeof(size_t)
 	 * may be larger than sizeof(uint32) on 64-bit architectures.
 	 */
 	uint32	bytes = summand1 + summand2;

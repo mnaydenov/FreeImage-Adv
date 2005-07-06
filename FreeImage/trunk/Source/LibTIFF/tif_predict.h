@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_predict.h,v 1.6 2005-03-22 23:04:14 drolon Exp $ */
+/* $Id: tif_predict.h,v 1.7 2005-07-06 20:11:16 drolon Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -36,9 +36,9 @@
  * the predictor code can cast tif_data to find its state.
  */
 typedef struct {
-	int	predictor;		/* predictor tag value */
-	int	stride;			/* sample stride over data */
-	tsize_t	rowsize;		/* tile/strip row size */
+	int		predictor;	/* predictor tag value */
+	int		stride;		/* sample stride over data */
+	tsize_t		rowsize;	/* tile/strip row size */
 
 	TIFFPostMethod	pfunc;		/* horizontal differencer/accumulator */
 	TIFFCodeMethod	coderow;	/* parent codec encode/decode row */
@@ -59,3 +59,5 @@ extern	int TIFFPredictorInit(TIFF*);
 }
 #endif
 #endif /* _TIFFPREDICT_ */
+
+/* vim: set ts=8 sts=8 sw=8 noet: */
