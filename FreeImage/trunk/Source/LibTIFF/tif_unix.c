@@ -1,4 +1,4 @@
-/* $Id: tif_unix.c,v 1.5 2005-07-06 20:11:17 drolon Exp $ */
+/* $Id: tif_unix.c,v 1.6 2005-09-17 15:34:56 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -37,15 +37,15 @@
 # include <unistd.h>
 #endif
 
-#if HAVE_FCNTL_H
+#ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
 
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
 
-#if HAVE_IO_H
+#ifdef HAVE_IO_H
 # include <io.h>
 #endif
 

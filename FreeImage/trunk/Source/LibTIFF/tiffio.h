@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.7 2005-07-06 20:11:17 drolon Exp $ */
+/* $Id: tiffio.h,v 1.8 2005-09-17 15:34:56 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -271,7 +271,7 @@ extern	const TIFFCodec* TIFFFindCODEC(uint16);
 extern	TIFFCodec* TIFFRegisterCODEC(uint16, const char*, TIFFInitMethod);
 extern	void TIFFUnRegisterCODEC(TIFFCodec*);
 extern  int TIFFIsCODECConfigured(uint16);
-extern	TIFFCodec* TIFFGetConfiguredCODECs();
+extern	TIFFCodec* TIFFGetConfiguredCODECs(void);
 
 extern	tdata_t _TIFFmalloc(tsize_t);
 extern	tdata_t _TIFFrealloc(tdata_t, tsize_t);

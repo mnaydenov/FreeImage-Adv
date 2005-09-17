@@ -1,4 +1,4 @@
-# $Id: makefile.vc,v 1.7 2005-07-06 20:11:13 drolon Exp $
+# $Id: makefile.vc,v 1.8 2005-09-17 15:34:56 drolon Exp $
 #
 # Copyright (C) 2004, Andrey Kiselev <dron@remotesensing.org>
 #
@@ -84,7 +84,7 @@ tif_config.h:
 tiffconf.h:
 	copy tiffconf.h.vc tiffconf.h
 
-libtiff.lib:	tif_config.h $(OBJ)
+libtiff.lib:	tif_config.h tiffconf.h $(OBJ)
 	$(AR) /out:libtiff.lib $(OBJ) $(LIBS)
 
 $(DLLNAME):	tif_config.h $(OBJ)

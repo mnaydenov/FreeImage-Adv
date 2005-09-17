@@ -1,4 +1,4 @@
-/* $Id: tiffiop.h,v 1.7 2005-07-06 20:11:17 drolon Exp $ */
+/* $Id: tiffiop.h,v 1.8 2005-09-17 15:34:56 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -32,26 +32,29 @@
 
 #include "tif_config.h"
 
-#if HAVE_FCNTL_H
+#ifdef HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
 
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
 
-#if HAVE_STRING_H
+#ifdef HAVE_STRING_H
 # include <string.h>
 #endif
 
-#if HAVE_ASSERT_H
+#ifdef HAVE_ASSERT_H
 # include <assert.h>
 #else
 # define assert(x) 
 #endif
 
-#if HAVE_SEARCH_H
+#ifdef HAVE_SEARCH_H
 # include <search.h>
+#else
+extern void *lfind(const void *, const void *, size_t *, size_t,
+		   int (*)(const void *, const void *));
 #endif
 
 #include "tiffio.h"
@@ -264,6 +267,8 @@ extern	void _TIFFprintAsciiTag(FILE*, const char*, const char*);
 
 GLOBALDATA(TIFFErrorHandler,_TIFFwarningHandler);
 GLOBALDATA(TIFFErrorHandler,_TIFFerrorHandler);
+
+extern	tdata_t _TIFFCheckMalloc(TIFF*, size_t, size_t, const char*);
 
 extern	int TIFFInitDumpMode(TIFF*, int);
 #ifdef PACKBITS_SUPPORT
