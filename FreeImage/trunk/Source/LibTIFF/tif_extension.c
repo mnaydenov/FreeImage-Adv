@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_extension.c,v 1.8 2005-09-17 15:34:56 drolon Exp $ */
+/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_extension.c,v 1.9 2006-01-03 18:08:12 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

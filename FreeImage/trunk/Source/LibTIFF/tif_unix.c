@@ -1,4 +1,4 @@
-/* $Id: tif_unix.c,v 1.6 2005-09-17 15:34:56 drolon Exp $ */
+/* $Id: tif_unix.c,v 1.7 2006-01-03 18:08:12 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -30,6 +30,11 @@
  */
 #include "tif_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
+#include <stdarg.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
@@ -39,10 +44,6 @@
 
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
-#endif
-
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
 #endif
 
 #ifdef HAVE_IO_H
@@ -170,7 +171,7 @@ TIFFOpen(const char* name, const char* mode)
 	fd = open(name, m, 0666);
 #endif
 	if (fd < 0) {
-		TIFFError(module, "%s: Cannot open", name);
+		TIFFErrorExt(0, module, "%s: Cannot open", name);
 		return ((TIFF *)0);
 	}
 
@@ -204,7 +205,7 @@ TIFFOpenW(const wchar_t* name, const char* mode)
         
 	fd = _wopen(name, m, 0666);
 	if (fd < 0) {
-		TIFFError(module, "%s: Cannot open", name);
+		TIFFErrorExt(0, module, "%s: Cannot open", name);
 		return ((TIFF *)0);
 	}
 
@@ -213,7 +214,7 @@ TIFFOpenW(const wchar_t* name, const char* mode)
 	if (mbsize > 0) {
 		mbname = _TIFFmalloc(mbsize);
 		if (!mbname) {
-			TIFFError(module,
+			TIFFErrorExt(0, module,
 			"Can't allocate space for filename conversion buffer");
 			return ((TIFF*)0);
 		}

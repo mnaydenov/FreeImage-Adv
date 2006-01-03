@@ -1,4 +1,4 @@
-/* $Id: tif_thunder.c,v 1.8 2005-09-17 15:34:56 drolon Exp $ */
+/* $Id: tif_thunder.c,v 1.9 2006-01-03 18:08:12 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -121,7 +121,7 @@ ThunderDecode(TIFF* tif, tidata_t op, tsize_t maxpixels)
 	tif->tif_rawcp = (tidata_t) bp;
 	tif->tif_rawcc = cc;
 	if (npixels != maxpixels) {
-		TIFFError(tif->tif_name,
+		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 		    "ThunderDecode: %s data at scanline %ld (%lu != %lu)",
 		    npixels < maxpixels ? "Not enough" : "Too much",
 		    (long) tif->tif_row, (long) npixels, (long) maxpixels);
