@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.9 2006-01-03 18:08:12 drolon Exp $ */
+/* $Id: tif_dirread.c,v 1.10 2006-01-15 01:13:15 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -852,7 +852,7 @@ TIFFReadEXIFDirectory(TIFF* tif, toff_t diroff)
 {
 	size_t exifFieldInfoCount;
 	const TIFFFieldInfo *exifFieldInfo =
-		_TIFFGetFieldInfo(&exifFieldInfoCount);
+		_TIFFGetExifFieldInfo(&exifFieldInfoCount);
 	return TIFFReadCustomDirectory(tif, diroff, exifFieldInfo,
 				       exifFieldInfoCount);
 }
