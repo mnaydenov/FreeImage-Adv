@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.11 2006-01-03 18:08:12 drolon Exp $ */
+/* $Id: tif_getimage.c,v 1.12 2006-02-06 19:40:55 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -23,10 +23,6 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
-
-#ifdef _MSC_VER 
-#pragma warning (disable : 4550) // expression evaluates to a function which is missing an argument list
-#endif
 
 /*
  * TIFF Library

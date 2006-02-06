@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.10 2006-01-15 01:13:15 drolon Exp $ */
+/* $Id: tif_dirinfo.c,v 1.11 2006-02-06 19:40:54 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
