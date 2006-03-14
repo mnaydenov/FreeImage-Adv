@@ -1,4 +1,4 @@
-/* $Id: tif_dirwrite.c,v 1.10 2006-02-06 19:40:54 drolon Exp $ */
+/* $Id: tif_dirwrite.c,v 1.11 2006-03-14 19:35:18 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -335,7 +335,12 @@ _TIFFWriteDirectory(TIFF* tif, int done)
 			}
 			break;
 		default:
-			if (!TIFFWriteNormalTag(tif, dir, fip))
+			/* XXX: Should be fixed and removed. */
+			if (fip->field_tag == TIFFTAG_DOTRANGE) {
+				if (!TIFFSetupShortPair(tif, fip->field_tag, dir))
+					goto bad;
+			}
+			else if (!TIFFWriteNormalTag(tif, dir, fip))
 				goto bad;
 			break;
 		}

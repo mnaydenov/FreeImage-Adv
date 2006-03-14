@@ -1,4 +1,4 @@
-/* $Id: tif_win32.c,v 1.8 2006-02-06 19:40:55 drolon Exp $ */
+/* $Id: tif_win32.c,v 1.9 2006-03-14 19:35:18 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -251,7 +251,7 @@ TIFFOpenW(const wchar_t* name, const char* mode)
 	mbname = NULL;
 	mbsize = WideCharToMultiByte(CP_ACP, 0, name, -1, NULL, 0, NULL, NULL);
 	if (mbsize > 0) {
-		mbname = _TIFFmalloc(mbsize);
+		mbname = (char *)_TIFFmalloc(mbsize);
 		if (!mbname) {
 			TIFFErrorExt(0, module,
 			"Can't allocate space for filename conversion buffer");

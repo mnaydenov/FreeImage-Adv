@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.11 2006-02-06 19:40:54 drolon Exp $ */
+/* $Id: tif_dirinfo.c,v 1.12 2006-03-14 19:35:18 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -711,7 +711,7 @@ _TIFFFindFieldInfo(TIFF* tif, ttag_t tag, TIFFDataType dt)
 		return (tif->tif_foundfield);
 	/* NB: use sorted search (e.g. binary search) */
 	if(dt != TIFF_ANY) {
-            TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
+            TIFFFieldInfo key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0};
 	    TIFFFieldInfo* pkey = &key;
 	    const TIFFFieldInfo **ret;
 
@@ -744,7 +744,7 @@ _TIFFFindFieldInfoByName(TIFF* tif, const char *field_name, TIFFDataType dt)
 		return (tif->tif_foundfield);
 	/* NB: use sorted search (e.g. binary search) */
 	if(dt != TIFF_ANY) {
-            TIFFFieldInfo key = {0, 0, 0, 0, 0, 0, 0, 0};
+            TIFFFieldInfo key = {0, 0, 0, TIFF_NOTYPE, 0, 0, 0, 0};
 	    TIFFFieldInfo* pkey = &key;
 	    const TIFFFieldInfo **ret;
 

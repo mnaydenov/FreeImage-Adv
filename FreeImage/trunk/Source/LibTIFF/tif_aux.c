@@ -1,4 +1,4 @@
-/* $Id: tif_aux.c,v 1.10 2006-02-06 19:40:54 drolon Exp $ */
+/* $Id: tif_aux.c,v 1.11 2006-03-14 19:35:18 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -36,7 +36,7 @@
 tdata_t
 _TIFFCheckMalloc(TIFF* tif, size_t nmemb, size_t elem_size, const char* what)
 {
-	tdata_t *cp = NULL;
+	tdata_t cp = NULL;
 	tsize_t	bytes = nmemb * elem_size;
 
 	/*
