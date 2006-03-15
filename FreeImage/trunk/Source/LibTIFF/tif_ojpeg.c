@@ -1,4 +1,4 @@
-/* $Id: tif_ojpeg.c,v 1.9 2006-03-14 19:35:18 drolon Exp $ */
+/* $Id: tif_ojpeg.c,v 1.10 2006-03-15 22:18:20 drolon Exp $ */
 
 #include "tiffiop.h"
 #ifdef OJPEG_SUPPORT

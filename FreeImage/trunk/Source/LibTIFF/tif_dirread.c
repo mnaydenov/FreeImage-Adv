@@ -1,4 +1,4 @@
-/* $Id: tif_dirread.c,v 1.12 2006-03-14 19:35:18 drolon Exp $ */
+/* $Id: tif_dirread.c,v 1.13 2006-03-15 22:18:20 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1727,9 +1727,6 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	 * Make the rows hold at least one scanline, but fill specified amount
 	 * of data if possible.
 	 */
-#ifndef STRIP_SIZE_DEFAULT
-# define STRIP_SIZE_DEFAULT 8192
-#endif
 	if (rowbytes > STRIP_SIZE_DEFAULT) {
 		stripbytes = rowbytes;
 		rowsperstrip = 1;
@@ -1739,7 +1736,6 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
 	}
         else
             return;
-#undef STRIP_SIZE_DEFAULT
 
 	/* 
 	 * never increase the number of strips in an image

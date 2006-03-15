@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.11 2006-03-14 19:35:18 drolon Exp $ */
+/* $Id: tif_jpeg.c,v 1.12 2006-03-15 22:18:20 drolon Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1849,9 +1849,6 @@ TIFFInitJPEG(TIFF* tif, int scheme)
 	JPEGState* sp;
 
 	assert(scheme == COMPRESSION_JPEG);
-
-	if ((tif->tif_flags & TIFF_CODERSETUP) == 0)
-		JPEGCleanup(tif);
 
 	/*
 	 * Allocate state block so tag methods have storage to record values.
