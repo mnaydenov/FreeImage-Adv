@@ -1,4 +1,4 @@
-/* $Id: tif_lzw.c,v 1.13 2006-03-15 22:18:20 drolon Exp $ */
+/* $Id: tif_lzw.c,v 1.14 2006-03-16 19:19:03 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1004,16 +1004,18 @@ LZWCleanup(TIFF* tif)
 {
 	(void)TIFFPredictorCleanup(tif);
 
-	if (tif->tif_data) {
-		if (DecoderState(tif)->dec_codetab)
-			_TIFFfree(DecoderState(tif)->dec_codetab);
+	assert(tif->tif_data != 0);
 
-		if (EncoderState(tif)->enc_hashtab)
-			_TIFFfree(EncoderState(tif)->enc_hashtab);
+	if (DecoderState(tif)->dec_codetab)
+		_TIFFfree(DecoderState(tif)->dec_codetab);
 
-		_TIFFfree(tif->tif_data);
-		tif->tif_data = NULL;
-	}
+	if (EncoderState(tif)->enc_hashtab)
+		_TIFFfree(EncoderState(tif)->enc_hashtab);
+
+	_TIFFfree(tif->tif_data);
+	tif->tif_data = NULL;
+
+	_TIFFSetDefaultCompressionState(tif);
 }
 
 int

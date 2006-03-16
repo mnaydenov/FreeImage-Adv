@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.12 2006-03-15 22:18:20 drolon Exp $ */
+/* $Id: tif_open.c,v 1.13 2006-03-16 19:19:03 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -28,8 +28,6 @@
  * TIFF Library.
  */
 #include "tiffiop.h"
-
-void _TIFFSetDefaultCompressionState(TIFF* tif);
 
 static const long typemask[13] = {
 	(long)0L,		/* TIFF_NOTYPE */

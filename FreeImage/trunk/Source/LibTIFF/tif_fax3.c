@@ -1,4 +1,4 @@
-/* $Id: tif_fax3.c,v 1.12 2006-03-15 22:18:20 drolon Exp $ */
+/* $Id: tif_fax3.c,v 1.13 2006-03-16 19:19:03 drolon Exp $ */
 
 /*
  * Copyright (c) 1990-1997 Sam Leffler
@@ -1084,6 +1084,8 @@ Fax3Cleanup(TIFF* tif)
 		_TIFFfree(Fax3State(tif)->subaddress);
 	_TIFFfree(tif->tif_data);
 	tif->tif_data = NULL;
+
+	_TIFFSetDefaultCompressionState(tif);
 }
 
 #define	FIELD_BADFAXLINES	(FIELD_CODEC+0)

@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.12 2006-03-15 22:18:20 drolon Exp $ */
+/* $Id: tif_jpeg.c,v 1.13 2006-03-16 19:19:03 drolon Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1532,6 +1532,8 @@ JPEGCleanup(TIFF* tif)
 		_TIFFfree(sp->jpegtables);
 	_TIFFfree(tif->tif_data);	/* release local state */
 	tif->tif_data = NULL;
+
+	_TIFFSetDefaultCompressionState(tif);
 }
 
 static int

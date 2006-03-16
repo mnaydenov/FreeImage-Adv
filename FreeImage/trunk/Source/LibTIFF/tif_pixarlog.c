@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.12 2006-03-15 22:18:20 drolon Exp $ */
+/* $Id: tif_pixarlog.c,v 1.13 2006-03-16 19:19:03 drolon Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -1186,6 +1186,8 @@ PixarLogCleanup(TIFF* tif)
 		_TIFFfree(sp->tbuf);
 	_TIFFfree(sp);
 	tif->tif_data = NULL;
+
+	_TIFFSetDefaultCompressionState(tif);
 }
 
 static int
