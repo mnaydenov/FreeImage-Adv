@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.13 2006-03-16 19:19:03 drolon Exp $ */
+/* $Id: tiffio.h,v 1.14 2006-03-26 18:10:42 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -75,13 +75,12 @@ typedef	uint32 toff_t;		/* file offset */
  * On windows you should define USE_WIN32_FILEIO if you are using tif_win32.c
  * or AVOID_WIN32_FILEIO if you are using something else (like tif_unix.c).
  *
- * By default tif_win32.c is assumed on windows if not using the cygwin
- * environment.
+ * By default tif_unix.c is assumed.
  */
 
 #if defined(_WINDOWS) || defined(__WIN32__) || defined(_Windows)
 #  if !defined(__CYGWIN) && !defined(AVOID_WIN32_FILEIO) && !defined(USE_WIN32_FILEIO)
-#    define USE_WIN32_FILEIO
+#    define AVOID_WIN32_FILEIO
 #  endif
 #endif
 
