@@ -1,4 +1,4 @@
-# $Id: SConstruct,v 1.6 2006-03-26 18:10:42 drolon Exp $
+# $Id: SConstruct,v 1.7 2006-06-25 16:23:05 drolon Exp $
 
 # Tag Image File Format (TIFF) Software
 #
@@ -46,6 +46,7 @@ SRCS = [ \
 	'tif_fax3sm.c', \
 	'tif_flush.c', \
 	'tif_getimage.c', \
+	'tif_jbig.c', \
 	'tif_jpeg.c', \
 	'tif_luv.c', \
 	'tif_lzw.c', \

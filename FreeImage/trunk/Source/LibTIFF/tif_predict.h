@@ -1,4 +1,4 @@
-/* $Id: tif_predict.h,v 1.14 2006-03-26 18:10:42 drolon Exp $ */
+/* $Id: tif_predict.h,v 1.15 2006-06-25 16:23:05 drolon Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler

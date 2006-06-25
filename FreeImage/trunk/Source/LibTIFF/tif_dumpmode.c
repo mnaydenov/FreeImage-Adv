@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_dumpmode.c,v 1.14 2006-03-26 18:10:42 drolon Exp $ */
+/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_dumpmode.c,v 1.15 2006-06-25 16:23:05 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -45,7 +45,7 @@ DumpModeEncode(TIFF* tif, tidata_t pp, tsize_t cc, tsample_t s)
 		if (tif->tif_rawcc + n > tif->tif_rawdatasize)
 			n = tif->tif_rawdatasize - tif->tif_rawcc;
 
-                assert( n > 0 );
+		assert( n > 0 );
                 
 		/*
 		 * Avoid copy if client has setup raw

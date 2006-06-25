@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.14 2006-03-26 18:10:42 drolon Exp $ */
+/* $Id: tif_compress.c,v 1.15 2006-06-25 16:23:05 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -144,7 +144,7 @@ _TIFFSetDefaultCompressionState(TIFF* tif)
 	tif->tif_cleanup = _TIFFvoid;
 	tif->tif_defstripsize = _TIFFDefaultStripSize;
 	tif->tif_deftilesize = _TIFFDefaultTileSize;
-	tif->tif_flags &= ~TIFF_NOBITREV;
+	tif->tif_flags &= ~(TIFF_NOBITREV|TIFF_NOREADRAW);
 }
 
 int
