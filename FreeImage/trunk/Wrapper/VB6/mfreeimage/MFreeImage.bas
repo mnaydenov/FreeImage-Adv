@@ -26,9 +26,9 @@ Attribute VB_Name = "MFreeImage"
 
 '// ==========================================================
 '// CVS
-'// $Revision: 1.6 $
-'// $Date: 2006-07-18 10:04:00 $
-'// $Id: MFreeImage.bas,v 1.6 2006-07-18 10:04:00 cklein05 Exp $
+'// $Revision: 1.7 $
+'// $Date: 2006-08-04 06:40:30 $
+'// $Id: MFreeImage.bas,v 1.7 2006-08-04 06:40:30 cklein05 Exp $
 '// ==========================================================
 
 
@@ -158,6 +158,12 @@ Option Explicit
 '- : removed
 '! : changed
 '+ : added
+'
+'August 4, 2006 - 1.7
+'* [Carsten Klein] fixed a bug in pGetTagFromTagPtr(): removed overflow error when converting unsigned short tags (FIDT_SHORT) with values between 32768 and 65535. Thanks to André Hendriks.
+'! [Carsten Klein] changed constant FREEIMAGE_RELEASE_SERIAL: set to 1 to match current version 3.9.1
+'
+'! now FreeImage version 3.9.1
 '
 'July 17, 2006 - 1.6
 '+ [Carsten Klein] added more public wrapper functions for tag copying and cloning:
@@ -785,7 +791,7 @@ End Enum
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
 Public Const FREEIMAGE_MINOR_VERSION As Long = 9
-Public Const FREEIMAGE_RELEASE_SERIAL As Long = 0
+Public Const FREEIMAGE_RELEASE_SERIAL As Long = 1
 
 ' Memory stream pointer operation flags
 Public Const SEEK_SET As Long = 0
@@ -9265,6 +9271,7 @@ Dim i As Long
             .Value = pGetStringFromPointerA(tTag.Value)
             
          Case FIDT_SHORT
+            Dim iTemp As Integer
             If (.Count > 1) Then
                ' for a unsigned long array, first redim Value to
                ' proper size
@@ -9274,18 +9281,18 @@ Dim i As Long
                   ' copy each value into a Long and
                   ' assign with FreeImage_UnsignedShort() to the
                   ' corresponding item in the (Variant) Value array
-                  Call CopyMemory(lTemp, ByVal tTag.Value + i * 2, 2)
-                  .Value(i) = FreeImage_UnsignedShort(lTemp)
+                  Call CopyMemory(iTemp, ByVal tTag.Value + i * 2, 2)
+                  .Value(i) = FreeImage_UnsignedShort(iTemp)
                Next i
             Else
                ' copy a single byte into a Long and assign
                ' with FreeImgage_UnsignedShort()
-               Call CopyMemory(lTemp, ByVal tTag.Value, 2)
+               Call CopyMemory(iTemp, ByVal tTag.Value, 2)
                ' this works although FreeImage_UnsignedShort() takes
                ' an Integer parameter since lTemp was 0 before and
                ' we copied only 2 bytes so, VB's implicit conversion
                ' to Integer will never produce an overflow
-               .Value = FreeImage_UnsignedShort(lTemp)
+               .Value = FreeImage_UnsignedShort(iTemp)
             End If
             
          Case FIDT_LONG, _
