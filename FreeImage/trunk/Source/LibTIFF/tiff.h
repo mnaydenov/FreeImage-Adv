@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.16 2006-06-25 16:23:06 drolon Exp $ */
+/* $Id: tiff.h,v 1.17 2006-10-28 19:36:43 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -43,7 +43,7 @@
  *    (http://partners.adobe.com/asn/developer/PDFS/TN/TIFF6.pdf)
  *
  * For Big TIFF design notes see the following link
- *    http://gdal.maptools.org/twiki/bin/view/libtiff/BigTIFFDesign
+ *    http://www.remotesensing.org/libtiff/bigtiffdesign.html
  */
 #define	TIFF_VERSION	        42
 #define TIFF_BIGTIFF_VERSION    43

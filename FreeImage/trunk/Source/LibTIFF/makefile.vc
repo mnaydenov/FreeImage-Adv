@@ -1,4 +1,4 @@
-# $Id: makefile.vc,v 1.15 2006-06-25 16:23:05 drolon Exp $
+# $Id: makefile.vc,v 1.16 2006-10-28 19:36:43 drolon Exp $
 #
 # Copyright (C) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
 #
@@ -80,11 +80,11 @@ OBJ	= \
 
 all:	libtiff.lib $(DLLNAME)
 
-tif_config.h:	tif_config.h.vc
-	copy tif_config.h.vc tif_config.h
+tif_config.h:	tif_config.vc.h
+	copy tif_config.vc.h tif_config.h
 
-tiffconf.h:	tiffconf.h.vc
-	copy tiffconf.h.vc tiffconf.h
+tiffconf.h:	tiffconf.vc.h
+	copy tiffconf.vc.h tiffconf.h
 
 libtiff.lib:	tif_config.h tiffconf.h $(OBJ)
 	$(AR) /out:libtiff.lib $(OBJ) $(LIBS)
