@@ -1,7 +1,7 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_flush.c,v 1.17 2007-04-12 20:47:34 drolon Exp $ */
+/* $Id: mkspans.c,v 1.5 2007-04-12 20:47:34 drolon Exp $ */
 
 /*
- * Copyright (c) 1988-1997 Sam Leffler
+ * Copyright (c) 1991-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software and 
@@ -24,44 +24,52 @@
  * OF THIS SOFTWARE.
  */
 
-/*
- * TIFF Library.
- */
-#include "tiffiop.h"
-
-int
-TIFFFlush(TIFF* tif)
-{
-
-	if (tif->tif_mode != O_RDONLY) {
-		if (!TIFFFlushData(tif))
-			return (0);
-		if ((tif->tif_flags & TIFF_DIRTYDIRECT) &&
-		    !TIFFWriteDirectory(tif))
-			return (0);
-	}
-	return (1);
-}
+#include <string.h>
+#include <stdio.h>
 
 /*
- * Flush buffered data to the file.
- *
- * Frank Warmerdam'2000: I modified this to return 1 if TIFF_BEENWRITING
- * is not set, so that TIFFFlush() will proceed to write out the directory.
- * The documentation says returning 1 is an error indicator, but not having
- * been writing isn't exactly a an error.  Hopefully this doesn't cause
- * problems for other people. 
+ * Hack program to construct tables used to find
+ * runs of zeros and ones in Group 3 Fax encoding.
  */
-int
-TIFFFlushData(TIFF* tif)
+
+dumparray(name, runs)
+	char *name;
+	unsigned char runs[256];
 {
-	if ((tif->tif_flags & TIFF_BEENWRITING) == 0)
-		return (0);
-	if (tif->tif_flags & TIFF_POSTENCODE) {
-		tif->tif_flags &= ~TIFF_POSTENCODE;
-		if (!(*tif->tif_postencode)(tif))
-			return (0);
+	int i;
+	char *sep;
+	printf("static unsigned char %s[256] = {\n", name);
+	sep = "    ";
+	for (i = 0; i < 256; i++) {
+		printf("%s%d", sep, runs[i]);
+		if (((i + 1) % 16) == 0) {
+			printf(",	/* 0x%02x - 0x%02x */\n", i-15, i);
+			sep = "    ";
+		} else
+			sep = ", ";
 	}
-	return (TIFFFlushData1(tif));
+	printf("\n};\n");
 }
 
+main()
+{
+	unsigned char runs[2][256];
+
+	memset(runs[0], 0, 256*sizeof (char));
+	memset(runs[1], 0, 256*sizeof (char));
+	{ register int run, runlen, i;
+	  runlen = 1;
+	  for (run = 0x80; run != 0xff; run = (run>>1)|0x80) {
+		for (i = run-1; i >= 0; i--) {
+			runs[1][run|i] = runlen;
+			runs[0][(~(run|i)) & 0xff] = runlen;
+		}
+		runlen++;
+	  }
+	  runs[1][0xff] = runs[0][0] = 8;
+	}
+	dumparray("bruns", runs[0]);
+	dumparray("wruns", runs[1]);
+}
+
+/* vim: set ts=8 sts=8 sw=8 noet: */

@@ -1,4 +1,4 @@
-/* $Id: tif_dir.h,v 1.16 2006-10-28 19:36:43 drolon Exp $ */
+/* $Id: tif_dir.h,v 1.17 2007-04-12 20:47:34 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -180,6 +180,7 @@ extern "C" {
 extern	const TIFFFieldInfo *_TIFFGetFieldInfo(size_t *);
 extern	const TIFFFieldInfo *_TIFFGetExifFieldInfo(size_t *);
 extern	void _TIFFSetupFieldInfo(TIFF*, const TIFFFieldInfo[], size_t);
+extern	int _TIFFMergeFieldInfo(TIFF*, const TIFFFieldInfo[], int);
 extern	void _TIFFPrintFieldInfo(TIFF*, FILE*);
 extern	TIFFDataType _TIFFSampleToTagType(TIFF*);
 extern  const TIFFFieldInfo* _TIFFFindOrRegisterFieldInfo( TIFF *tif,
@@ -188,7 +189,6 @@ extern  const TIFFFieldInfo* _TIFFFindOrRegisterFieldInfo( TIFF *tif,
 extern  TIFFFieldInfo* _TIFFCreateAnonFieldInfo( TIFF *tif, ttag_t tag,
                                                  TIFFDataType dt );
 
-#define _TIFFMergeFieldInfo	    TIFFMergeFieldInfo
 #define _TIFFFindFieldInfo	    TIFFFindFieldInfo
 #define _TIFFFindFieldInfoByName    TIFFFindFieldInfoByName
 #define _TIFFFieldWithTag	    TIFFFieldWithTag

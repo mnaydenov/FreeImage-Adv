@@ -1,4 +1,4 @@
-# $Id: makefile.vc,v 1.16 2006-10-28 19:36:43 drolon Exp $
+# $Id: makefile.vc,v 1.17 2007-04-12 20:47:33 drolon Exp $
 #
 # Copyright (C) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
 #
@@ -98,3 +98,4 @@ clean:
 	-del *.lib
 	-del *.dll
 	-del *.exe
+	-del *.pdb
