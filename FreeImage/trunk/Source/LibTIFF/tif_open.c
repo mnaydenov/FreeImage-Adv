@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.18 2007-05-16 18:29:33 drolon Exp $ */
+/* $Id: tif_open.c,v 1.19 2007-07-18 21:24:21 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.20 2007-05-16 18:29:31 drolon Exp $ */
+/* $Id: tif_getimage.c,v 1.21 2007-07-18 21:24:21 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
