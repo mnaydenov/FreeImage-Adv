@@ -1,4 +1,4 @@
-/* $Id: tif_dirinfo.c,v 1.20 2007-07-18 21:24:21 drolon Exp $ */
+/* $Id: tif_dirinfo.c,v 1.21 2007-11-10 18:40:55 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -591,22 +591,10 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 int
 _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 {
-	const char module[] = "_TIFFMergeFieldInfo";
-	const char reason[] = "for field info array";
+	static const char module[] = "_TIFFMergeFieldInfo";
+	static const char reason[] = "for field info array";
 	TIFFFieldInfo** tp;
 	int i;
-
-	for (i = 0; i < n; i++) {
-		const TIFFFieldInfo *fip =
-			_TIFFFindFieldInfo(tif, info[i].field_tag, TIFF_ANY);
-		if (fip) {
-			TIFFErrorExt(tif->tif_clientdata, module,
-			"Field with tag %lu is already registered as \"%s\"",
-				     (unsigned int) info[i].field_tag,
-				     fip->field_name);
-			return 0;
-		}
-	}
 
         tif->tif_foundfield = NULL;
 
@@ -627,10 +615,19 @@ _TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], int n)
 	}
 	tp = tif->tif_fieldinfo + tif->tif_nfields;
 	for (i = 0; i < n; i++)
-		*tp++ = (TIFFFieldInfo*) (info + i);	/* XXX */
+        {
+            const TIFFFieldInfo *fip =
+                _TIFFFindFieldInfo(tif, info[i].field_tag, info[i].field_type);
+
+            /* only add definitions that aren't already present */
+            if (!fip) {
+                *tp++ = (TIFFFieldInfo*) (info + i);
+                tif->tif_nfields++;
+            }
+        }
 
         /* Sort the field info by tag number */
-        qsort(tif->tif_fieldinfo, tif->tif_nfields += n,
+        qsort(tif->tif_fieldinfo, tif->tif_nfields,
 	      sizeof (TIFFFieldInfo*), tagCompare);
 
 	return n;

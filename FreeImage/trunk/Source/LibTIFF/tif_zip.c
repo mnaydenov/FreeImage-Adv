@@ -1,4 +1,4 @@
-/* $Id: tif_zip.c,v 1.19 2007-07-18 21:24:21 drolon Exp $ */
+/* $Id: tif_zip.c,v 1.20 2007-11-10 18:41:43 drolon Exp $ */
 
 /*
  * Copyright (c) 1995-1997 Sam Leffler
@@ -342,7 +342,7 @@ static const TIFFFieldInfo zipFieldInfo[] = {
 int
 TIFFInitZIP(TIFF* tif, int scheme)
 {
-	const char module[] = "TIFFInitZIP";
+	static const char module[] = "TIFFInitZIP";
 	ZIPState* sp;
 
 	assert( (scheme == COMPRESSION_DEFLATE)

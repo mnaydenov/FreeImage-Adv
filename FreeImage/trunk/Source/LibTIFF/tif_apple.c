@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_apple.c,v 1.19 2007-07-18 21:24:20 drolon Exp $ */
+/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_apple.c,v 1.20 2007-11-10 18:40:46 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

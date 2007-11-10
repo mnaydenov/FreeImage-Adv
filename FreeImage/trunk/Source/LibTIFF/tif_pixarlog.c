@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.19 2007-07-18 21:24:21 drolon Exp $ */
+/* $Id: tif_pixarlog.c,v 1.20 2007-11-10 18:41:25 drolon Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -1289,7 +1289,7 @@ static const TIFFFieldInfo pixarlogFieldInfo[] = {
 int
 TIFFInitPixarLog(TIFF* tif, int scheme)
 {
-	const char module[] = "TIFFInitPixarLog";
+	static const char module[] = "TIFFInitPixarLog";
 
 	PixarLogState* sp;
 
