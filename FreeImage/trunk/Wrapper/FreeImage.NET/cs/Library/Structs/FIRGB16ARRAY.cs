@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:29 $
-// $Id: FIRGB16ARRAY.cs,v 1.1 2007-11-28 15:33:29 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2007-12-21 14:42:53 $
+// $Id: FIRGB16ARRAY.cs,v 1.2 2007-12-21 14:42:53 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -75,7 +75,7 @@ namespace FreeImageAPI
 		{
 			if (dib.IsNull) throw new ArgumentNullException();
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_BITMAP) throw new ArgumentException("dib");
-			if (FreeImage.GetBPP(dib) != 48) throw new ArgumentException("dib");
+			if (FreeImage.GetBPP(dib) != 16) throw new ArgumentException("dib");
 			baseAddress = (uint)FreeImage.GetScanLine(dib, scanline);
 			length = FreeImage.GetWidth(dib);
 		}
