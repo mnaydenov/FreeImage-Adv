@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:25 $
-// $Id: FIICCPROFILE.cs,v 1.1 2007-11-28 15:33:25 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2007-12-21 14:42:01 $
+// $Id: FIICCPROFILE.cs,v 1.2 2007-12-21 14:42:01 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -80,6 +80,7 @@ namespace FreeImageAPI
 		public ICC_FLAGS Flags
 		{
 			get { return flags; }
+			set { flags = value; }
 		}
 
 		/// <summary>
@@ -116,7 +117,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Indicates whether the profile is CMYK.
 		/// </summary>
-		public bool isCMYK
+		public bool IsCMYK
 		{
 			get
 			{
