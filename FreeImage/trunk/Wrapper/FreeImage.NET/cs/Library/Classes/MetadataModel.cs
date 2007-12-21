@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:45 $
-// $Id: MetadataModel.cs,v 1.1 2007-11-28 15:33:45 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2007-12-21 14:33:50 $
+// $Id: MetadataModel.cs,v 1.2 2007-12-21 14:33:50 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -281,14 +281,6 @@ namespace FreeImageAPI
 			}
 			result.Capacity = result.Count;
 			return result;
-		}
-
-		/// <summary>
-		/// Returns the bitmap this instance is linked to.
-		/// </summary>
-		public FIBITMAP Dib
-		{
-			get { return dib; }
 		}
 
 		/// <summary>
