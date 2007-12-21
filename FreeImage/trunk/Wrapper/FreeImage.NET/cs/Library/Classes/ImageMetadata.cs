@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:45 $
-// $Id: ImageMetadata.cs,v 1.1 2007-11-28 15:33:45 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2007-12-21 14:31:09 $
+// $Id: ImageMetadata.cs,v 1.2 2007-12-21 14:31:09 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -40,6 +40,9 @@ using System.Reflection;
 
 namespace FreeImageAPI
 {
+	/// <summary>
+	/// Class handling metadata of a FreeImage bitmap.
+	/// </summary>
 	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
 	{
 		private readonly List<MetadataModel> data;
@@ -190,17 +193,6 @@ namespace FreeImageAPI
 				{
 					return data.Count;
 				}
-			}
-		}
-
-		/// <summary>
-		/// Gets the bitmap this instance represents.
-		/// </summary>
-		public FIBITMAP Dib
-		{
-			get
-			{
-				return dib;
 			}
 		}
 
