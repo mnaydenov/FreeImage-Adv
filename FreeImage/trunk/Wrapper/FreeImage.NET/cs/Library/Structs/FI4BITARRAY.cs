@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:25 $
-// $Id: FI4BITARRAY.cs,v 1.1 2007-11-28 15:33:25 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2007-12-21 14:39:40 $
+// $Id: FI4BITARRAY.cs,v 1.2 2007-12-21 14:39:40 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -131,6 +131,36 @@ namespace FreeImageAPI
 		public unsafe void SetIndex(int index, byte value)
 		{
 			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			if ((index % 2) == 0)
+				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0x0F) | (value << 4));
+			else
+				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0xF0) | (value & 0x0F));
+		}
+
+		/// <summary>
+		/// Returns the palette-index at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <returns>Data at the index.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe byte GetIndexUnsafe(int index)
+		{
+			if ((index % 2) == 0)
+				return (byte)(((byte*)baseAddress)[index / 2] >> 4);
+			else
+				return (byte)(((byte*)baseAddress)[index / 2] & 0x0F);
+		}
+
+		/// <summary>
+		/// Sets the palette-index at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <param name="value">The new data.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe void SetIndexUnsafe(int index, byte value)
+		{
 			if ((index % 2) == 0)
 				((byte*)baseAddress)[index / 2] = (byte)((((byte*)baseAddress)[index / 2] & 0x0F) | (value << 4));
 			else

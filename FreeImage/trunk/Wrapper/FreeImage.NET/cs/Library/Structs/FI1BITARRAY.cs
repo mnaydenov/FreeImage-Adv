@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:23 $
-// $Id: FI1BITARRAY.cs,v 1.1 2007-11-28 15:33:23 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2007-12-21 14:39:40 $
+// $Id: FI1BITARRAY.cs,v 1.2 2007-12-21 14:39:40 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -131,6 +131,39 @@ namespace FreeImageAPI
 		public unsafe void SetIndex(int index, byte value)
 		{
 			if (index >= length || index < 0) throw new ArgumentOutOfRangeException();
+			int mask = 1 << (7 - (index % 8));
+			if ((value & 0x01) > 0)
+			{
+				((byte*)baseAddress)[index / 8] |= (byte)mask;
+			}
+			else
+			{
+				((byte*)baseAddress)[index / 8] &= (byte)(~mask);
+			}
+		}
+
+		/// <summary>
+		/// Returns the bit at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <returns>Data at the index.</returns>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe byte GetIndexUnsafe(int index)
+		{
+			byte mask = (byte)(1 << (7 - (index % 8)));
+			return ((((byte*)baseAddress)[index / 8] & mask) > 0) ? FI1BITARRAY.One : FI1BITARRAY.Zero;
+		}
+
+		/// <summary>
+		/// Sets the bit at a given index.
+		/// </summary>
+		/// <param name="index">Index of the data.</param>
+		/// <param name="value">The new data.</param>
+		/// <exception cref="ArgumentOutOfRangeException">
+		/// Thrown if index is greater or same as Length</exception>
+		internal unsafe void SetIndexUnsafe(int index, byte value)
+		{
 			int mask = 1 << (7 - (index % 8));
 			if ((value & 0x01) > 0)
 			{
