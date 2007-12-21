@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:45 $
-// $Id: LocalPlugin.cs,v 1.1 2007-11-28 15:33:45 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2007-12-21 14:33:13 $
+// $Id: LocalPlugin.cs,v 1.2 2007-12-21 14:33:13 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -292,6 +292,10 @@ namespace FreeImageAPI
 
 			// Register the plugin. The result will be saved and can be accessed later.
 			registered = FreeImage.RegisterLocalPlugin(initProc, null, null, null, null) != FREE_IMAGE_FORMAT.FIF_UNKNOWN;
+			if (registered)
+			{
+				PluginRepository.RegisterLocalPlugin(this);
+			}
 		}
 
 		~LocalPlugin()
