@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:23 $
-// $Id: FIRational.cs,v 1.1 2007-11-28 15:33:23 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2008-01-14 07:58:58 $
+// $Id: FIRational.cs,v 1.2 2008-01-14 07:58:58 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -101,7 +101,7 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="value">The value to convert into a fraction.</param>
 		/// <exception cref="OverflowException">
-		/// Throws if 'value' cannot be converted into a fraction
+		/// Thrown if <paramref name="value"/> cannot be converted into a fraction
 		/// represented by two integer values.</exception>
 		public FIRational(decimal value)
 		{

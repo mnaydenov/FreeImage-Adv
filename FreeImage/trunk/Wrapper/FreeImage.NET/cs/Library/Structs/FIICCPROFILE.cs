@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.2 $
-// $Date: 2007-12-21 14:42:01 $
-// $Id: FIICCPROFILE.cs,v 1.2 2007-12-21 14:42:01 cklein05 Exp $
+// $Revision: 1.3 $
+// $Date: 2008-01-14 07:58:58 $
+// $Id: FIICCPROFILE.cs,v 1.3 2008-01-14 07:58:58 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -53,6 +53,8 @@ namespace FreeImageAPI
 		/// </summary>
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The ICC-Profile data.</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="dib"/> is null.</exception>
 		public FIICCPROFILE(FIBITMAP dib, byte[] data)
 			: this(dib, data, (int)data.Length)
 		{
@@ -64,8 +66,14 @@ namespace FreeImageAPI
 		/// <param name="dib">Handle to a FreeImage bitmap.</param>
 		/// <param name="data">The ICC-Profile data.</param>
 		/// <param name="size">Number of bytes to use from data.</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="dib"/> is null.</exception>
 		public unsafe FIICCPROFILE(FIBITMAP dib, byte[] data, int size)
 		{
+			if (dib.IsNull)
+			{
+				throw new ArgumentNullException("dib");
+			}
 			FIICCPROFILE prof;
 			size = Math.Min(size, (int)data.Length);
 			prof = *(FIICCPROFILE*)FreeImage.CreateICCProfile(dib, data, size);

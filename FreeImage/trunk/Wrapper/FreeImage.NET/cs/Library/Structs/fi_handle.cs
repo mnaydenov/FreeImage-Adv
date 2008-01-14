@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:25 $
-// $Id: fi_handle.cs,v 1.1 2007-11-28 15:33:25 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2008-01-14 07:58:58 $
+// $Id: fi_handle.cs,v 1.2 2008-01-14 07:58:58 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -88,10 +88,14 @@ namespace FreeImageAPI
 		/// Creates a new fi_handle structure wrapping a managed object.
 		/// </summary>
 		/// <param name="obj">The object to wrap.</param>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if <paramref name="obj"/> is null.</exception>
 		public fi_handle(object obj)
 		{
 			if (obj == null)
+			{
 				throw new ArgumentNullException("obj");
+			}
 			GCHandle gch = GCHandle.Alloc(obj, GCHandleType.Normal);
 			handle = GCHandle.ToIntPtr(gch);
 		}
