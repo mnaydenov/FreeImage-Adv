@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:22 $
-// $Id: FI16RGB.cs,v 1.1 2007-11-28 15:33:22 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2008-01-14 07:59:40 $
+// $Id: FI16RGB.cs,v 1.2 2008-01-14 07:59:40 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -61,16 +61,22 @@ namespace FreeImageAPI
 		public static bool operator ==(FI16RGB value1, FI16RGB value2)
 		{
 			if (value1.bitSettings.RED_MASK != value2.bitSettings.RED_MASK)
+			{
 				return false;
+			}
 			if (value1.bitSettings.GREEN_MASK != value2.bitSettings.GREEN_MASK)
+			{
 				return false;
+			}
 			if (value1.bitSettings.BLUE_MASK != value2.bitSettings.BLUE_MASK)
+			{
 				return false;
+			}
 			int MASK =
 				(value1.bitSettings.RED_MASK |
 				value1.bitSettings.GREEN_MASK |
 				value1.bitSettings.BLUE_MASK);
-			return (value1.data & MASK) == (value2.data & MASK);
+			return ((value1.data & MASK) == (value2.data & MASK));
 		}
 
 		public static bool operator !=(FI16RGB value1, FI16RGB value2)
