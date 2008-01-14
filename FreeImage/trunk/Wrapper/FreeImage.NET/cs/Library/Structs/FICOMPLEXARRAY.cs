@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2008-01-14 07:42:44 $
-// $Id: FICOMPLEXARRAY.cs,v 1.1 2008-01-14 07:42:44 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2008-01-14 16:52:20 $
+// $Id: FICOMPLEXARRAY.cs,v 1.2 2008-01-14 16:52:20 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -85,6 +85,10 @@ namespace FreeImageAPI
 			if (dib.IsNull)
 			{
 				throw new ArgumentNullException();
+			}
+			if ((scanline < 0) || scanline >= FreeImage.GetHeight(dib))
+			{
+				throw new ArgumentOutOfRangeException("scanline");
 			}
 			if (FreeImage.GetImageType(dib) != FREE_IMAGE_TYPE.FIT_COMPLEX)
 			{
@@ -254,7 +258,7 @@ namespace FreeImageAPI
 			{
 				get
 				{
-					if (index >= 0 && index <= array.length)
+					if ((index >= 0) && (index < array.length))
 					{
 						return array.GetFICOMPLEX(index);
 					}
@@ -264,9 +268,9 @@ namespace FreeImageAPI
 
 			public bool MoveNext()
 			{
-				index++;
-				if (index < (int)array.length)
+				if ((index + 1) < (int)array.length)
 				{
+					index++;
 					return true;
 				}
 				return false;
