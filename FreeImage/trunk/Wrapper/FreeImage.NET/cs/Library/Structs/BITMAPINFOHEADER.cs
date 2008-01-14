@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.2 $
-// $Date: 2007-12-21 14:37:34 $
-// $Id: BITMAPINFOHEADER.cs,v 1.2 2007-12-21 14:37:34 cklein05 Exp $
+// $Revision: 1.3 $
+// $Date: 2008-01-14 16:51:06 $
+// $Id: BITMAPINFOHEADER.cs,v 1.3 2008-01-14 16:51:06 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -96,17 +96,17 @@ namespace FreeImageAPI
 
 		public static bool operator ==(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)
 		{
-			return !((value1.biSize != value2.biSize) ||
-					(value1.biWidth != value2.biWidth) ||
-					(value1.biHeight != value2.biHeight) ||
-					(value1.biPlanes != value2.biPlanes) ||
-					(value1.biBitCount != value2.biBitCount) ||
-					(value1.biCompression != value2.biCompression) ||
-					(value1.biSizeImage != value2.biSizeImage) ||
-					(value1.biXPelsPerMeter != value2.biXPelsPerMeter) ||
-					(value1.biYPelsPerMeter != value2.biYPelsPerMeter) ||
-					(value1.biClrUsed != value2.biClrUsed) ||
-					(value1.biClrImportant != value2.biClrImportant));
+			return ((value1.biSize == value2.biSize) &&
+					(value1.biWidth == value2.biWidth) &&
+					(value1.biHeight == value2.biHeight) &&
+					(value1.biPlanes == value2.biPlanes) &&
+					(value1.biBitCount == value2.biBitCount) &&
+					(value1.biCompression == value2.biCompression) &&
+					(value1.biSizeImage == value2.biSizeImage) &&
+					(value1.biXPelsPerMeter == value2.biXPelsPerMeter) &&
+					(value1.biYPelsPerMeter == value2.biYPelsPerMeter) &&
+					(value1.biClrUsed == value2.biClrUsed) &&
+					(value1.biClrImportant == value2.biClrImportant));
 		}
 
 		public static bool operator !=(BITMAPINFOHEADER value1, BITMAPINFOHEADER value2)

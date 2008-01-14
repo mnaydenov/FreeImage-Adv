@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:29 $
-// $Id: BITMAPINFO.cs,v 1.1 2007-11-28 15:33:29 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2008-01-14 16:51:06 $
+// $Id: BITMAPINFO.cs,v 1.2 2008-01-14 16:51:06 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -56,12 +56,20 @@ namespace FreeImageAPI
 		public static bool operator ==(BITMAPINFO value1, BITMAPINFO value2)
 		{
 			if (value1.bmiHeader != value2.bmiHeader)
+			{
 				return false;
+			}
 			if (value1.bmiColors.Length != value2.bmiColors.Length)
+			{
 				return false;
+			}
 			for (int i = 0; i < value1.bmiColors.Length; i++)
+			{
 				if (value1.bmiColors[i] != value2.bmiColors[i])
+				{
 					return false;
+				}
+			}
 			return true;
 		}
 
