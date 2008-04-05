@@ -1,4 +1,4 @@
-/* $Id: mkspans.c,v 1.9 2008-04-05 17:32:37 drolon Exp $ */
+/* $Id: mkspans.c,v 1.10 2008-04-05 17:55:37 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler

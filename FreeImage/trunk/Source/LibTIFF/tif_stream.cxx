@@ -1,4 +1,4 @@
-/* $Id: tif_stream.cxx,v 1.16 2008-04-05 17:32:40 drolon Exp $ */
+/* $Id: tif_stream.cxx,v 1.17 2008-04-05 17:55:39 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1996 Sam Leffler
