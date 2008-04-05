@@ -1,4 +1,4 @@
-/* $Id: tif_tile.c,v 1.20 2007-11-10 18:41:34 drolon Exp $ */
+/* $Id: tif_tile.c,v 1.21 2008-04-05 17:32:40 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler

@@ -1,4 +1,4 @@
-/* $Id: t4.h,v 1.20 2007-11-10 18:40:44 drolon Exp $ */
+/* $Id: t4.h,v 1.21 2008-04-05 17:32:37 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
