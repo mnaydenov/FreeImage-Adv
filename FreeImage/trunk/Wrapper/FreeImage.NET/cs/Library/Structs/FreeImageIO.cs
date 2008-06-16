@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:24 $
-// $Id: FreeImageIO.cs,v 1.1 2007-11-28 15:33:24 cklein05 Exp $
+// $Revision: 1.2 $
+// $Date: 2008-06-16 15:15:36 $
+// $Id: FreeImageIO.cs,v 1.2 2008-06-16 15:15:36 cklein05 Exp $
 // ==========================================================
 
 using System.Runtime.InteropServices;
@@ -43,9 +43,24 @@ namespace FreeImageAPI
 	[StructLayout(LayoutKind.Sequential)]
 	public struct FreeImageIO
 	{
+		/// <summary>
+		/// Delegate to the C++ function <b>fread</b>.
+		/// </summary>
 		public ReadProc readProc;
+
+		/// <summary>
+		/// Delegate to the C++ function <b>fwrite</b>.
+		/// </summary>
 		public WriteProc writeProc;
+
+		/// <summary>
+		/// Delegate to the C++ function <b>fseek</b>.
+		/// </summary>
 		public SeekProc seekProc;
+
+		/// <summary>
+		/// Delegate to the C++ function <b>ftell</b>.
+		/// </summary>
 		public TellProc tellProc;
 	}
 }
