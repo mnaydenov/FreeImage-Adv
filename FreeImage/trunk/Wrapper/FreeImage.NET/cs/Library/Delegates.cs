@@ -28,14 +28,15 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.2 $
-// $Date: 2008-06-16 15:15:37 $
-// $Id: Delegates.cs,v 1.2 2008-06-16 15:15:37 cklein05 Exp $
+// $Revision: 1.3 $
+// $Date: 2008-06-17 13:50:59 $
+// $Id: Delegates.cs,v 1.3 2008-06-17 13:50:59 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using FreeImageAPI.IO;
 
 namespace FreeImageAPI
 {
@@ -49,7 +50,10 @@ namespace FreeImageAPI
 	// DLL_API is missing in the definition of the callbackfuntion.
 	[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 	public delegate void OutputMessageFunction(FREE_IMAGE_FORMAT fif, string message);
+}
 
+namespace FreeImageAPI.IO
+{
 	/// <summary>
 	/// Delegate to the C++ function <b>fread</b>.
 	/// </summary>
@@ -91,7 +95,10 @@ namespace FreeImageAPI
 	public delegate int TellProc(fi_handle handle);
 
 	// Delegates used by 'Plugin' structure
+}
 
+namespace FreeImageAPI.Plugins
+{
 	/// <summary>
 	/// Delegate to a function that returns a string which describes
 	/// the plugins format.

@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.5 $
-// $Date: 2008-06-16 15:24:16 $
-// $Id: FreeImageWrapper.cs,v 1.5 2008-06-16 15:24:16 cklein05 Exp $
+// $Revision: 1.6 $
+// $Date: 2008-06-17 13:50:59 $
+// $Id: FreeImageWrapper.cs,v 1.6 2008-06-17 13:50:59 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -41,6 +41,8 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using FreeImageAPI.IO;
+using FreeImageAPI.Metadata;
 
 namespace FreeImageAPI
 {

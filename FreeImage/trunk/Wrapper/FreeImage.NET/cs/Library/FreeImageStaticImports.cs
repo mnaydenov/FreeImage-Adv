@@ -28,13 +28,15 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.3 $
-// $Date: 2008-06-16 15:20:13 $
-// $Id: FreeImageStaticImports.cs,v 1.3 2008-06-16 15:20:13 cklein05 Exp $
+// $Revision: 1.4 $
+// $Date: 2008-06-17 13:50:59 $
+// $Id: FreeImageStaticImports.cs,v 1.4 2008-06-17 13:50:59 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.Runtime.InteropServices;
+using FreeImageAPI.Plugins;
+using FreeImageAPI.IO;
 
 namespace FreeImageAPI
 {
