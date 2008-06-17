@@ -28,15 +28,15 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.3 $
-// $Date: 2008-06-16 15:15:36 $
-// $Id: StreamWrapper.cs,v 1.3 2008-06-16 15:15:36 cklein05 Exp $
+// $Revision: 1.4 $
+// $Date: 2008-06-17 13:49:24 $
+// $Id: StreamWrapper.cs,v 1.4 2008-06-17 13:49:24 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.IO;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.IO
 {
 	/// <summary>
 	/// Class wrapping streams, implementing a buffer for read data,

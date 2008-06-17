@@ -28,14 +28,14 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.2 $
-// $Date: 2008-06-16 15:15:36 $
-// $Id: FreeImageIO.cs,v 1.2 2008-06-16 15:15:36 cklein05 Exp $
+// $Revision: 1.3 $
+// $Date: 2008-06-17 13:49:23 $
+// $Id: FreeImageIO.cs,v 1.3 2008-06-17 13:49:23 cklein05 Exp $
 // ==========================================================
 
 using System.Runtime.InteropServices;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.IO
 {
 	/// <summary>
 	/// Structure for implementing access to custom handles.
