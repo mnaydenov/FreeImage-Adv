@@ -28,15 +28,16 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.2 $
-// $Date: 2008-06-16 15:15:36 $
-// $Id: Plugin.cs,v 1.2 2008-06-16 15:15:36 cklein05 Exp $
+// $Revision: 1.3 $
+// $Date: 2008-06-17 13:48:22 $
+// $Id: Plugin.cs,v 1.3 2008-06-17 13:48:22 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.Runtime.InteropServices;
+using FreeImageAPI.Plugins;
 
-namespace FreeImageAPI
+namespace FreeImageAPI.Plugins
 {
 	/// <summary>
 	/// The structure contains functionpointers that make up a FreeImage plugin.
