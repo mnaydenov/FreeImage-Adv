@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.4 $
-// $Date: 2008-06-17 13:49:23 $
-// $Id: fi_handle.cs,v 1.4 2008-06-17 13:49:23 cklein05 Exp $
+// $Revision: 1.5 $
+// $Date: 2008-06-20 08:29:21 $
+// $Id: fi_handle.cs,v 1.5 2008-06-20 08:29:21 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -104,12 +104,12 @@ namespace FreeImageAPI.IO
 		}
 
 		/// <summary>
-		/// Tests whether two specified <see cref="fi_handle"/> structures are different.
+		/// Tests whether two specified <see cref="fi_handle"/> structures are equivalent.
 		/// </summary>
-		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the inequality operator.</param>
-		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the inequality operator.</param>
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the equality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the equality operator.</param>
 		/// <returns>
-		/// <b>true</b> if the two <see cref="fi_handle"/> structures are different; otherwise, <b>false</b>.
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are equal; otherwise, <b>false</b>.
 		/// </returns>
 		public static bool operator ==(fi_handle left, fi_handle right)
 		{
@@ -117,12 +117,12 @@ namespace FreeImageAPI.IO
 		}
 
 		/// <summary>
-		/// Tests whether two specified <see cref="fi_handle"/> structures are equivalent.
+		/// Tests whether two specified <see cref="fi_handle"/> structures are different.
 		/// </summary>
-		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the equality operator.</param>
-		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the equality operator.</param>
+		/// <param name="left">The <see cref="fi_handle"/> that is to the left of the inequality operator.</param>
+		/// <param name="right">The <see cref="fi_handle"/> that is to the right of the inequality operator.</param>
 		/// <returns>
-		/// <b>true</b> if the two <see cref="fi_handle"/> structures are equal; otherwise, <b>false</b>.
+		/// <b>true</b> if the two <see cref="fi_handle"/> structures are different; otherwise, <b>false</b>.
 		/// </returns>
 		public static bool operator !=(fi_handle left, fi_handle right)
 		{
