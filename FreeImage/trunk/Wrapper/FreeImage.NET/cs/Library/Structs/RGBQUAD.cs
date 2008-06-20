@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.2 $
-// $Date: 2008-06-16 15:16:53 $
-// $Id: RGBQUAD.cs,v 1.2 2008-06-16 15:16:53 cklein05 Exp $
+// $Revision: 1.3 $
+// $Date: 2008-06-20 08:29:48 $
+// $Id: RGBQUAD.cs,v 1.3 2008-06-20 08:29:48 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -149,10 +149,7 @@ namespace FreeImageAPI
 		/// </returns>
 		public static bool operator ==(RGBQUAD left, RGBQUAD right)
 		{
-			return ((left.rgbBlue == right.rgbBlue) &&
-					(left.rgbGreen == right.rgbGreen) &&
-					(left.rgbRed == right.rgbRed) &&
-					(left.rgbReserved == right.rgbReserved));
+			return (left.uintValue == right.uintValue);
 		}
 
 		/// <summary>
@@ -165,7 +162,7 @@ namespace FreeImageAPI
 		/// </returns>
 		public static bool operator !=(RGBQUAD left, RGBQUAD right)
 		{
-			return !(left == right);
+			return (left.uintValue != right.uintValue);
 		}
 
 		/// <summary>
