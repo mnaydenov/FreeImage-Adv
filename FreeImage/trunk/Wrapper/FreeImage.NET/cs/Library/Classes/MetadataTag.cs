@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.4 $
-// $Date: 2008-06-17 13:48:47 $
-// $Id: MetadataTag.cs,v 1.4 2008-06-17 13:48:47 cklein05 Exp $
+// $Revision: 1.5 $
+// $Date: 2008-07-25 07:30:13 $
+// $Id: MetadataTag.cs,v 1.5 2008-07-25 07:30:13 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -87,6 +87,11 @@ namespace FreeImageAPI.Metadata
 			this.model = model;
 			tag = FreeImage.CreateTag();
 			selfCreated = true;
+
+			if (model == FREE_IMAGE_MDMODEL.FIMD_XMP)
+			{
+				Key = "XMLPacket";
+			}
 		}
 
 		/// <summary>
@@ -107,6 +112,11 @@ namespace FreeImageAPI.Metadata
 			this.tag = tag;
 			model = GetModel(dib, tag);
 			selfCreated = false;
+
+			if (model == FREE_IMAGE_MDMODEL.FIMD_XMP)
+			{
+				Key = "XMLPacket";
+			}
 		}
 
 		/// <summary>
@@ -123,6 +133,11 @@ namespace FreeImageAPI.Metadata
 			this.tag = tag;
 			this.model = model;
 			selfCreated = false;
+
+			if (model == FREE_IMAGE_MDMODEL.FIMD_XMP)
+			{
+				Key = "XMLPacket";
+			}
 		}
 
 		static MetadataTag()
@@ -287,7 +302,14 @@ namespace FreeImageAPI.Metadata
 		public string Key
 		{
 			get { CheckDisposed(); return FreeImage.GetTagKey(tag); }
-			set { CheckDisposed(); FreeImage.SetTagKey(tag, value); }
+			set
+			{
+				CheckDisposed();
+				if ((model != FREE_IMAGE_MDMODEL.FIMD_XMP) || (value == "XMLPacket"))
+				{
+					FreeImage.SetTagKey(tag, value);
+				}
+			}
 		}
 
 		/// <summary>
