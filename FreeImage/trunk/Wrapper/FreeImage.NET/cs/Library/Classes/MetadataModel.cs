@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.4 $
-// $Date: 2008-06-17 13:48:47 $
-// $Id: MetadataModel.cs,v 1.4 2008-06-17 13:48:47 cklein05 Exp $
+// $Revision: 1.5 $
+// $Date: 2008-08-18 12:13:18 $
+// $Id: MetadataModel.cs,v 1.5 2008-08-18 12:13:18 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -138,7 +138,7 @@ namespace FreeImageAPI.Metadata
 			{
 				throw new ArgumentNullException("key");
 			}
-			return FreeImage.SetMetadata(Model, dib, key, 0);
+			return FreeImage.SetMetadata(Model, dib, key, new FITAG());
 		}
 
 		/// <summary>
@@ -148,7 +148,7 @@ namespace FreeImageAPI.Metadata
 		/// <returns>Returns true on success, false on failure.</returns>
 		public bool DestoryModel()
 		{
-			return FreeImage.SetMetadata(Model, dib, null, 0);
+			return FreeImage.SetMetadata(Model, dib, null, new FITAG());
 		}
 
 		/// <summary>
