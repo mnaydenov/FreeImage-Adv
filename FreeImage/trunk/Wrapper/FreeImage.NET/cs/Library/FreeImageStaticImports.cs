@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.4 $
-// $Date: 2008-06-17 13:50:59 $
-// $Id: FreeImageStaticImports.cs,v 1.4 2008-06-17 13:50:59 cklein05 Exp $
+// $Revision: 1.5 $
+// $Date: 2008-08-18 12:11:58 $
+// $Id: FreeImageStaticImports.cs,v 1.5 2008-08-18 12:11:58 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -210,10 +210,11 @@ namespace FreeImageAPI
 		/// <summary>
 		/// You use the function FreeImage_SetOutputMessage to capture the log string
 		/// so that you can show it to the user of the program.
-		/// The callback is implemented in the <see cref="Message"/> event of this class.
+		/// The callback is implemented in the <see cref="FreeImageEngine.Message"/> event of this class.
 		/// </summary>
 		/// <remarks>The function is private because FreeImage can only have a single
-		/// callback function. To use the callback use the <see cref="Message"/> event of this class.</remarks>
+		/// callback function. To use the callback use the <see cref="FreeImageEngine.Message"/>
+		/// event of this class.</remarks>
 		/// <param name="omf">Handler to the callback function.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetOutputMessage")]
 		internal static extern void SetOutputMessage(OutputMessageFunction omf);
