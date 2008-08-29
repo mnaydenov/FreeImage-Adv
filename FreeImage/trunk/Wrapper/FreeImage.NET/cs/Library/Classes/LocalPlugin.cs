@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.5 $
-// $Date: 2008-08-18 12:13:43 $
-// $Id: LocalPlugin.cs,v 1.5 2008-08-18 12:13:43 cklein05 Exp $
+// $Revision: 1.6 $
+// $Date: 2008-08-29 12:00:40 $
+// $Id: LocalPlugin.cs,v 1.6 2008-08-29 12:00:40 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -238,7 +238,7 @@ namespace FreeImageAPI.Plugins
 		/// <summary>
 		/// Function that can be implemented.
 		/// </summary>
-		protected virtual FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data) { return new FIBITMAP(); }
+		protected virtual FIBITMAP LoadProc(ref FreeImageIO io, fi_handle handle, int page, int flags, IntPtr data) { return FIBITMAP.Zero; }
 		/// <summary>
 		/// Function that can be implemented.
 		/// </summary>

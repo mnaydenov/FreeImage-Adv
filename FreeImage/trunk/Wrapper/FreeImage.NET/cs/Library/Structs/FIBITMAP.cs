@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.3 $
-// $Date: 2008-08-18 12:15:11 $
-// $Id: FIBITMAP.cs,v 1.3 2008-08-18 12:15:11 cklein05 Exp $
+// $Revision: 1.4 $
+// $Date: 2008-08-29 11:59:13 $
+// $Id: FIBITMAP.cs,v 1.4 2008-08-29 11:59:13 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -50,6 +50,11 @@ namespace FreeImageAPI
 	public struct FIBITMAP : IComparable, IComparable<FIBITMAP>, IEquatable<FIBITMAP>
 	{
 		private IntPtr data;
+
+		/// <summary>
+		/// A read-only field that represents a handle that has been initialized to zero.
+		/// </summary>
+		public static readonly FIBITMAP Zero;
 
 		/// <summary>
 		/// Tests whether two specified <see cref="FIBITMAP"/> structures are equivalent.
