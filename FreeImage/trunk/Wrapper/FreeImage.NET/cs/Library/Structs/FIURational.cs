@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.3 $
-// $Date: 2008-06-16 15:17:37 $
-// $Id: FIURational.cs,v 1.3 2008-06-16 15:17:37 cklein05 Exp $
+// $Revision: 1.4 $
+// $Date: 2009-02-20 07:41:08 $
+// $Id: FIURational.cs,v 1.4 2009-02-20 07:41:08 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -136,7 +136,7 @@ namespace FreeImageAPI
 					Normalize();
 					if (Math.Abs(((decimal)numerator / (decimal)denominator) - value) > 0.0001m)
 					{
-						throw new OverflowException();
+						throw new OverflowException("Unable to convert value into a fraction");
 					}
 				}
 				Normalize();
