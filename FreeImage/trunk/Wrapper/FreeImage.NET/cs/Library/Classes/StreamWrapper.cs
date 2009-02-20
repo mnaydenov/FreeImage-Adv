@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.4 $
-// $Date: 2008-06-17 13:49:24 $
-// $Id: StreamWrapper.cs,v 1.4 2008-06-17 13:49:24 cklein05 Exp $
+// $Revision: 1.5 $
+// $Date: 2009-02-20 07:37:12 $
+// $Id: StreamWrapper.cs,v 1.5 2009-02-20 07:37:12 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -213,7 +213,7 @@ namespace FreeImageAPI.IO
 					newPosition = memoryStream.Length + offset;
 					break;
 				default:
-					throw new ArgumentOutOfRangeException();
+					throw new ArgumentOutOfRangeException("origin");
 			}
 			// in case the new position is beyond the memory-streams end
 			// and the original streams end hasn't been reached

@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.4 $
-// $Date: 2008-08-29 11:59:13 $
-// $Id: FIMEMORY.cs,v 1.4 2008-08-29 11:59:13 cklein05 Exp $
+// $Revision: 1.5 $
+// $Date: 2009-02-20 07:41:08 $
+// $Id: FIMEMORY.cs,v 1.5 2009-02-20 07:41:08 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -151,7 +151,7 @@ namespace FreeImageAPI
 			}
 			if (!(obj is FIMEMORY))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((FIMEMORY)obj);
 		}

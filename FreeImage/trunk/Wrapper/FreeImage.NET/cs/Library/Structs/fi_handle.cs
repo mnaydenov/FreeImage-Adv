@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.6 $
-// $Date: 2008-11-05 13:18:50 $
-// $Id: fi_handle.cs,v 1.6 2008-11-05 13:18:50 cklein05 Exp $
+// $Revision: 1.7 $
+// $Date: 2009-02-20 07:41:08 $
+// $Id: fi_handle.cs,v 1.7 2009-02-20 07:41:08 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -216,7 +216,7 @@ namespace FreeImageAPI.IO
 			}
 			if (!(obj is fi_handle))
 			{
-				throw new ArgumentException();
+				throw new ArgumentException("obj");
 			}
 			return CompareTo((fi_handle)obj);
 		}
