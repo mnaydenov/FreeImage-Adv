@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.6 $
-// $Date: 2008-11-05 13:16:50 $
-// $Id: FreeImageStaticImports.cs,v 1.6 2008-11-05 13:16:50 cklein05 Exp $
+// $Revision: 1.7 $
+// $Date: 2009-02-23 12:25:52 $
+// $Id: FreeImageStaticImports.cs,v 1.7 2009-02-23 12:25:52 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -1073,7 +1073,7 @@ namespace FreeImageAPI
 		/// <param name="table">Pointer to the bitmap's new transparency table.</param>
 		/// <param name="count">The number of transparent colors in the new transparency table.</param>
 		[DllImport(FreeImageLibrary, EntryPoint = "FreeImage_SetTransparencyTable")]
-		internal static extern void SetTransparencyTable_(FIBITMAP dib, byte[] table, int count);
+		internal static extern void SetTransparencyTable(FIBITMAP dib, byte[] table, int count);
 
 		/// <summary>
 		/// Returns whether the transparency table is enabled.
