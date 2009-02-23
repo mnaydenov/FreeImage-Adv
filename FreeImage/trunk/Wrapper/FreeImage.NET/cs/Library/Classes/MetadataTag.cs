@@ -28,15 +28,16 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.7 $
-// $Date: 2009-02-20 07:35:46 $
-// $Id: MetadataTag.cs,v 1.7 2009-02-20 07:35:46 cklein05 Exp $
+// $Revision: 1.8 $
+// $Date: 2009-02-23 12:28:56 $
+// $Id: MetadataTag.cs,v 1.8 2009-02-23 12:28:56 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace FreeImageAPI.Metadata
 {
@@ -48,27 +49,38 @@ namespace FreeImageAPI.Metadata
 		/// <summary>
 		/// The encapsulated FreeImage-tag.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		internal FITAG tag;
+
 		/// <summary>
 		/// The metadata model of <see cref="tag"/>.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private FREE_IMAGE_MDMODEL model;
+
 		/// <summary>
 		/// Indicates whether this instance has already been disposed.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool disposed = false;
+
 		/// <summary>
 		/// Indicates whether this instance was created by FreeImage or
 		/// by the user.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool selfCreated;
+
 		/// <summary>
 		/// List linking metadata-model and Type.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly Dictionary<FREE_IMAGE_MDTYPE, Type> idList;
+
 		/// <summary>
 		/// List linking Type and metadata-model.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static readonly Dictionary<Type, FREE_IMAGE_MDTYPE> typeList;
 
 		/// <summary>

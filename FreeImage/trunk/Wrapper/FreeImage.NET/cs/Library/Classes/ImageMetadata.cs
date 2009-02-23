@@ -28,15 +28,16 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.5 $
-// $Date: 2009-02-20 07:36:17 $
-// $Id: ImageMetadata.cs,v 1.5 2009-02-20 07:36:17 cklein05 Exp $
+// $Revision: 1.6 $
+// $Date: 2009-02-23 12:28:56 $
+// $Id: ImageMetadata.cs,v 1.6 2009-02-23 12:28:56 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace FreeImageAPI.Metadata
 {
@@ -45,8 +46,11 @@ namespace FreeImageAPI.Metadata
 	/// </summary>
 	public class ImageMetadata : IEnumerable, IComparable, IComparable<ImageMetadata>
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly List<MetadataModel> data;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly FIBITMAP dib;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool hideEmptyModels;
 
 		/// <summary>
