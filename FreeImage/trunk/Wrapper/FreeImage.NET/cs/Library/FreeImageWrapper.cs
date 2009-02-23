@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.11 $
-// $Date: 2009-02-20 07:34:09 $
-// $Id: FreeImageWrapper.cs,v 1.11 2009-02-20 07:34:09 cklein05 Exp $
+// $Revision: 1.12 $
+// $Date: 2009-02-23 12:25:36 $
+// $Id: FreeImageWrapper.cs,v 1.12 2009-02-23 12:25:36 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -353,9 +353,17 @@ namespace FreeImageAPI
 				Color[] colors = bitmap.Palette.Entries;
 				// Only copy available palette entries
 				int entriesToCopy = Math.Min(palette.Length, colors.Length);
+				byte[] transTable = new byte[entriesToCopy];
 				for (int i = 0; i < entriesToCopy; i++)
 				{
-					palette[i] = (RGBQUAD)colors[i];
+					RGBQUAD color = (RGBQUAD)colors[i];
+					color.rgbReserved = 0x00;
+					palette[i] = color;
+					transTable[i] = colors[i].A;
+				}
+				if ((bitmap.Flags & (int)ImageFlags.HasAlpha) != 0)
+				{
+					FreeImage.SetTransparencyTable(result, transTable);
 				}
 			}
 			// Handle meta data
@@ -2624,7 +2632,7 @@ namespace FreeImageAPI
 			{
 				throw new ArgumentNullException("table");
 			}
-			SetTransparencyTable_(dib, table, table.Length);
+			SetTransparencyTable(dib, table, table.Length);
 		}
 
 		/// <summary>
