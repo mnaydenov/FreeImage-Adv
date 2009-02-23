@@ -28,15 +28,16 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.6 $
-// $Date: 2008-08-29 12:00:40 $
-// $Id: MetadataModel.cs,v 1.6 2008-08-29 12:00:40 cklein05 Exp $
+// $Revision: 1.7 $
+// $Date: 2009-02-23 12:28:56 $
+// $Id: MetadataModel.cs,v 1.7 2009-02-23 12:28:56 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace FreeImageAPI.Metadata
 {
@@ -52,6 +53,7 @@ namespace FreeImageAPI.Metadata
 		/// <summary>
 		/// Handle to a FreeImage-bitmap.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly FIBITMAP dib;
 
 		/// <summary>

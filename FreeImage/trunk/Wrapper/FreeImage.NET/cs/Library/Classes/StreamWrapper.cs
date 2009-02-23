@@ -28,13 +28,14 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.5 $
-// $Date: 2009-02-20 07:37:12 $
-// $Id: StreamWrapper.cs,v 1.5 2009-02-20 07:37:12 cklein05 Exp $
+// $Revision: 1.6 $
+// $Date: 2009-02-23 12:28:56 $
+// $Id: StreamWrapper.cs,v 1.6 2009-02-23 12:28:56 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace FreeImageAPI.IO
 {
@@ -57,22 +58,31 @@ namespace FreeImageAPI.IO
 		/// <summary>
 		/// The stream to wrap
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private readonly Stream stream;
+
 		/// <summary>
 		/// The caching stream
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private MemoryStream memoryStream = new MemoryStream();
+
 		/// <summary>
 		/// Indicates if the wrapped stream reached its end
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool eos = false;
+
 		/// <summary>
 		/// Tells the wrapper to block readings or not
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool blocking = false;
+
 		/// <summary>
 		/// Indicates if the wrapped stream is disposed or not
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private bool disposed = false;
 
 		/// <summary>

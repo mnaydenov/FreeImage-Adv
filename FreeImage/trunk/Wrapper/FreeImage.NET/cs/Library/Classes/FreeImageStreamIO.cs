@@ -28,14 +28,15 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.3 $
-// $Date: 2008-06-17 13:49:24 $
-// $Id: FreeImageStreamIO.cs,v 1.3 2008-06-17 13:49:24 cklein05 Exp $
+// $Revision: 1.4 $
+// $Date: 2009-02-23 12:28:56 $
+// $Id: FreeImageStreamIO.cs,v 1.4 2009-02-23 12:28:56 cklein05 Exp $
 // ==========================================================
 
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace FreeImageAPI.IO
 {
@@ -59,9 +60,13 @@ namespace FreeImageAPI.IO
 	/// </remarks>
 	internal static class FreeImageStreamIO
 	{
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle readHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle writeHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle seekHandle;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private static GCHandle tellHandle;
 
 		/// <summary>
