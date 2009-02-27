@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.6 $
-// $Date: 2009-02-23 12:28:56 $
-// $Id: ImageMetadata.cs,v 1.6 2009-02-23 12:28:56 cklein05 Exp $
+// $Revision: 1.7 $
+// $Date: 2009-02-27 16:34:59 $
+// $Id: ImageMetadata.cs,v 1.7 2009-02-27 16:34:59 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -80,7 +80,7 @@ namespace FreeImageAPI.Metadata
 			data.Add(new MDM_EXIF_EXIF(dib));
 			data.Add(new MDM_EXIF_GPS(dib));
 			data.Add(new MDM_INTEROP(dib));
-			data.Add(new MDM_MAIN(dib));
+			data.Add(new MDM_EXIF_MAIN(dib));
 			data.Add(new MDM_MAKERNOTE(dib));
 			data.Add(new MDM_GEOTIFF(dib));
 			data.Add(new MDM_IPTC(dib));
