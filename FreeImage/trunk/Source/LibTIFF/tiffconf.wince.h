@@ -1,4 +1,4 @@
-/* $Id: tiffconf.wince.h,v 1.7 2008-06-08 18:47:37 drolon Exp $ */
+/* $Id: tiffconf.wince.h,v 1.8 2009-03-15 17:29:17 drolon Exp $ */
 
 /*
  * Windows CE platform tiffconf.wince.h
@@ -41,6 +41,18 @@
 
 /* The size of a `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
+
+/* Signed 64-bit type formatter */
+#define TIFF_INT64_FORMAT "%I64d"
+
+/* Signed 64-bit type */
+#define TIFF_INT64_T signed __int64
+
+/* Unsigned 64-bit type formatter */
+#define TIFF_UINT64_FORMAT "%I64u"
+
+/* Unsigned 64-bit type */
+#define TIFF_UINT64_T unsigned __int64
 
 /* Compatibility stuff. */
 

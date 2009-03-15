@@ -1,4 +1,4 @@
-/* $Id: tif_pixarlog.c,v 1.23 2008-06-08 18:47:34 drolon Exp $ */
+/* $Id: tif_pixarlog.c,v 1.24 2009-03-15 17:29:17 drolon Exp $ */
 
 /*
  * Copyright (c) 1996-1997 Sam Leffler
@@ -774,8 +774,8 @@ PixarLogDecode(TIFF* tif, tidata_t op, tsize_t occ, tsample_t s)
 	 */
 	if (nsamples % llen) { 
 		TIFFWarningExt(tif->tif_clientdata, module,
-			"%s: stride %lu is not a multiple of sample count, "
-			"%lu, data truncated.", tif->tif_name, llen, nsamples);
+			"%s: stride %d is not a multiple of sample count, "
+			"%d, data truncated.", tif->tif_name, llen, nsamples);
 		nsamples -= nsamples % llen;
 	}
 
