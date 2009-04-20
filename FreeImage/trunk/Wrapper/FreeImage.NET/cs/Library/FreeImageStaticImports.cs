@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.7 $
-// $Date: 2009-02-23 12:25:52 $
-// $Id: FreeImageStaticImports.cs,v 1.7 2009-02-23 12:25:52 cklein05 Exp $
+// $Revision: 1.8 $
+// $Date: 2009-04-20 09:07:30 $
+// $Id: FreeImageStaticImports.cs,v 1.8 2009-04-20 09:07:30 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -56,7 +56,7 @@ namespace FreeImageAPI
 		/// <summary>
 		/// Minor version of the library.
 		/// </summary>
-		public const int FREEIMAGE_MINOR_VERSION = 11;
+		public const int FREEIMAGE_MINOR_VERSION = 12;
 		/// <summary>
 		/// Release version of the library.
 		/// </summary>
