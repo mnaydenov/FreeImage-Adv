@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.13 $
-// $Date: 2009-02-27 16:33:38 $
-// $Id: FreeImageWrapper.cs,v 1.13 2009-02-27 16:33:38 cklein05 Exp $
+// $Revision: 1.14 $
+// $Date: 2009-04-20 09:07:48 $
+// $Id: FreeImageWrapper.cs,v 1.14 2009-04-20 09:07:48 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -108,7 +108,7 @@ namespace FreeImageAPI
 		/// <returns>The internal version of this FreeImage 3 .NET wrapper.</returns>
 		public static Version GetWrapperVersion()
 		{
-			return new Version(1, 0, 5, 0);
+			return new Version(1, 0, 10, 0);
 		}
 
 		/// <summary>
