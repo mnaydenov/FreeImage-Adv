@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_acorn.c,v 1.24 2009-03-15 17:29:17 drolon Exp $ */
+/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_acorn.c,v 1.25 2009-07-14 21:10:27 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
