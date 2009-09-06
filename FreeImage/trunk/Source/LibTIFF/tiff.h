@@ -1,4 +1,4 @@
-/* $Id: tiff.h,v 1.27 2009-08-26 17:35:14 drolon Exp $ */
+/* $Id: tiff.h,v 1.28 2009-09-06 13:11:29 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
