@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.5 $
-// $Date: 2009-04-20 09:08:49 $
-// $Id: MetadataModels.cs,v 1.5 2009-04-20 09:08:49 cklein05 Exp $
+// $Revision: 1.6 $
+// $Date: 2009-09-15 11:49:24 $
+// $Id: MetadataModels.cs,v 1.6 2009-09-15 11:49:24 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -5731,11 +5731,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("ByLine");
+                return GetTagText("By-line");
             }
             set
             {
-                SetTagValue("ByLine", value);
+                SetTagValue("By-line", value);
             }
         }
 
@@ -5756,11 +5756,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("ByLineTitle");
+                return GetTagText("By-lineTitle");
             }
             set
             {
-                SetTagValue("ByLineTitle", value);
+                SetTagValue("By-lineTitle", value);
             }
         }
 
@@ -5852,11 +5852,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("CountryPrimaryLocationCode");
+                return GetTagText("Country-PrimaryLocationCode");
             }
             set
             {
-                SetTagValue("CountryPrimaryLocationCode", value);
+                SetTagValue("Country-PrimaryLocationCode", value);
             }
         }
 
@@ -5876,11 +5876,11 @@ namespace FreeImageAPI.Metadata
         {
             get
             {
-                return GetTagText("CountryPrimaryLocationName");
+                return GetTagText("Country-PrimaryLocationName");
             }
             set
             {
-                SetTagValue("CountryPrimaryLocationName", value);
+                SetTagValue("Country-PrimaryLocationName", value);
             }
         }
 
