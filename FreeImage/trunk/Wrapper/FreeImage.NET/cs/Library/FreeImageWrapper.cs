@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.15 $
-// $Date: 2009-09-15 11:43:47 $
-// $Id: FreeImageWrapper.cs,v 1.15 2009-09-15 11:43:47 cklein05 Exp $
+// $Revision: 1.16 $
+// $Date: 2009-09-16 14:35:13 $
+// $Id: FreeImageWrapper.cs,v 1.16 2009-09-16 14:35:13 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -259,11 +259,12 @@ namespace FreeImageAPI
 		/// and it is 2 for a 1-bit image. In other words, this function does not support partial palettes.
 		/// <para/>
 		/// However, specifying a palette is not necesarily needed, even for palletized images. This
-		/// function is capable of implicitly creating a palette. If the specified background color is
-		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
-		/// only if the specified background color is either black or white, a monochrome palette,
-		/// consisting of black and white only is created. In any case, the darker colors are stored at
-		/// the smaller palette indices.
+		/// function is capable of implicitly creating a palette, if <paramref name="palette"/> is <c>null</c>.
+		/// If the specified background color is a greyscale value (red = green = blue) or if option
+		/// <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/> is specified, a greyscale palette
+		/// is created. For a 1-bit image, only if the specified background color is either black or white,
+		/// a monochrome palette, consisting of black and white only is created. In any case, the darker
+		/// colors are stored at the smaller palette indices.
 		/// <para/>
 		/// If the specified background color is not a greyscale value, or is neither black nor white
 		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
@@ -324,11 +325,12 @@ namespace FreeImageAPI
 		/// and it is 2 for a 1-bit image. In other words, this function does not support partial palettes.
 		/// <para/>
 		/// However, specifying a palette is not necesarily needed, even for palletized images. This
-		/// function is capable of implicitly creating a palette. If the specified background color is
-		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
-		/// only if the specified background color is either black or white, a monochrome palette,
-		/// consisting of black and white only is created. In any case, the darker colors are stored at
-		/// the smaller palette indices.
+		/// function is capable of implicitly creating a palette, if <paramref name="palette"/> is <c>null</c>.
+		/// If the specified background color is a greyscale value (red = green = blue) or if option
+		/// <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/> is specified, a greyscale palette
+		/// is created. For a 1-bit image, only if the specified background color is either black or white,
+		/// a monochrome palette, consisting of black and white only is created. In any case, the darker
+		/// colors are stored at the smaller palette indices.
 		/// <para/>
 		/// If the specified background color is not a greyscale value, or is neither black nor white
 		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
@@ -411,11 +413,12 @@ namespace FreeImageAPI
 		/// 2 for a 1-bit image. In other words, this function does not support partial palettes.
 		/// <para/>
 		/// However, specifying a palette is not necesarily needed, even for palletized images. This
-		/// function is capable of implicitly creating a palette. If the specified background color is
-		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
-		/// only if the specified background color is either black or white, a monochrome palette,
-		/// consisting of black and white only is created. In any case, the darker colors are stored at
-		/// the smaller palette indices.
+		/// function is capable of implicitly creating a palette, if <paramref name="palette"/> is <c>null</c>.
+		/// If the specified background color is a greyscale value (red = green = blue) or if option
+		/// <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/> is specified, a greyscale palette
+		/// is created. For a 1-bit image, only if the specified background color is either black or white,
+		/// a monochrome palette, consisting of black and white only is created. In any case, the darker
+		/// colors are stored at the smaller palette indices.
 		/// <para/>
 		/// If the specified background color is not a greyscale value, or is neither black nor white
 		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
@@ -480,11 +483,12 @@ namespace FreeImageAPI
 		/// 2 for a 1-bit image. In other words, this function does not support partial palettes.
 		/// <para/>
 		/// However, specifying a palette is not necesarily needed, even for palletized images. This
-		/// function is capable of implicitly creating a palette. If the specified background color is
-		/// a greyscale value (red = green = blue), a greyscale palette is created. For a 1-bit image,
-		/// only if the specified background color is either black or white, a monochrome palette,
-		/// consisting of black and white only is created. In any case, the darker colors are stored at
-		/// the smaller palette indices.
+		/// function is capable of implicitly creating a palette, if <paramref name="palette"/> is <c>null</c>.
+		/// If the specified background color is a greyscale value (red = green = blue) or if option
+		/// <see cref="FREE_IMAGE_COLOR_OPTIONS.FICO_ALPHA_IS_INDEX"/> is specified, a greyscale palette
+		/// is created. For a 1-bit image, only if the specified background color is either black or white,
+		/// a monochrome palette, consisting of black and white only is created. In any case, the darker
+		/// colors are stored at the smaller palette indices.
 		/// <para/>
 		/// If the specified background color is not a greyscale value, or is neither black nor white
 		/// for a 1-bit image, solely this specified color is injected into the otherwise black-initialized
