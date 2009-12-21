@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.16 $
-// $Date: 2009-09-16 14:35:13 $
-// $Id: FreeImageWrapper.cs,v 1.16 2009-09-16 14:35:13 cklein05 Exp $
+// $Revision: 1.17 $
+// $Date: 2009-12-21 20:22:33 $
+// $Id: FreeImageWrapper.cs,v 1.17 2009-12-21 20:22:33 cklein05 Exp $
 // ==========================================================
 
 using System;
@@ -2018,7 +2018,10 @@ namespace FreeImageAPI
 				}
 				else
 				{
-					streamHandles.Add(mdib, handle);
+					lock (streamHandles)
+					{
+						streamHandles.Add(mdib, handle);
+					}
 				}
 
 				return mdib;
@@ -2046,10 +2049,13 @@ namespace FreeImageAPI
 			if (CloseMultiBitmap_(bitmap, flags))
 			{
 				fi_handle handle;
-				if (streamHandles.TryGetValue(bitmap, out handle))
+				lock (streamHandles)
 				{
-					streamHandles.Remove(bitmap);
-					handle.Dispose();
+					if (streamHandles.TryGetValue(bitmap, out handle))
+					{
+						streamHandles.Remove(bitmap);
+						handle.Dispose();
+					}
 				}
 				return true;
 			}
