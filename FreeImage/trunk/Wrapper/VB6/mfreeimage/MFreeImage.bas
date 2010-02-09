@@ -26,9 +26,9 @@ Attribute VB_Name = "MFreeImage"
 
 '// ==========================================================
 '// CVS
-'// $Revision: 2.8 $
-'// $Date: 2010-02-08 08:20:30 $
-'// $Id: MFreeImage.bas,v 2.8 2010-02-08 08:20:30 cklein05 Exp $
+'// $Revision: 2.9 $
+'// $Date: 2010-02-09 06:22:16 $
+'// $Id: MFreeImage.bas,v 2.9 2010-02-09 06:22:16 cklein05 Exp $
 '// ==========================================================
 
 
@@ -151,6 +151,9 @@ Option Explicit
 '- : removed
 '! : changed
 '+ : added
+'
+'February 9, 2010 - 2.8
+'* [Carsten Klein] fixed a syntax typo
 '
 'February 8, 2010 - 2.8
 '* [Mike Weir] fixed a bug in function FreeImage_ApplyColorMappingEx: now properly includes all specified mapping entries
@@ -8848,7 +8851,7 @@ Dim abTransparencyTable() As Byte
          alPalette = FreeImage_GetPaletteExLong(dib)
          If (FreeImage_GetTransparencyCount(dib) > UBound(alPalette)) Then
             abTransparencyTable = FreeImage_GetTransparencyTableExClone(dib)
-         End If
+         Else
             eTransparencyState = FITSF_IGNORE_TRANSPARENCY
          End If
          For i = 0 To UBound(alPalette)
