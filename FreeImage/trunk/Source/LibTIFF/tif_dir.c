@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.29 2009-11-07 19:18:27 drolon Exp $ */
+/* $Id: tif_dir.c,v 1.30 2010-02-25 19:38:07 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1099,6 +1099,11 @@ TIFFDefaultDirectory(TIFF* tif)
 	 * Should we also be clearing stuff like INSUBIFD?
 	 */
 	tif->tif_flags &= ~TIFF_ISTILED;
+        /*
+         * Clear other directory-specific fields.
+         */
+        tif->tif_tilesize = -1;
+        tif->tif_scanlinesize = -1;
 
 	return (1);
 }
