@@ -1,4 +1,4 @@
-/* "$Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_atari.c,v 1.30 2010-05-09 20:26:43 drolon Exp $" */
+/* "$Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF/tif_atari.c,v 1.31 2010-06-13 17:17:48 drolon Exp $" */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -241,3 +241,10 @@ atariErrorHandler(const char* module, const char* fmt, va_list ap)
 	fprintf(stderr, ".\n");
 }
 TIFFErrorHandler _TIFFerrorHandler = atariErrorHandler;
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */
