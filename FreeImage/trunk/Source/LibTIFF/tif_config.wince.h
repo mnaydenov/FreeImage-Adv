@@ -1,4 +1,4 @@
-/* $Id: tif_config.wince.h,v 1.14 2010-05-09 20:26:43 drolon Exp $ */
+/* $Id: tif_config.wince.h,v 1.15 2010-06-13 17:17:48 drolon Exp $ */
 
 /*
  * TIFF library configuration header for Windows CE platform.
@@ -65,3 +65,10 @@
 #endif
 
 
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */
