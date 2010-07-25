@@ -1,4 +1,4 @@
-/* $Id: tif_getimage.c,v 1.34 2010-06-16 19:19:59 drolon Exp $ */
+/* $Id: tif_getimage.c,v 1.35 2010-07-25 18:46:05 drolon Exp $ */
 
 /*
  * Copyright (c) 1991-1997 Sam Leffler
@@ -1846,6 +1846,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr41tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
 {
 	uint32* cp2;
+	int32 incr = 2*toskew+w;
 	(void) y;
 	fromskew = (fromskew / 2) * 6;
 	cp2 = cp+w+toskew;
@@ -1872,8 +1873,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr22tile)
 			cp2 ++ ;
 			pp += 6;
 		}
-		cp += toskew*2+w;
-		cp2 += toskew*2+w;
+		cp += incr;
+		cp2 += incr;
 		pp += fromskew;
 		h-=2;
 	}
@@ -1939,6 +1940,7 @@ DECLAREContigPutFunc(putcontig8bitYCbCr21tile)
 DECLAREContigPutFunc(putcontig8bitYCbCr12tile)
 {
 	uint32* cp2;
+	int32 incr = 2*toskew+w;
 	(void) y;
 	fromskew = (fromskew / 2) * 4;
 	cp2 = cp+w+toskew;
@@ -1953,8 +1955,8 @@ DECLAREContigPutFunc(putcontig8bitYCbCr12tile)
 			cp2 ++;
 			pp += 4;
 		} while (--x);
-		cp += toskew*2+w;
-		cp2 += toskew*2+w;
+		cp += incr;
+		cp2 += incr;
 		pp += fromskew;
 		h-=2;
 	}
@@ -2397,7 +2399,7 @@ PickContigCase(TIFFRGBAImage* img)
 			}
 			break;
 		case PHOTOMETRIC_YCBCR:
-			if (img->bitspersample == 8)
+			if ((img->bitspersample==8) && (img->samplesperpixel==3))
 			{
 				if (initYCbCrConversion(img)!=0)
 				{
