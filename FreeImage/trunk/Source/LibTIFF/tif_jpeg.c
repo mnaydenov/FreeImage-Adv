@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.32 2010-06-16 19:19:59 drolon Exp $ */
+/* $Id: tif_jpeg.c,v 1.33 2010-07-25 18:46:05 drolon Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1064,7 +1064,7 @@ JPEGDecodeRaw(TIFF* tif, tidata_t buf, tsize_t cc, tsample_t s)
 					}
 				}
 				else
-				{         // 12-bit
+				{         /* 12-bit  */
 					int value_pairs = (sp->cinfo.d.output_width
 					    * sp->cinfo.d.num_components) / 2;
 					int iPair;

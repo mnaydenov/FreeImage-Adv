@@ -1,4 +1,4 @@
-/* $Id: tif_print.c,v 1.32 2010-06-16 19:19:59 drolon Exp $ */
+/* $Id: tif_print.c,v 1.33 2010-07-25 18:46:05 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -131,10 +131,6 @@ _TIFFPrettyPrintField(TIFF* tif, FILE* fd, ttag_t tag,
 						*((uint16*)raw_data));
 					break;
 			}
-			return 1;
-		case TIFFTAG_DOTRANGE:
-			fprintf(fd, "  Dot Range: %u-%u\n",
-				((uint16*)raw_data)[0], ((uint16*)raw_data)[1]);
 			return 1;
 		case TIFFTAG_WHITEPOINT:
 			fprintf(fd, "  White Point: %g-%g\n",
