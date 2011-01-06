@@ -1,4 +1,4 @@
-/* $Id: tif_jpeg.c,v 1.35 2010-12-21 19:25:18 drolon Exp $ */
+/* $Id: tif_jpeg.c,v 1.36 2011-01-06 20:52:31 drolon Exp $ */
 
 /*
  * Copyright (c) 1994-1997 Sam Leffler
@@ -1358,7 +1358,7 @@ JPEGPreEncode(TIFF* tif, tsample_t s)
 			sp->cinfo.c.comp_info[0].h_samp_factor = sp->h_sampling;
 			sp->cinfo.c.comp_info[0].v_samp_factor = sp->v_sampling;
 		} else {
-			if (td->td_photometric == PHOTOMETRIC_MINISWHITE || td->td_photometric == PHOTOMETRIC_MINISBLACK)
+			if ((td->td_photometric == PHOTOMETRIC_MINISWHITE || td->td_photometric == PHOTOMETRIC_MINISBLACK) && td->td_samplesperpixel == 1)
 				sp->cinfo.c.in_color_space = JCS_GRAYSCALE;
 			else if (td->td_photometric == PHOTOMETRIC_RGB)
 				sp->cinfo.c.in_color_space = JCS_RGB;
@@ -1366,7 +1366,7 @@ JPEGPreEncode(TIFF* tif, tsample_t s)
 				sp->cinfo.c.in_color_space = JCS_CMYK;
 			else
 				sp->cinfo.c.in_color_space = JCS_UNKNOWN;
-			if (!TIFFjpeg_set_colorspace(sp, (sp->cinfo.c.in_color_space == JCS_RGB) ? JCS_YCbCr : sp->cinfo.c.in_color_space))
+			if (!TIFFjpeg_set_colorspace(sp, sp->cinfo.c.in_color_space))
 				return (0);
 			/* jpeg_set_colorspace set all sampling factors to 1 */
 		}

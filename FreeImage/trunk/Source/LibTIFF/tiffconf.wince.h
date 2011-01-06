@@ -1,4 +1,4 @@
-/* $Id: tiffconf.wince.h,v 1.19 2010-12-21 19:25:18 drolon Exp $ */
+/* $Id: tiffconf.wince.h,v 1.20 2011-01-06 20:52:32 drolon Exp $ */
 
 /*
  * Windows CE platform tiffconf.wince.h
