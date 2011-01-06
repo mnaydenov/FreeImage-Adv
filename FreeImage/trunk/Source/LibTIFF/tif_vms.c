@@ -1,4 +1,4 @@
-/* $Id: tif_vms.c,v 1.19 2010-12-21 19:25:18 drolon Exp $ */
+/* $Id: tif_vms.c,v 1.20 2011-01-06 20:52:31 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
