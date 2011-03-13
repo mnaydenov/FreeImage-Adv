@@ -26,9 +26,9 @@ Attribute VB_Name = "MFreeImage"
 
 '// ==========================================================
 '// CVS
-'// $Revision: 2.13 $
-'// $Date: 2010-08-11 16:02:40 $
-'// $Id: MFreeImage.bas,v 2.13 2010-08-11 16:02:40 cklein05 Exp $
+'// $Revision: 2.14 $
+'// $Date: 2011-03-13 13:41:26 $
+'// $Id: MFreeImage.bas,v 2.14 2011-03-13 13:41:26 drolon Exp $
 '// ==========================================================
 
 
@@ -151,6 +151,9 @@ Option Explicit
 '- : removed
 '! : changed
 '+ : added
+'
+' March 13, 2011 - 2.14
+'* [Glenn Thorpe] fixed a typo error with the call to FreeImage_HasPixels inside FreeImage_CreateMask 
 '
 'August 11, 2010 - 2.13
 '+ [Carsten Klein] added PSD load flags PSD_CMYK and PSD_LAB as well as the enum constants FILO_PSD_CYMK and FILO_PSD_LAB.
@@ -8617,7 +8620,7 @@ Dim i As Long
                    (lBitDepth = 24) Or _
                    (lBitDepth = 32))) Then
                    
-      If (Not FreeImage_HasPixels(Bitmap)) Then
+      If (Not FreeImage_HasPixels(hDIB)) Then
          Call Err.Raise(5, "MFreeImage", Error$(5) & vbCrLf & vbCrLf & _
                         "Unable to create a mask image from a 'header-only' bitmap.")
       End If
