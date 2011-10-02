@@ -19,8 +19,8 @@
    *If you have not modified dcraw.c in any way, a link to my
    homepage qualifies as "full source code".
 
-   $Revision: 1.23 $
-   $Date: 2011-09-07 17:51:40 $
+   $Revision: 1.24 $
+   $Date: 2011-10-02 12:45:59 $
  */
 
 #define DCRAW_VERSION "9.10"
