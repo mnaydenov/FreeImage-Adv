@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.18 $
-// $Date: 2011-07-17 15:06:10 $
-// $Id: FreeImageWrapper.cs,v 1.18 2011-07-17 15:06:10 drolon Exp $
+// $Revision: 1.19 $
+// $Date: 2011-10-02 13:00:45 $
+// $Id: FreeImageWrapper.cs,v 1.19 2011-10-02 13:00:45 drolon Exp $
 // ==========================================================
 
 using System;
@@ -511,13 +511,13 @@ namespace FreeImageAPI
 			uint red_mask, uint green_mask, uint blue_mask) where T : struct
 		{
 			if ((palette != null) && (bpp <= 8) && (palette.Length < (1 << bpp)))
-				return FIBITMAP.Zero;
-
-			if (!CheckColorType(type, color))
-				return FIBITMAP.Zero;
+				return FIBITMAP.Zero;			
 
 			if (color.HasValue)
 			{
+                if (!CheckColorType(type, color.Value))
+                    return FIBITMAP.Zero;
+
 				GCHandle handle = new GCHandle();
 				try
 				{
@@ -4406,13 +4406,13 @@ namespace FreeImageAPI
 			T? color, FREE_IMAGE_COLOR_OPTIONS options) where T : struct
 		{
 			if (dib.IsNull)
-				return FIBITMAP.Zero;
-
-			if (!CheckColorType(GetImageType(dib), color))
-				return FIBITMAP.Zero;
+				return FIBITMAP.Zero;			
 
 			if (color.HasValue)
 			{
+                if (!CheckColorType(GetImageType(dib), color.Value))
+                    return FIBITMAP.Zero;
+
 				GCHandle handle = new GCHandle();
 				try
 				{
