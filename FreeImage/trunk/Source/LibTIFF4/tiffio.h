@@ -1,4 +1,4 @@
-/* $Id: tiffio.h,v 1.2 2012-02-25 17:48:20 drolon Exp $ */
+/* $Id: tiffio.h,v 1.3 2012-06-17 15:57:23 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -392,6 +392,8 @@ extern int TIFFSetupStrips(TIFF *);
 extern int TIFFWriteCheck(TIFF*, int, const char *);
 extern void TIFFFreeDirectory(TIFF*);
 extern int TIFFCreateDirectory(TIFF*);
+extern int TIFFCreateCustomDirectory(TIFF*,const TIFFFieldArray*);
+extern int TIFFCreateEXIFDirectory(TIFF*);
 extern int TIFFLastDirectory(TIFF*);
 extern int TIFFSetDirectory(TIFF*, uint16);
 extern int TIFFSetSubDirectory(TIFF*, uint64);
@@ -400,6 +402,7 @@ extern int TIFFSetField(TIFF*, uint32, ...);
 extern int TIFFVSetField(TIFF*, uint32, va_list);
 extern int TIFFUnsetField(TIFF*, uint32);
 extern int TIFFWriteDirectory(TIFF *);
+extern int TIFFWriteCustomDirectory(TIFF *, uint64 *);
 extern int TIFFCheckpointDirectory(TIFF *);
 extern int TIFFRewriteDirectory(TIFF *);
 
