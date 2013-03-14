@@ -26,9 +26,9 @@ Attribute VB_Name = "MFreeImage"
 
 '// ==========================================================
 '// CVS
-'// $Revision: 2.18 $
-'// $Date: 2012-11-13 15:48:55 $
-'// $Id: MFreeImage.bas,v 2.18 2012-11-13 15:48:55 cklein05 Exp $
+'// $Revision: 2.19 $
+'// $Date: 2013-03-14 15:05:52 $
+'// $Id: MFreeImage.bas,v 2.19 2013-03-14 15:05:52 cklein05 Exp $
 '// ==========================================================
 
 
@@ -151,6 +151,9 @@ Option Explicit
 '- : removed
 '! : changed
 '+ : added
+'
+'March 14, 2013 - 2.19 (3.15.4)
+'* [Jørgen Hartmann] fixed coordinate calculation in FreeImage_PaintDCEx applied for horizontal and/or vertical mirroring, which now works correctly for all XDst and YDst coordinates.
 '
 'November 13, 2012 - 2.18 (3.15.4)
 '+ [Carsten Klein] added function declaration FreeImage_HasRGBMasksInt and a real VB Boolean returning function FreeImage_HasRGBMasks.
@@ -7070,12 +7073,12 @@ Dim eLastStretchMode As STRETCH_MODE
       End If
       
       If (DrawMode And DM_MIRROR_VERTICAL) Then
-         YDst = HeightDst
+         YDst = YDst + HeightDst
          HeightDst = -HeightDst
       End If
      
       If (DrawMode And DM_MIRROR_HORIZONTAL) Then
-         XDst = WidthDst
+         XDst = XDst + WidthDst
          WidthDst = -WidthDst
       End If
 
