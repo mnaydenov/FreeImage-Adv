@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.8 2013-11-29 22:22:01 drolon Exp $ */
+/* $Id: tif_dir.c,v 1.9 2014-02-07 22:51:11 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -1481,7 +1481,7 @@ TIFFNumberOfDirectories(TIFF* tif)
 	n = 0;
 	while (nextdir != 0 && TIFFAdvanceDirectory(tif, &nextdir, NULL))
         {
-		if(n++ == 0)
+		if(++n == 0)
                 {
                         TIFFErrorExt(tif->tif_clientdata, module,
                                      "Directory count exceeded 65535 limit, giving up on counting.");
