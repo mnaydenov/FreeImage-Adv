@@ -50,72 +50,62 @@ static int s_format_id;
 
 /**
 FreeImage input stream wrapper
+@see Imf::IStream
 */
-class C_IStream: public Imf::IStream {
-public:
-	C_IStream (FreeImageIO *io, fi_handle handle):
-	IStream(""), _io (io), _handle(handle) {}
-
-	virtual bool	read (char c[/*n*/], int n);
-	virtual Imf::Int64	tellg ();
-	virtual void	seekg (Imf::Int64 pos);
-	virtual void	clear () {};
-
+class C_IStream : public Imf::IStream {
 private:
     FreeImageIO *_io;
 	fi_handle _handle;
+
+public:
+	C_IStream (FreeImageIO *io, fi_handle handle) : IStream(""), _io (io), _handle(handle) {
+	}
+
+	bool read (char c[/*n*/], int n) {
+		return ((unsigned)n != _io->read_proc(c, 1, n, _handle));
+	}
+
+	Imf::Int64 tellg() {
+		return _io->tell_proc(_handle);
+	}
+
+	void seekg(Imf::Int64 pos) {
+		_io->seek_proc(_handle, (unsigned)pos, SEEK_SET);
+	}
+
+	void clear() {
+	}
 };
 
+// ----------------------------------------------------------
 
 /**
 FreeImage output stream wrapper
+@see Imf::OStream
 */
-class C_OStream: public Imf::OStream {
-public:
-	C_OStream (FreeImageIO *io, fi_handle handle):
-	OStream(""), _io (io), _handle(handle) {}
-
-    virtual void	write (const char c[/*n*/], int n);
-	virtual Imf::Int64	tellp ();
-	virtual void	seekp (Imf::Int64 pos);
-
+class C_OStream : public Imf::OStream {
 private:
     FreeImageIO *_io;
 	fi_handle _handle;
-};
 
-
-bool
-C_IStream::read (char c[/*n*/], int n) {
-	return ((unsigned)n != _io->read_proc(c, 1, n, _handle));
-}
-
-Imf::Int64
-C_IStream::tellg () {
-	return _io->tell_proc(_handle);
-}
-
-void
-C_IStream::seekg (Imf::Int64 pos) {
-	_io->seek_proc(_handle, (unsigned)pos, SEEK_SET);
-}
-
-void
-C_OStream::write (const char c[/*n*/], int n) {
-	if((unsigned)n != _io->write_proc((void*)&c[0], 1, n, _handle)) {
-		Iex::throwErrnoExc();
+public:
+	C_OStream (FreeImageIO *io, fi_handle handle) : OStream(""), _io (io), _handle(handle) {
 	}
-}
 
-Imf::Int64
-C_OStream::tellp () {
-	return _io->tell_proc(_handle);
-}
+	void write(const char c[/*n*/], int n) {
+		if((unsigned)n != _io->write_proc((void*)&c[0], 1, n, _handle)) {
+			Iex::throwErrnoExc();
+		}
+	}
 
-void
-C_OStream::seekp (Imf::Int64 pos) {
-	_io->seek_proc(_handle, (unsigned)pos, SEEK_SET);
-}
+	Imf::Int64 tellp() {
+		return _io->tell_proc(_handle);
+	}
+
+	void seekp(Imf::Int64 pos) {
+		_io->seek_proc(_handle, (unsigned)pos, SEEK_SET);
+	}
+};
 
 // ----------------------------------------------------------
 
