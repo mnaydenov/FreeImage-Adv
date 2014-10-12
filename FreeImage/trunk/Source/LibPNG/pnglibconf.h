@@ -205,6 +205,14 @@
 #define PNG_Z_DEFAULT_NOFILTER_STRATEGY 0
 #define PNG_Z_DEFAULT_STRATEGY 1
 #define PNG_sCAL_PRECISION 5
-#define PNG_sRGB_PROFILE_CHECKS 2
+/**
+PNG_sRGB_PROFILE_CHECKS == 0
+   The MD5 is used if available, nothing else is checked.  No warning messages.
+PNG_sRGB_PROFILE_CHECKS == 1
+   The MD5 is checked and if it matches the adler32 (from the zlib stream)is also checked, the profile is regarded as not-sRGB if the check fails.
+PNG_SRGB_PROFILE_CHECKS == 2
+   In addition to the above a full crc32 is also calculated if everything passes.  The profile is only regarded as sRGB if this passes too.
+*/
+#define PNG_sRGB_PROFILE_CHECKS -1
 /* end of settings */
 #endif /* PNGLCONF_H */
