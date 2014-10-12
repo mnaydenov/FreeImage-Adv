@@ -930,7 +930,11 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			png_destroy_write_struct(&png_ptr, &info_ptr);
 
 			return TRUE;
+
 		} catch (const char *text) {
+			if(png_ptr) {
+				png_destroy_write_struct(&png_ptr, &info_ptr);
+			}
 			FreeImage_OutputMessageProc(s_format_id, text);
 		}
 	}
