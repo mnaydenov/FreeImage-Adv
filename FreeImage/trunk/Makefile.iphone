@@ -83,7 +83,7 @@ $(STATICLIB_SIM): $(MODULES_i686)
 	$(CXX_SIM) $(CXXFLAGS_SIM) -c $< -o $@
 
 $(STATICLIB_PHONE): $(MODULES_ARM)
-	$(LIBTOOL_PHONE) -arch_only armv7 -o $@ $(MODULES_ARM)
+	$(LIBTOOL_PHONE) -arch_only $(ARCH_PHONE) -o $@ $(MODULES_ARM)
 
 .c.o-arm:
 	$(CC_PHONE) $(CFLAGS_PHONE) -c $< -o $@
