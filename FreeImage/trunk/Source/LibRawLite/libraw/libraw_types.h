@@ -73,8 +73,9 @@ extern "C" {
 typedef __int64 INT64;
 typedef unsigned __int64 UINT64;
 #else
-typedef long long INT64;
-typedef unsigned long long UINT64;
+#include <stdint.h>
+typedef int64_t INT64;
+typedef uint64_t UINT64;
 #endif
 
 typedef unsigned char uchar;
@@ -198,6 +199,14 @@ typedef struct
   float colormatrix[4][3];
 } dng_color_t;
 
+typedef struct 
+{
+	int CanonColorDataVer;
+	int CanonColorDataSubVer;
+	int SpecularWhiteLevel;
+	int AverageBlackLevel;
+} canon_makernotes_t;
+
 typedef struct
 {
   ushort      curve[0x10000]; 
@@ -219,7 +228,10 @@ typedef struct
   unsigned    profile_length;
   unsigned    black_stat[8];
   dng_color_t  dng_color[2];
+  canon_makernotes_t canon_makernotes;
   float	      baseline_exposure;
+  int		  OlympusSensorCalibration[2];
+  int		digitalBack_color;
 }libraw_colordata_t;
 
 typedef struct
@@ -233,6 +245,17 @@ typedef struct
     char       *thumb;
 }libraw_thumbnail_t;
 
+typedef struct 
+{
+	float latitude[3]; // Deg,min,sec
+	float longtitude[3]; // Deg,min,sec
+	float gpstimestamp[3]; // Deg,min,sec
+	float altitude;
+	char  altref, latref, longref, gpsstatus;
+	char  gpsparsed;
+
+} libraw_gps_info_t;
+
 typedef struct
 {
     float       iso_speed; 
@@ -242,6 +265,7 @@ typedef struct
     time_t      timestamp; 
     unsigned    shot_order;
     unsigned    gpsdata[32];
+	libraw_gps_info_t parsed_gps;
     char        desc[512],
                 artist[64];
 } libraw_imgother_t;
@@ -327,6 +351,8 @@ typedef struct
   /* Sony ARW2 digging mode */
   int sony_arw2_options;
   int sony_arw2_posterization_thr;
+  /* Nikon Coolscan */
+  float coolscan_nef_gamma;
 }libraw_output_params_t;
 
 typedef struct
