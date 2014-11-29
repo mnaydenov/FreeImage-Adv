@@ -204,6 +204,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="IexMath\IexMathFpu.cpp" />
     <ClCompile Include="IlmImf\b44ExpLogTable.cpp" />
     <ClCompile Include="IlmImf\ImfAcesFile.cpp" />
     <ClCompile Include="IlmImf\ImfAttribute.cpp" />
@@ -306,15 +307,8 @@
     <ClCompile Include="Half\half.cpp" />
     <ClCompile Include="IlmThread\IlmThread.cpp" />
     <ClCompile Include="IlmThread\IlmThreadMutex.cpp" />
-    <ClCompile Include="IlmThread\IlmThreadMutexPosix.cpp" />
-    <ClCompile Include="IlmThread\IlmThreadMutexWin32.cpp" />
     <ClCompile Include="IlmThread\IlmThreadPool.cpp" />
-    <ClCompile Include="IlmThread\IlmThreadPosix.cpp" />
     <ClCompile Include="IlmThread\IlmThreadSemaphore.cpp" />
-    <ClCompile Include="IlmThread\IlmThreadSemaphorePosix.cpp" />
-    <ClCompile Include="IlmThread\IlmThreadSemaphorePosixCompat.cpp" />
-    <ClCompile Include="IlmThread\IlmThreadSemaphoreWin32.cpp" />
-    <ClCompile Include="IlmThread\IlmThreadWin32.cpp" />
     <ClCompile Include="IexMath\IexMathFloatExc.cpp" />
   </ItemGroup>
   <ItemGroup>

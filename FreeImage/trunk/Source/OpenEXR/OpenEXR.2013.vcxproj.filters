@@ -361,34 +361,16 @@
     <ClCompile Include="IlmThread\IlmThreadMutex.cpp">
       <Filter>Source Files\IlmThread Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IlmThread\IlmThreadMutexPosix.cpp">
-      <Filter>Source Files\IlmThread Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IlmThread\IlmThreadMutexWin32.cpp">
-      <Filter>Source Files\IlmThread Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IlmThread\IlmThreadPool.cpp">
-      <Filter>Source Files\IlmThread Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IlmThread\IlmThreadPosix.cpp">
       <Filter>Source Files\IlmThread Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IlmThread\IlmThreadSemaphore.cpp">
       <Filter>Source Files\IlmThread Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IlmThread\IlmThreadSemaphorePosix.cpp">
-      <Filter>Source Files\IlmThread Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IlmThread\IlmThreadSemaphorePosixCompat.cpp">
-      <Filter>Source Files\IlmThread Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IlmThread\IlmThreadSemaphoreWin32.cpp">
-      <Filter>Source Files\IlmThread Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IlmThread\IlmThreadWin32.cpp">
-      <Filter>Source Files\IlmThread Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IexMath\IexMathFloatExc.cpp">
+      <Filter>Source Files\IexMath Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IexMath\IexMathFpu.cpp">
       <Filter>Source Files\IexMath Source Files</Filter>
     </ClCompile>
   </ItemGroup>
