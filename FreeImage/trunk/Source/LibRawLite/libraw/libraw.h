@@ -117,6 +117,7 @@ class DllDef LibRaw
     int                         unpack_thumb(void);
 
     int                         adjust_sizes_info_only(void);
+    LibRaw_colormatrix_type	camera_color_type();
     int                         subtract_black();
     int                         subtract_black_internal();
     int                         raw2image();
@@ -145,6 +146,7 @@ class DllDef LibRaw
     int is_sraw();
 	int sraw_midpoint();
 	int is_nikon_sraw();
+	int is_coolscan_nef();
     /* memory writers */
     virtual libraw_processed_image_t*   dcraw_make_mem_image(int *errcode=NULL);  
     virtual libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);
@@ -175,10 +177,12 @@ class DllDef LibRaw
   void phase_one_correct();
   int  set_rawspeed_camerafile(char *filename);
   void setCancelFlag();
-  void adobe_coeff (const char *, const char *, int internal_only=0);
+  virtual void adobe_coeff (const char *, const char *, int internal_only=0);
+
 
 protected:
     void checkCancel();
+	void        cam_xyz_coeff(float _rgb_cam[3][4], double cam_xyz[4][3]);
     void phase_one_allocate_tempbuffer();
     void phase_one_free_tempbuffer();
     virtual int  is_phaseone_compressed();
