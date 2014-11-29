@@ -200,6 +200,7 @@
     <ClCompile Include="src\dsp\enc.c" />
     <ClCompile Include="src\dsp\enc_avx2.c" />
     <ClCompile Include="src\dsp\enc_mips32.c" />
+    <ClCompile Include="src\dsp\enc_mips_dsp_r2.c" />
     <ClCompile Include="src\dsp\enc_neon.c" />
     <ClCompile Include="src\dsp\enc_sse2.c" />
     <ClCompile Include="src\dsp\filters_mips_dsp_r2.c" />
@@ -262,6 +263,7 @@
     <ClInclude Include="src\dec\webpi.h" />
     <ClInclude Include="src\dsp\dsp.h" />
     <ClInclude Include="src\dsp\lossless.h" />
+    <ClInclude Include="src\dsp\mips_macro.h" />
     <ClInclude Include="src\dsp\neon.h" />
     <ClInclude Include="src\dsp\yuv.h" />
     <ClInclude Include="src\dsp\yuv_tables_sse2.h" />

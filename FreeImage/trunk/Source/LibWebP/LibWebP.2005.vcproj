@@ -280,6 +280,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\dsp\enc_mips_dsp_r2.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\enc_neon.c"
 					>
 				</File>
@@ -547,6 +551,10 @@
 				</File>
 				<File
 					RelativePath=".\src\dsp\lossless.h"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\mips_macro.h"
 					>
 				</File>
 				<File
