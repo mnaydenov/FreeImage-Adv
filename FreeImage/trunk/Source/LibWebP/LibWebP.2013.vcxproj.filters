@@ -275,6 +275,9 @@
     <ClCompile Include="src\demux\demux.c">
       <Filter>Source Files\demux</Filter>
     </ClCompile>
+    <ClCompile Include="src\dsp\enc_mips_dsp_r2.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dec\alphai.h">
@@ -387,6 +390,9 @@
     </ClInclude>
     <ClInclude Include="src\mux\muxi.h">
       <Filter>Header Files\mux</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dsp\mips_macro.h">
+      <Filter>Header Files\dsp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
