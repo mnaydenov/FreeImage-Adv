@@ -41,7 +41,7 @@
 
 #include "IlmBaseConfig.h"
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(HAVE_PTHREAD)
+//#if !defined(_WIN32) && !defined(_WIN64) && !defined(HAVE_PTHREAD)
 
 #include "IlmThread.h"
 #include "Iex.h"
@@ -77,4 +77,4 @@ Thread::start ()
 
 ILMTHREAD_INTERNAL_NAMESPACE_SOURCE_EXIT
 
-#endif
+//#endif

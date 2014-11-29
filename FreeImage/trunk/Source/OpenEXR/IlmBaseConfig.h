@@ -5,7 +5,7 @@ and you want IlmBase to use it for multithreaded file I/O.
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #undef HAVE_PTHREAD
 #else
-#define HAVE_PTHREAD 1
+#undef HAVE_PTHREAD
 #endif
 
 /**
@@ -16,7 +16,7 @@ own semaphore implementation.
 #if defined(_MSC_VER) || defined(__MINGW32__)
 #undef HAVE_POSIX_SEMAPHORES
 #else
-#define HAVE_POSIX_SEMAPHORES 1
+#undef HAVE_POSIX_SEMAPHORES
 #endif
 
 /**

@@ -779,39 +779,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\IlmThread\IlmThreadMutexPosix.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\IlmThread\IlmThreadMutexWin32.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\IlmThread\IlmThreadPool.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\IlmThread\IlmThreadPosix.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\IlmThread\IlmThreadSemaphore.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\IlmThread\IlmThreadSemaphorePosix.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\IlmThread\IlmThreadSemaphorePosixCompat.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\IlmThread\IlmThreadSemaphoreWin32.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\IlmThread\IlmThreadWin32.cpp"
 					>
 				</File>
 			</Filter>
@@ -820,6 +792,10 @@
 				>
 				<File
 					RelativePath=".\IexMath\IexMathFloatExc.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\IexMath\IexMathFpu.cpp"
 					>
 				</File>
 			</Filter>
