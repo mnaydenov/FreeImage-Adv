@@ -6,6 +6,7 @@
 // - Herve Drolon (drolon@infonie.fr)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Aaron Shumate (trek@startreker.com)
+// - Tanner Helland (tannerhelland@users.sf.net)
 //
 // This file is part of FreeImage 3
 //
@@ -314,16 +315,13 @@ SupportsNoPixels() {
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	png_structp png_ptr = NULL;
-	png_infop info_ptr;
+	png_infop info_ptr = NULL;
 	png_uint_32 width, height;
-	png_colorp png_palette = NULL;
-	int color_type, palette_entries = 0;
+	int color_type;
 	int bit_depth, pixel_depth;		// pixel_depth = bit_depth * channels
 
 	FIBITMAP *dib = NULL;
-	RGBQUAD *palette = NULL;		// pointer to dib palette
-	png_bytepp  row_pointers = NULL;
-	int i;
+	png_bytepp row_pointers = NULL;
 
     fi_ioStructure fio;
     fio.s_handle = handle;
@@ -392,16 +390,40 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				} 
 				else if ((pixel_depth == 64) && (color_type == PNG_COLOR_TYPE_RGB_ALPHA)) {
 					image_type = FIT_RGBA16;
-				} else {
+				}
+				else if ((pixel_depth == 32) && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA)) {
+					// 16 bit grayscale + 16 bit alpha => convert to 64 bit RGBA
+					image_type = FIT_RGBA16;
+				}
+				else {
 					// tell libpng to strip 16 bit/color files down to 8 bits/color
 					png_set_strip_16(png_ptr);
 					bit_depth = 8;
 				}
 			}
 
+			// sometimes, 24- or 48-bit images may contain transparency information
+			// check for this use case and convert to an alpha-compatible format
+			if ((color_type == PNG_COLOR_TYPE_RGB) && png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
+				// if the image is 24-bit RGB, mark it as 32-bit; if it is 48-bit, mark it as 64-bit
+				if(pixel_depth == 24) {
+					pixel_depth = 32;
+					image_type = FIT_BITMAP;
+				} 
+				else if(pixel_depth == 48) {
+					pixel_depth = 64;
+					image_type = FIT_RGBA16;
+				} else {
+					throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
+				}
+				// expand tRNS chunk to alpha channel
+				png_set_tRNS_to_alpha(png_ptr);
+				color_type = PNG_COLOR_TYPE_RGB_ALPHA;
+			}
+
 #ifndef FREEIMAGE_BIGENDIAN
 			if((image_type == FIT_UINT16) || (image_type == FIT_RGB16) || (image_type == FIT_RGBA16)) {
-				// turn on 16 bit byte swapping
+				// turn on 16-bit byte swapping
 				png_set_swap(png_ptr);
 			}
 #endif						
@@ -443,6 +465,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				case PNG_COLOR_TYPE_GRAY_ALPHA:
 					// expand 8-bit greyscale + 8-bit alpha to 32-bit
+					// expand 16-bit greyscale + 16-bit alpha to 64-bit
 
 					png_set_gray_to_rgb(png_ptr);
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
@@ -450,7 +473,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					png_set_bgr(png_ptr);
 #endif
-					pixel_depth = 32;
+					pixel_depth = (bit_depth == 8) ? 32 : (bit_depth == 16) ? 64 : 0;
 
 					break;
 
@@ -503,29 +526,33 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				case PNG_COLOR_TYPE_PALETTE:
 					dib = FreeImage_AllocateHeader(header_only, width, height, pixel_depth);
+					if(dib) {
+						png_colorp png_palette = NULL;
+						int palette_entries = 0;
 
-					png_get_PLTE(png_ptr,info_ptr, &png_palette, &palette_entries);
+						png_get_PLTE(png_ptr,info_ptr, &png_palette, &palette_entries);
 
-					palette_entries = MIN((unsigned)palette_entries, FreeImage_GetColorsUsed(dib));
-					palette = FreeImage_GetPalette(dib);
+						palette_entries = MIN((unsigned)palette_entries, FreeImage_GetColorsUsed(dib));						
 
-					// store the palette
+						// store the palette
 
-					for (i = 0; i < palette_entries; i++) {
-						palette[i].rgbRed   = png_palette[i].red;
-						palette[i].rgbGreen = png_palette[i].green;
-						palette[i].rgbBlue  = png_palette[i].blue;
+						RGBQUAD *palette = FreeImage_GetPalette(dib);
+						for(int i = 0; i < palette_entries; i++) {
+							palette[i].rgbRed   = png_palette[i].red;
+							palette[i].rgbGreen = png_palette[i].green;
+							palette[i].rgbBlue  = png_palette[i].blue;
+						}
 					}
 					break;
 
 				case PNG_COLOR_TYPE_GRAY:
 					dib = FreeImage_AllocateHeaderT(header_only, image_type, width, height, pixel_depth);
 
-					if(pixel_depth <= 8) {
-						palette = FreeImage_GetPalette(dib);
-						palette_entries = 1 << pixel_depth;
+					if(dib && (pixel_depth <= 8)) {
+						RGBQUAD *palette = FreeImage_GetPalette(dib);
+						const int palette_entries = 1 << pixel_depth;
 
-						for (i = 0; i < palette_entries; i++) {
+						for(int i = 0; i < palette_entries; i++) {
 							palette[i].rgbRed   =
 							palette[i].rgbGreen =
 							palette[i].rgbBlue  = (BYTE)((i * 255) / (palette_entries - 1));
@@ -535,6 +562,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				default:
 					throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
+			}
+
+			if(!dib) {
+				throw FI_MSG_ERROR_DIB_MEMORY;
 			}
 
 			// store the transparency table
@@ -551,11 +582,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				if((color_type == PNG_COLOR_TYPE_GRAY) && trans_color) {
 					// single transparent color
-					if (trans_color->gray < palette_entries) { 
+					if (trans_color->gray < 256) { 
 						BYTE table[256]; 
-						memset(table, 0xFF, palette_entries); 
+						memset(table, 0xFF, 256); 
 						table[trans_color->gray] = 0; 
-						FreeImage_SetTransparencyTable(dib, table, palette_entries); 
+						FreeImage_SetTransparencyTable(dib, table, 256); 
 					}
 				} else if((color_type == PNG_COLOR_TYPE_PALETTE) && trans_alpha) {
 					// transparency table
