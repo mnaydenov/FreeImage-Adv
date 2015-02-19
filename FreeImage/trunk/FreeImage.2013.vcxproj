@@ -302,10 +302,13 @@ copy Source\FreeImage.h Dist\x64
   <ItemGroup>
     <ClCompile Include="Source\FreeImage\BitmapAccess.cpp" />
     <ClCompile Include="Source\FreeImage\ColorLookup.cpp" />
+    <ClCompile Include="Source\FreeImage\ConversionRGBA16.cpp" />
+    <ClCompile Include="Source\FreeImage\ConversionRGBAF.cpp" />
     <ClCompile Include="Source\FreeImage\FreeImage.cpp" />
     <ClCompile Include="Source\FreeImage\FreeImageC.c" />
     <ClCompile Include="Source\FreeImage\FreeImageIO.cpp" />
     <ClCompile Include="Source\FreeImage\GetType.cpp" />
+    <ClCompile Include="Source\FreeImage\LFPQuantizer.cpp" />
     <ClCompile Include="Source\FreeImage\MemoryIO.cpp" />
     <ClCompile Include="Source\FreeImage\PixelAccess.cpp" />
     <ClCompile Include="Source\FreeImage\J2KHelper.cpp" />

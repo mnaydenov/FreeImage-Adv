@@ -242,9 +242,12 @@ copy ..\FreeImage.h ..\..\Dist\x64
   <ItemGroup>
     <ClCompile Include="..\FreeImage\BitmapAccess.cpp" />
     <ClCompile Include="..\FreeImage\ColorLookup.cpp" />
+    <ClCompile Include="..\FreeImage\ConversionRGBA16.cpp" />
+    <ClCompile Include="..\FreeImage\ConversionRGBAF.cpp" />
     <ClCompile Include="..\FreeImage\FreeImage.cpp" />
     <ClCompile Include="..\FreeImage\FreeImageIO.cpp" />
     <ClCompile Include="..\FreeImage\GetType.cpp" />
+    <ClCompile Include="..\FreeImage\LFPQuantizer.cpp" />
     <ClCompile Include="..\FreeImage\MemoryIO.cpp" />
     <ClCompile Include="..\FreeImage\PixelAccess.cpp" />
     <ClCompile Include="..\FreeImage\NNQuantizer.cpp" />
