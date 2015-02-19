@@ -29,8 +29,8 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   16
-#define FREEIMAGE_RELEASE_SERIAL  1
+#define FREEIMAGE_MINOR_VERSION   17
+#define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
 
@@ -69,22 +69,36 @@
 	#endif // WIN32 / !WIN32
 #endif // FREEIMAGE_LIB
 
-// Some versions of gcc may have BYTE_ORDER or __BYTE_ORDER defined
+// Endianness:
+// Some versions of gcc may have BYTE_ORDER or __BYTE_ORDER defined.
 // If your big endian system isn't being detected, add an OS specific check
-#if (defined(BYTE_ORDER) && BYTE_ORDER==BIG_ENDIAN) || \
-	(defined(__BYTE_ORDER) && __BYTE_ORDER==__BIG_ENDIAN) || \
-	defined(__BIG_ENDIAN__)
-#define FREEIMAGE_BIGENDIAN
-#endif // BYTE_ORDER
+// or define any of FREEIMAGE_BIGENDIAN and FREEIMAGE_LITTLEENDIAN directly
+// to specify the desired endianness.
+#if (!defined(FREEIMAGE_BIGENDIAN) && !defined(FREEIMAGE_LITTLEENDIAN))
+	#if (defined(BYTE_ORDER) && BYTE_ORDER==BIG_ENDIAN) || (defined(__BYTE_ORDER) && __BYTE_ORDER==__BIG_ENDIAN) || defined(__BIG_ENDIAN__)
+		#define FREEIMAGE_BIGENDIAN
+	#endif // BYTE_ORDER
+#endif // !FREEIMAGE_[BIG|LITTLE]ENDIAN
 
-// This really only affects 24 and 32 bit formats, the rest are always RGB order.
-#define FREEIMAGE_COLORORDER_BGR	0
-#define FREEIMAGE_COLORORDER_RGB	1
-#if defined(FREEIMAGE_BIGENDIAN)
-#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_RGB
-#else
-#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_BGR
-#endif
+// Color-Order:
+// The specified order of color components red, green and blue affects 24-
+// and 32-bit images of type FIT_BITMAP as well as the colors that are part
+// of a color palette. All other images always use RGB order. By default,
+// color order is coupled to endianness:
+// little-endian -> BGR
+// big-endian    -> RGB
+// However, you can always define FREEIMAGE_COLORORDER to any of the known
+// orders FREEIMAGE_COLORORDER_BGR (0) and FREEIMAGE_COLORORDER_RGB (1) to
+// specify your preferred color order.
+#define FREEIMAGE_COLORORDER_BGR    0
+#define FREEIMAGE_COLORORDER_RGB    1
+#if (!defined(FREEIMAGE_COLORORDER)) || ((FREEIMAGE_COLORORDER != FREEIMAGE_COLORORDER_BGR) && (FREEIMAGE_COLORORDER != FREEIMAGE_COLORORDER_RGB))
+	#if defined(FREEIMAGE_BIGENDIAN)
+		#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_RGB
+	#else
+		#define FREEIMAGE_COLORORDER FREEIMAGE_COLORORDER_BGR
+	#endif // FREEIMAGE_BIGENDIAN
+#endif // FREEIMAGE_COLORORDER
 
 // Ensure 4-byte enums if we're using Borland C++ compilers
 #if defined(__BORLANDC__)
@@ -442,7 +456,8 @@ Constants used in FreeImage_ColorQuantize.
 */
 FI_ENUM(FREE_IMAGE_QUANTIZE) {
     FIQ_WUQUANT = 0,		// Xiaolin Wu color quantization algorithm
-    FIQ_NNQUANT = 1			// NeuQuant neural-net quantization algorithm by Anthony Dekker
+    FIQ_NNQUANT = 1,		// NeuQuant neural-net quantization algorithm by Anthony Dekker
+	FIQ_LFPQUANT = 2		// Lossless Fast Pseudo-Quantization Algorithm by Carsten Klein
 };
 
 /** Dithering algorithms.
@@ -982,8 +997,10 @@ DLL_API void DLL_CALLCONV FreeImage_ConvertToRawBits(BYTE *bits, FIBITMAP *dib, 
 
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToFloat(FIBITMAP *dib);
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToRGBF(FIBITMAP *dib);
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToRGBAF(FIBITMAP *dib);
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToUINT16(FIBITMAP *dib);
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToRGB16(FIBITMAP *dib);
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToRGBA16(FIBITMAP *dib);
 
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToStandardType(FIBITMAP *src, BOOL scale_linear FI_DEFAULT(TRUE));
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_ConvertToType(FIBITMAP *src, FREE_IMAGE_TYPE dst_type, BOOL scale_linear FI_DEFAULT(TRUE));
