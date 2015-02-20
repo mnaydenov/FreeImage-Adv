@@ -42,6 +42,8 @@ Month day, 2014 - 3.17.0
 * [Herve Drolon] fixed a memory leak in PluginPNG:Save occuring when dealing with invalid PNG files
 * [Tanner Helland] fixed PNG plugin handling of 16-bit grayscale + 16-bit alpha images
 * [Tanner Helland] fixed PNG plugin handling of 24-bit RGB + tRNS chunk images
+* [ekpyron] fixed invalid directory delimiter in include statement (mingw-w64) in Source/LibJXR/image/sys/strcodec.h
+* [ekpyron] fixed Invalid condition for defining _byteswap_ulong (mingw-w64) in Source/LibJXR/image/sys/strcodec.c
 
 March 23rd, 2014 - 3.16.0
 ! FreeImage now uses LibJPEG 9a
