@@ -181,14 +181,13 @@ void LFPQuantizer::AddReservePalette(const void *palette, unsigned size) {
 		const unsigned color = *ppal++;
 		const unsigned index = i + offset;
 		unsigned bucket = hash(color) & (MAP_SIZE - 1);
-		while (m_map[bucket].color != EMPTY_BUCKET) {
-			if (m_map[bucket].color == color) {
-				continue;
-			}
+		while((m_map[bucket].color != EMPTY_BUCKET) && (m_map[bucket].color != color)) {
 			bucket = (bucket + 1) % MAP_SIZE;
 		}
-		m_map[bucket].color = color;
-		m_map[bucket].index = index;
+		if(m_map[bucket].color != color) {
+			m_map[bucket].color = color;
+			m_map[bucket].index = index;
+		}
 	}
 	m_size += size;
 }
