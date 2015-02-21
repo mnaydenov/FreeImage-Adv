@@ -827,7 +827,10 @@ FreeImage_GetRedMask(FIBITMAP *dib) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			return masks ? masks->red_mask : FI_RGBA_RED_MASK;
+			if (masks) {
+				return masks->red_mask;
+			}
+			return FreeImage_GetBPP(dib) >= 24 ? FI_RGBA_RED_MASK : 0;
 		default:
 			return 0;
 	}
@@ -841,7 +844,10 @@ FreeImage_GetGreenMask(FIBITMAP *dib) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			return masks ? masks->green_mask : FI_RGBA_GREEN_MASK;
+			if (masks) {
+				return masks->green_mask;
+			}
+			return FreeImage_GetBPP(dib) >= 24 ? FI_RGBA_GREEN_MASK : 0;
 		default:
 			return 0;
 	}
@@ -855,7 +861,10 @@ FreeImage_GetBlueMask(FIBITMAP *dib) {
 		case FIT_BITMAP:
 			// check for 16-bit RGB (565 or 555)
 			masks = FreeImage_GetRGBMasks(dib);
-			return masks ? masks->blue_mask : FI_RGBA_BLUE_MASK;
+			if (masks) {
+				return masks->blue_mask;
+			}
+			return FreeImage_GetBPP(dib) >= 24 ? FI_RGBA_BLUE_MASK : 0;
 		default:
 			return 0;
 	}
