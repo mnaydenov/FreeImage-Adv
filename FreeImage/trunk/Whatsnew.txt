@@ -45,6 +45,7 @@ Month day, 2015 - 3.17.0
 * [ekpyron] fixed invalid directory delimiter in include statement (mingw-w64) in Source/LibJXR/image/sys/strcodec.h
 * [ekpyron] fixed Invalid condition for defining _byteswap_ulong (mingw-w64) in Source/LibJXR/image/sys/strcodec.c
 * [tostercx] fixed FreeImage_Get*Mask not returning 0 for greyscale images
+* [robpats] fixed loading of external plugins when using UNICODE directory names to store plugins
 
 March 23rd, 2014 - 3.16.0
 ! FreeImage now uses LibJPEG 9a
