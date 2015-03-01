@@ -354,6 +354,9 @@
     <ClInclude Include="Source\FreeImageToolkit\Resize.h">
       <Filter>Toolkit Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\MapIntrospector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Todo.txt" />

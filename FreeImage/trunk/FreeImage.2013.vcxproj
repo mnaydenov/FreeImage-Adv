@@ -399,6 +399,7 @@ copy Source\FreeImage.h Dist\x64
   <ItemGroup>
     <ClInclude Include="Source\CacheFile.h" />
     <ClInclude Include="Source\DeprecationManager\DeprecationMgr.h" />
+    <ClInclude Include="Source\MapIntrospector.h" />
     <ClInclude Include="Source\Metadata\FIRational.h" />
     <ClInclude Include="Source\FreeImage.h" />
     <ClInclude Include="Source\FreeImageIO.h" />

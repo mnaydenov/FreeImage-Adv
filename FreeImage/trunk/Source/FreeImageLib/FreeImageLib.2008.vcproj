@@ -716,6 +716,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\MapIntrospector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\Plugin.h"
 				>
 			</File>
