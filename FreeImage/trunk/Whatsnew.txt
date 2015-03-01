@@ -18,11 +18,14 @@ Month day, 2015 - 3.17.0
 + [Herve Drolon] added support for metadata writing to the JPEG-JXR plugin
 + [Herve Drolon] added VS 2013 project files
 + [Herve Drolon] added support for PNG tIME metadata (read/write, handle as Exif-TIFF DateTime)
-+ [Carsten Klein] added explicit definition of endianness and color order compiler options
++ [Carsten Klein] added explicit definition of endianness and color order in compiler options
 + [Carsten Klein] added FIQ_LFPQUANT quantizer algorithm
 + [Carsten Klein] added support for input 32-bit dib in Wu quantizer
 + [Tanner Helland] added FreeImage_ConvertToRGBAF and updated conversions in FreeImage_ConvertToType
 + [Herve Drolon] added FreeImage_ConvertToRGBA16 and updated conversions in FreeImage_ConvertToType
++ [Carsten Klein] added FreeImage_CreateView
++ [Carsten Klein] added FreeImage_RescaleRect
++ [Carsten Klein] added FreeImage_GetMemorySize
 * [Tanner Helland] ICO plugin: improved support for Vista icons
 * [fpgaminer] fixed a rounding error in RGB to greyscale conversion formula
 * [Sven-Hendrik Haase] fixed Makefile.fip so that it installs symlinks
