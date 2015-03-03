@@ -340,7 +340,8 @@ FreeImage_GetTagMemorySize(FITAG *tag) {
 			switch (tag_header->type) {
 				case FIDT_ASCII:
 					// for ASCII strings, the value of the count part of an ASCII tag entry includes the NULL.
-					size += tag_header->length;
+					// however, FreeImage adds another '\0' to be sure that this last character is present.
+					size += tag_header->length + 1;
 					break;
 				default:
 					size += tag_header->length;
