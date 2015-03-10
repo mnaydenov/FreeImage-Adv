@@ -355,8 +355,21 @@ ConfigureDecoder(png_structp png_ptr, png_infop info_ptr, int flags, FREE_IMAGE_
 						png_set_expand_gray_1_2_4_to_8(png_ptr);
 					}
 					break;
+
 				case 16:
 					image_type = (pixel_depth == 16) ? FIT_UINT16 : FIT_UNKNOWN;
+
+					// 16-bit grayscale images can contain a transparent value (shade)
+					// if found, expand the transparent value to a full alpha channel
+					if (bIsTransparent && (image_type != FIT_UNKNOWN)) {
+						// expand tRNS to a full alpha channel
+						png_set_tRNS_to_alpha(png_ptr);
+						
+						// expand new 16-bit gray + 16-bit alpha to full 64-bit RGBA
+						png_set_gray_to_rgb(png_ptr);
+
+						image_type = FIT_RGBA16;
+					}
 					break;
 
 				default:
@@ -583,7 +596,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 						png_get_PLTE(png_ptr,info_ptr, &png_palette, &palette_entries);
 
-						palette_entries = MIN((unsigned)palette_entries, FreeImage_GetColorsUsed(dib));						
+						palette_entries = MIN((unsigned)palette_entries, FreeImage_GetColorsUsed(dib));
 
 						// store the palette
 
@@ -729,7 +742,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// allow loading of PNG with minor errors (such as images with several IDAT chunks)
 
 			for (png_uint_32 k = 0; k < height; k++) {
-				row_pointers[height - 1 - k] = FreeImage_GetScanLine(dib, k);			
+				row_pointers[height - 1 - k] = FreeImage_GetScanLine(dib, k);
 			}
 
 			png_set_benign_errors(png_ptr, 1);
@@ -775,7 +788,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				free(row_pointers);
 			}
 			if (dib) {
-				FreeImage_Unload(dib);			
+				FreeImage_Unload(dib);
 			}
 			FreeImage_OutputMessageProc(s_format_id, text);
 			
@@ -1036,7 +1049,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 				// the number of passes is either 1 for non-interlaced images, or 7 for interlaced images
 				for (int pass = 0; pass < number_passes; pass++) {
 					for (png_uint_32 k = 0; k < height; k++) {
-						FreeImage_ConvertLine32To24(buffer, FreeImage_GetScanLine(dib, height - k - 1), width);			
+						FreeImage_ConvertLine32To24(buffer, FreeImage_GetScanLine(dib, height - k - 1), width);
 						png_write_row(png_ptr, buffer);
 					}
 				}
@@ -1044,8 +1057,8 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			} else {
 				// the number of passes is either 1 for non-interlaced images, or 7 for interlaced images
 				for (int pass = 0; pass < number_passes; pass++) {
-					for (png_uint_32 k = 0; k < height; k++) {			
-						png_write_row(png_ptr, FreeImage_GetScanLine(dib, height - k - 1));					
+					for (png_uint_32 k = 0; k < height; k++) {
+						png_write_row(png_ptr, FreeImage_GetScanLine(dib, height - k - 1));
 					}
 				}
 			}
