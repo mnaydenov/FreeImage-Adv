@@ -44,6 +44,7 @@ Month day, 2015 - 3.17.0
 * [Herve Drolon] improved Exif reader so as to handle Exif IFD with a suspicious offset (can occur with maker notes)
 * [Herve Drolon] fixed a memory leak in PluginPNG:Save occuring when dealing with invalid PNG files
 * [Tanner Helland] fixed PNG plugin handling of 16-bit grayscale + 16-bit alpha images
+* [Tanner Helland] fixed PNG plugin handling of 16-bit grayscale + tRNS chunk images
 * [Tanner Helland] fixed PNG plugin handling of 24-bit RGB + tRNS chunk images
 * [Tanner Helland] fixed PNG plugin handling of 1-,4-bit greyscale/palettized + tRNS chunk images
 * [ekpyron] fixed invalid directory delimiter in include statement (mingw-w64) in Source/LibJXR/image/sys/strcodec.h
