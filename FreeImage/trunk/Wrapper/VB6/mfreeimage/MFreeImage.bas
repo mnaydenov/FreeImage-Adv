@@ -26,9 +26,9 @@ Attribute VB_Name = "MFreeImage"
 
 '// ==========================================================
 '// CVS
-'// $Revision: 2.23 $
-'// $Date: 2014-08-08 06:53:12 $
-'// $Id: MFreeImage.bas,v 2.23 2014-08-08 06:53:12 cklein05 Exp $
+'// $Revision: 2.24 $
+'// $Date: 2015-03-16 06:29:34 $
+'// $Id: MFreeImage.bas,v 2.24 2015-03-16 06:29:34 cklein05 Exp $
 '// ==========================================================
 
 
@@ -365,7 +365,7 @@ End Enum
 
 ' Version information
 Public Const FREEIMAGE_MAJOR_VERSION As Long = 3
-Public Const FREEIMAGE_MINOR_VERSION As Long = 16
+Public Const FREEIMAGE_MINOR_VERSION As Long = 17
 Public Const FREEIMAGE_RELEASE_SERIAL As Long = 0
 
 ' Memory stream pointer operation flags
@@ -414,7 +414,7 @@ Public Enum FREE_IMAGE_ICC_COLOR_MODEL
 End Enum
 
 ' Load / Save flag constants
-Public Const FIF_LOAD_NOPIXELS = &H8000              ' load the image header only (not supported by all plugins)
+Public Const FIF_LOAD_NOPIXELS As Long = &H8000      ' load the image header only (not supported by all plugins)
 
 Public Const BMP_DEFAULT As Long = 0
 Public Const BMP_SAVE_RLE As Long = 1
@@ -668,6 +668,7 @@ End Enum
 Public Enum FREE_IMAGE_QUANTIZE
    FIQ_WUQUANT = 0           ' Xiaolin Wu color quantization algorithm
    FIQ_NNQUANT = 1           ' NeuQuant neural-net quantization algorithm by Anthony Dekker
+   FIQ_LFPQUANT = 2          ' Lossless Fast Pseudo-Quantization Algorithm by Carsten Klein
 End Enum
 
 ' Dithering algorithm constants
@@ -708,6 +709,12 @@ Public Enum FREE_IMAGE_FILTER
    FILTER_BSPLINE = 3        ' 4th order (cubic) b-spline
    FILTER_CATMULLROM = 4     ' Catmull-Rom spline, Overhauser spline
    FILTER_LANCZOS3 = 5       ' Lanczos3 filter
+End Enum
+
+Public Enum FREE_IMAGE_RESCALE_OPTIONS
+   FI_RESCALE_DEFAULT = &H0        ' default options; none of the following other options apply
+   FI_RESCALE_TRUE_COLOR = &H1     ' for non-transparent greyscale images, convert to 24-bit if src bitdepth <= 8 (default is a 8-bit greyscale image)
+   FI_RESCALE_OMIT_METADATA = &H2  ' do not copy metadata to the rescaled image
 End Enum
 
 ' Color channel constants
@@ -1404,6 +1411,9 @@ Public Declare Function FreeImage_GetPitch Lib "FreeImage.dll" Alias "_FreeImage
 Public Declare Function FreeImage_GetDIBSize Lib "FreeImage.dll" Alias "_FreeImage_GetDIBSize@4" ( _
            ByVal Bitmap As Long) As Long
 
+Public Declare Function FreeImage_GetMemorySize Lib "FreeImage.dll" Alias "_FreeImage_GetMemorySize@4" ( _
+           ByVal Bitmap As Long) As Long
+
 Public Declare Function FreeImage_GetPalette Lib "FreeImage.dll" Alias "_FreeImage_GetPalette@4" ( _
            ByVal Bitmap As Long) As Long
 
@@ -1782,10 +1792,16 @@ Public Declare Function FreeImage_ConvertToFloat Lib "FreeImage.dll" Alias "_Fre
 Public Declare Function FreeImage_ConvertToRGBF Lib "FreeImage.dll" Alias "_FreeImage_ConvertToRGBF@4" ( _
            ByVal Bitmap As Long) As Long
 
+Public Declare Function FreeImage_ConvertToRGBAF Lib "FreeImage.dll" Alias "_FreeImage_ConvertToRGBAF@4" ( _
+           ByVal Bitmap As Long) As Long
+
 Public Declare Function FreeImage_ConvertToUINT16 Lib "FreeImage.dll" Alias "_FreeImage_ConvertToUINT16@4" ( _
            ByVal Bitmap As Long) As Long
 
 Public Declare Function FreeImage_ConvertToRGB16 Lib "FreeImage.dll" Alias "_FreeImage_ConvertToRGB16@4" ( _
+           ByVal Bitmap As Long) As Long
+
+Public Declare Function FreeImage_ConvertToRGBA16 Lib "FreeImage.dll" Alias "_FreeImage_ConvertToRGBA16@4" ( _
            ByVal Bitmap As Long) As Long
 
 Private Declare Function FreeImage_ConvertToStandardTypeInt Lib "FreeImage.dll" Alias "_FreeImage_ConvertToStandardType@8" ( _
@@ -2032,22 +2048,23 @@ Public Declare Function FreeImage_Rescale Lib "FreeImage.dll" Alias "_FreeImage_
            ByVal Bitmap As Long, _
            ByVal Width As Long, _
            ByVal Height As Long, _
-           ByVal Filter As FREE_IMAGE_FILTER) As Long
-           
-Public Declare Function FreeImage_RescaleRect Lib "FreeImage.dll" Alias "_FreeImage_RescaleRect@32" ( _
-           ByVal Bitmap As Long, _
-           ByVal Left As Long, _
-           ByVal Top As Long, _
-           ByVal Right As Long, _
-           ByVal Bottom As Long, _
-           ByVal Width As Long, _
-           ByVal Height As Long, _
-           ByVal Filter As FREE_IMAGE_FILTER) As Long
+  Optional ByVal Filter As FREE_IMAGE_FILTER = FILTER_CATMULLROM) As Long
            
 Private Declare Function FreeImage_MakeThumbnailInt Lib "FreeImage.dll" Alias "_FreeImage_MakeThumbnail@12" ( _
            ByVal Bitmap As Long, _
            ByVal MaxPixelSize As Long, _
   Optional ByVal Convert As Long) As Long
+
+Public Declare Function FreeImage_RescaleRect Lib "FreeImage.dll" Alias "_FreeImage_RescaleRect@36" ( _
+           ByVal Bitmap As Long, _
+           ByVal Width As Long, _
+           ByVal Height As Long, _
+           ByVal Left As Long, _
+           ByVal Top As Long, _
+           ByVal Right As Long, _
+           ByVal Bottom As Long, _
+  Optional ByVal Filter As FREE_IMAGE_FILTER = FILTER_CATMULLROM, _
+  Optional ByVal Flags As FREE_IMAGE_RESCALE_OPTIONS) As Long
 
 
 ' color manipulation functions (point operations)
@@ -2156,6 +2173,13 @@ Private Declare Function FreeImage_PasteInt Lib "FreeImage.dll" Alias "_FreeImag
            ByVal Left As Long, _
            ByVal Top As Long, _
            ByVal Alpha As Long) As Long
+
+Public Declare Function FreeImage_CreateView Lib "FreeImage.dll" Alias "_FreeImage_CreateView@20" ( _
+           ByVal Bitmap As Long, _
+           ByVal Left As Long, _
+           ByVal Top As Long, _
+           ByVal Right As Long, _
+           ByVal Bottom As Long) As Long
 
 Public Declare Function FreeImage_Composite Lib "FreeImage.dll" Alias "_FreeImage_Composite@16" ( _
            ByVal Bitmap As Long, _
@@ -5990,13 +6014,13 @@ Dim bAdjustReservePaletteSize As Boolean
          End If
          
       Case FICF_PALLETISED_8BPP
-         ' note, that the FreeImage library only quantizes 24 bit images
+         ' note, that the FreeImage library only quantizes 24 or 32 bit images (expect FIQ_NNQUANT)
          ' do not convert any 8 bit images
          If (lBPP <> 8) Then
             ' images with a color depth of 24 bits can directly be
             ' converted with the FreeImage_ColorQuantize function;
-            ' other images need to be converted to 24 bits first
-            If (lBPP = 24) Then
+            ' other images may need to be converted to 24 bits first
+            If (lBPP = 24 Or (lBPP = 32 And QuantizeMethod <> FIQ_NNQUANT)) Then
                hDIBNew = FreeImage_ColorQuantize(Bitmap, QuantizeMethod)
             Else
                hDIBTemp = FreeImage_ConvertTo24Bits(Bitmap)
