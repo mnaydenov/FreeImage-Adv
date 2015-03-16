@@ -5,7 +5,18 @@ What's New for FreeImage VB Wrapper
 ! : changed
 + : added
 
-August 08, 2014 - 2.24 (3.16.0)
+March 16, 2015 - 2.24 (3.17.0)
++ [Carsten Klein] added support for the new Lossless Fast Pseudo-Quantization Algorithm (FIQ_LFPQUANT)
++ [Carsten Klein] added function FreeImage_ConvertToRGBAF
++ [Carsten Klein] added function FreeImage_ConvertToRGBA16
++ [Carsten Klein] added support for 32-bit input images for all quantizers in wrapper function FreeImage_ConvertColorDepth (expect for FIQ_NNQUANT)
++ [Carsten Klein] added function FreeImage_CreateView
++ [Carsten Klein] added function FreeImage_GetMemorySize
++ [Carsten Klein] added function FreeImage_RescaleRect
++ [Carsten Klein] added enumeration FREE_IMAGE_RESCALE_OPTIONS for new FI_RESCALE_* options used with FreeImage_RescaleRect
+! [Carsten Klein] changed constants FREEIMAGE_MINOR_VERSION and FREEIMAGE_RELEASE_SERIAL to match current version 3.17.0 
+
+August 08, 2014 - 2.23 (3.16.0)
 - [Carsten Klein] removed declaration of Win32 API function FillMemory
 + [Carsten Klein] added load flag RAW_UNPROCESSED and corresponding FILO_RAW_UNPROCESSED
 + [Carsten Klein] added function FreeImage_SetMetadataKeyValue
