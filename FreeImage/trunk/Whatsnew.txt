@@ -5,6 +5,9 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2015 - 3.17.1
+* [Pengsu Cheng] fixed PCX loader against malicious images with a bad window specification
+
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
 ! FreeImage now uses LibWebP 0.4.2 (GIT patch 2015-03-03)
