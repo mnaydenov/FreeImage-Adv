@@ -346,6 +346,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	try {
+		// check PCX identifier
+		// (note: should have been already validated using FreeImage_GetFileType but check again)
+		{
+			long start_pos = io->tell_proc(handle);
+			BOOL bValidated = pcx_validate(io, handle);
+			io->seek_proc(handle, start_pos, SEEK_SET);
+			if(!bValidated) {
+				throw FI_MSG_ERROR_MAGIC_NUMBER;
+			}
+		}
+		
 		PCXHEADER header;
 
 		// process the header
