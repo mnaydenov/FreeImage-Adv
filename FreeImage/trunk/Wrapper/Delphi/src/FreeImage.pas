@@ -33,6 +33,7 @@ unit FreeImage;
 // 2013-05-06  MAU   Corrected calls definition to MAC OSX library
 // 2013-11-25  MAU   Added type FreeImageAnsiString for handling accents on MAC OSX filenames/path
 // 2014-05-05  LM    Updated to 3.16.1
+// 2015-09-17  LM    Updated to 3.17.0
 //
 
 //
@@ -72,7 +73,7 @@ type
 
   PDWORD = ^DWORD;
 
-  BITMAPINFOHEADER = record
+  BITMAPINFOHEADER = packed record
     biSize : DWORD;
     biWidth : LONG;
     biHeight : LONG;
@@ -89,7 +90,7 @@ type
   TBITMAPINFOHEADER = BITMAPINFOHEADER;
   PBITMAPINFOHEADER = ^BITMAPINFOHEADER;
 
-  RGBQUAD = record
+  RGBQUAD = packed record
     rgbBlue : BYTE;
     rgbGreen : BYTE;
     rgbRed : BYTE;
@@ -99,7 +100,7 @@ type
   TRGBQUAD = RGBQUAD;
   PRGBQUAD = ^RGBQUAD;
 
-  BITMAPINFO = record
+  BITMAPINFO = packed record
     bmiHeader : BITMAPINFOHEADER;
     bmiColors : array[0..0] of RGBQUAD;
   end;
@@ -121,7 +122,7 @@ const
 const
   // Version information
   FREEIMAGE_MAJOR_VERSION  = 3;
-  FREEIMAGE_MINOR_VERSION  = 16;
+  FREEIMAGE_MINOR_VERSION  = 17;
   FREEIMAGE_RELEASE_SERIAL = 1;
   // This really only affects 24 and 32 bit formats, the rest are always RGB order.
   FREEIMAGE_COLORORDER_BGR = 0;
@@ -241,7 +242,7 @@ const
   FIICC_COLOR_IS_CMYK = $1;
 
 type
-  FIICCPROFILE = record
+  FIICCPROFILE = packed record
     flags: WORD;   // info flag
     size: DWORD;   // profile's size measured in bytes
     data: Pointer; // points to a block of contiguous memory containing the profile
@@ -333,6 +334,7 @@ const
   // Color quantization algorithms. Constants used in FreeImage_ColorQuantize.
   FIQ_WUQUANT = FREE_IMAGE_QUANTIZE(0); // Xiaolin Wu color quantization algorithm
   FIQ_NNQUANT = FREE_IMAGE_QUANTIZE(1); // NeuQuant neural-net quantization algorithm by Anthony Dekker
+  FIQ_LFPQUANT = FREE_IMAGE_QUANTIZE(2); // Lossless Fast Pseudo-Quantization Algorithm by Carsten Klein
 
   // Dithering algorithms. Constants used FreeImage_Dither.
   FID_FS            = FREE_IMAGE_DITHER(0); // Floyd & Steinberg error diffusion
@@ -496,7 +498,7 @@ type
   FI_SupportsICCProfilesProc = function: LongBool; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   FI_SupportsNoPixelsProc = function: LongBool; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
 
-  Plugin = record
+  Plugin = packed record
     format_proc: FI_FormatProc;
     description_proc: FI_DescriptionProc;
     extension_proc: FI_ExtensionListProc;
@@ -591,6 +593,7 @@ const
   RAW_PREVIEW         = 1; //! try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
   RAW_DISPLAY         = 2; //! load the file as RGB 24-bit
   RAW_HALFSIZE        = 4; //! output a half-size color image
+  RAW_UNPROCESSED     = 8; //! output a FIT_UINT16 raw Bayer image
   SGI_DEFAULT         = 0;
   TARGA_DEFAULT       = 0;
   TARGA_LOAD_RGB888   = 1;     //! if set the loader converts RGB555 and ARGB8888 -> RGB888.
@@ -626,6 +629,13 @@ const
   FI_COLOR_FIND_EQUAL_COLOR     = $02; // For palettized images: lookup equal RGB color from palette
   FI_COLOR_ALPHA_IS_INDEX       = $04; // The color's rgbReserved member (alpha) contains the palette index to be used
   FI_COLOR_PALETTE_SEARCH_MASK  = FI_COLOR_FIND_EQUAL_COLOR or FI_COLOR_ALPHA_IS_INDEX; // No color lookup is performed
+
+// RescaleEx options ---------------------------------------------------------
+// Constants used in FreeImage_RescaleEx
+
+  FI_RESCALE_DEFAULT            = $00;  //! default options; none of the following other options apply
+  FI_RESCALE_TRUE_COLOR         = $01;  //! for non-transparent greyscale images, convert to 24-bit if src bitdepth <= 8 (default is a 8-bit greyscale image). 
+  FI_RESCALE_OMIT_METADATA      = $02;  //! do not copy metadata to the rescaled image
 
 // --------------------------------------------------------------------------
 // Init/Error routines ------------------------------------------------------
@@ -993,6 +1003,9 @@ function FreeImage_GetPitch(dib: PFIBITMAP): Cardinal; {$IFDEF MSWINDOWS}stdcall
 function FreeImage_GetDIBSize(dib: PFIBITMAP): Cardinal; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_GetDIBSize@4'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_GetDIBSize'{$ENDIF};
+function FreeImage_GetMemorySize(dib: PFIBITMAP): Cardinal; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_GetMemorySize@4'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_GetMemorySize'{$ENDIF};
 function FreeImage_GetPalette(dib: PFIBITMAP): PRGBQuad; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_GetPalette@4'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_GetPalette'{$ENDIF};
@@ -1276,12 +1289,18 @@ function FreeImage_ConvertToFloat(dib: PFIBITMAP): PFIBITMAP; {$IFDEF MSWINDOWS}
 function FreeImage_ConvertToRGBF(dib: PFIBITMAP): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRGBF@4'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_ConvertToRGBF'{$ENDIF};
+function FreeImage_ConvertToRGBAF(dib: PFIBITMAP): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRGBAF@4'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_ConvertToRGBAF'{$ENDIF};
 function FreeImage_ConvertToUINT16(dib: PFIBITMAP): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToUINT16@4'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_ConvertToUINT16'{$ENDIF};
 function FreeImage_ConvertToRGB16(dib: PFIBITMAP): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRGB16@4'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_ConvertToRGB16'{$ENDIF};
+function FreeImage_ConvertToRGBA16(dib: PFIBITMAP): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertToRGBA16@4'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_ConvertToRGBA16'{$ENDIF};
 
 function FreeImage_ConvertToStandardType(src: PFIBITMAP;
   scale_linear: LongBool = True): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
@@ -1416,6 +1435,10 @@ function FreeImage_GetMetadata(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP;
   key: PAnsiChar; var tag: PFITAG): LongBool; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_GetMetadata@16'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_GetMetadata'{$ENDIF};
+function FreeImage_SetMetadataKeyValue(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP;
+  key, value: PAnsiChar): LongBool; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_SetMetadataKeyValue@16'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_SetMetadataKeyValue'{$ENDIF};
 
 // helpers
 function FreeImage_GetMetadataCount(model: FREE_IMAGE_MDMODEL; dib: PFIBITMAP): Cardinal; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
@@ -1500,6 +1523,10 @@ function FreeImage_Rescale(dib: PFIBITMAP; dst_width, dst_height: Integer;
 function FreeImage_MakeThumbnail(dib: PFIBITMAP; max_pixel_size: Integer; convert: LongBool = True): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_MakeThumbnail@12'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_MakeThumbnail'{$ENDIF};
+function FreeImage_RescaleRect(dib: PFIBITMAP; dst_width, dst_height, left, top, right, bottom: Integer;
+  filter: FREE_IMAGE_FILTER = FILTER_CATMULLROM; flags: Cardinal = 0): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_RescaleRect@36'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_RescaleRect'{$ENDIF};
 
 // color manipulation routines (point operations)
 function FreeImage_AdjustCurve(dib: PFIBITMAP; LUT: PByte;
@@ -1568,6 +1595,10 @@ function FreeImage_Copy(dib: PFIBITMAP; left, top, right, bottom: Integer): PFIB
 function FreeImage_Paste(dst, src: PFIBITMAP; left, top, alpha: Integer): LongBool; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_Paste@20'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_Paste'{$ENDIF};
+function FreeImage_CreateView(dib: PFIBITMAP; left, top, right, bottom: Cardinal): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_CreateView@20'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_CreateView'{$ENDIF};
+
 function FreeImage_Composite(fg: PFIBITMAP; useFileBkg: LongBool = False;
   appBkColor: PRGBQuad = nil; bg: PFIBITMAP = nil): PFIBITMAP; {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_Composite@16'{$ENDIF}
