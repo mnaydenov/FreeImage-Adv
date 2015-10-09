@@ -1,5 +1,5 @@
 /* 
-  Copyright 2008-2013 LibRaw LLC (info@libraw.org)
+  Copyright 2008-2015 LibRaw LLC (info@libraw.org)
 
 LibRaw is free software; you can redistribute it and/or modify
 it under the terms of the one of three licenses as you choose:
@@ -21,15 +21,14 @@ it under the terms of the one of three licenses as you choose:
    for more information
 */
 
-#line 33 "dcraw/dcraw.c"
 #ifndef USE_JPEG
 #define NO_JPEG
 #endif
 #ifndef USE_JASPER
 #define NO_JASPER
 #endif
-#line 44 "dcraw/dcraw.c"
-#define DCRAW_VERSION "9.24"
+#define DCRAW_VERSION "9.25"
+
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -47,7 +46,6 @@ it under the terms of the one of three licenses as you choose:
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-#line 71 "dcraw/dcraw.c"
 #ifdef __CYGWIN__
 #include <io.h>
 #endif
@@ -58,7 +56,6 @@ it under the terms of the one of three licenses as you choose:
 #define snprintf _snprintf
 #define strcasecmp stricmp
 #define strncasecmp strnicmp
-#line 85 "dcraw/dcraw.c"
 #else
 #include <unistd.h>
 #include <utime.h>
@@ -101,7 +98,6 @@ typedef uint64_t UINT64;
 #ifndef LONG_BIT
 #define LONG_BIT (8 * sizeof (long))
 #endif
-#line 199 "dcraw/dcraw.c"
 #define FORC(cnt) for (c=0; c < cnt; c++)
 #define FORC3 FORC(3)
 #define FORC4 FORC(4)
@@ -159,7 +155,6 @@ typedef uint64_t UINT64;
 
 #define RAW(row,col) \
 	raw_image[(row)*raw_width+(col)]
-#line 262 "dcraw/dcraw.c"
 #define BAYER(row,col) \
 	image[((row) >> shrink)*iwidth + ((col) >> shrink)][FC(row,col)]
 
