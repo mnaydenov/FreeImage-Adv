@@ -4,7 +4,7 @@
           \__\__/\____/\_____/__/ ____  ___
                 / _/ /    \    \ /  _ \/ _/
                /  \_/   / /   \ \   __/  \__
-               \____/____/\_____/_____/____/v0.4.2
+               \____/____/\_____/_____/____/v0.4.3
 
 Description:
 ============
@@ -273,12 +273,13 @@ Use following options to convert into alternate image formats:
   -alpha_dither  use alpha-plane dithering if needed
   -mt .......... use multi-threading
   -crop <x> <y> <w> <h> ... crop output with the given rectangle
-  -scale <w> <h> .......... scale the output (*after* any cropping)
+  -resize <w> <h> ......... scale the output (*after* any cropping)
   -flip ........ flip the output vertically
   -alpha ....... only save the alpha plane
   -incremental . use incremental decoding (useful for tests)
   -h     ....... this help message
   -v     ....... verbose (e.g. print encoding/decoding times)
+  -quiet ....... quiet mode, don't print anything
   -noasm ....... disable all assembly optimizations
 
 Visualization tool:
@@ -366,6 +367,24 @@ Building:
 With the libgif development files installed, gif2webp can be built using
 makefile.unix:
 $ make -f makefile.unix examples/gif2webp
+
+or using autoconf:
+$ ./configure --enable-everything
+$ make
+
+Comparison of animated images:
+==============================
+Test utility anim_diff under examples/ can be used to compare two animated
+images (each can be GIF or WebP).
+
+Usage:
+ anim_diff <image1> <image2> [-dump_frames <folder>] [-min_psnr <float>]
+
+Building:
+---------
+With the libgif development files and a C++ compiler installed, anim_diff can
+be built using makefile.unix:
+$ make -f makefile.unix examples/anim_diff
 
 or using autoconf:
 $ ./configure --enable-everything

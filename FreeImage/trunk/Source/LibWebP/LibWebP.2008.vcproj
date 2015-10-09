@@ -370,6 +370,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\dsp\dsp.alpha_processing_sse41.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\dsp.argb.c"
 					>
 				</File>
@@ -426,6 +430,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\dsp\dsp.dec_sse41.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\dsp.enc.c"
 					>
 				</File>
@@ -450,6 +458,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\src\dsp\dsp.enc_sse41.c"
+					>
+				</File>
+				<File
 					RelativePath=".\src\dsp\dsp.filters.c"
 					>
 				</File>
@@ -463,6 +475,30 @@
 				</File>
 				<File
 					RelativePath=".\src\dsp\dsp.lossless.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.lossless_enc.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.lossless_enc_mips32.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.lossless_enc_mips_dsp_r2.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.lossless_enc_neon.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.lossless_enc_sse2.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.lossless_enc_sse41.c"
 					>
 				</File>
 				<File
@@ -491,6 +527,14 @@
 				</File>
 				<File
 					RelativePath=".\src\dsp\dsp.rescaler_mips_dsp_r2.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.rescaler_neon.c"
+					>
+				</File>
+				<File
+					RelativePath=".\src\dsp\dsp.rescaler_sse2.c"
 					>
 				</File>
 				<File
