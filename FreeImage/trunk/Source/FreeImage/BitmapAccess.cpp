@@ -1200,12 +1200,12 @@ FreeImage_FindFirstMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, FITAG **tag
 		FIMETADATA 	*handle = (FIMETADATA *)malloc(sizeof(FIMETADATA));
 		if(handle) {
 			// calculate the size of a METADATAHEADER
-			int header_size = sizeof(METADATAHEADER);
+			const size_t header_size = sizeof(METADATAHEADER);
 
-			handle->data = (BYTE *)malloc(header_size * sizeof(BYTE));
+			handle->data = (BYTE *)malloc(header_size);
 			
 			if(handle->data) {
-				memset(handle->data, 0, header_size * sizeof(BYTE));
+				memset(handle->data, 0, header_size);
 
 				// write out the METADATAHEADER
 				METADATAHEADER *mdh = (METADATAHEADER *)handle->data;
