@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_cxx.cpp
- * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2015 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
  * LibRaw C++ interface (implementation)
@@ -487,6 +487,7 @@ void LibRaw:: recycle()
   ZERO(imgdata.color);
   cleargps(&imgdata.other.parsed_gps);
   imgdata.color.baseline_exposure = -999.f;
+  imgdata.color.FujiExpoMidPointShift = -999.f;
   ZERO(libraw_internal_data);
   ZERO(imgdata.lens);
   imgdata.lens.makernotes.CanonFocalUnits = 1;
@@ -1012,10 +1013,14 @@ struct foveon_data_t
   {"Sigma","DP3 Merrill",4928,1632,3900,12,0,4807,1603}, // 2/3 size
   {"Polaroid","x530",1440,1088,2700,10,13,1419,1059},
   // dp2 Q
+  {"Sigma","dp3 Quattro",5888,3672,16383,204,24,5446,3624}, // full size
+  {"Sigma","dp3 Quattro",2944,1836,16383,102,12,2723,1812}, // half size
   {"Sigma","dp2 Quattro",5888,3672,16383,204,24,5446,3624}, // full size
   {"Sigma","dp2 Quattro",2944,1836,16383,102,12,2723,1812}, // half size
   {"Sigma","dp1 Quattro",5888,3672,16383,204,24,5446,3624}, // full size
   {"Sigma","dp1 Quattro",2944,1836,16383,102,12,2723,1812}, // half size
+  {"Sigma","dp0 Quattro",5888,3672,16383,204,24,5446,3624}, // full size
+  {"Sigma","dp0 Quattro",2944,1836,16383,102,12,2723,1812}, // half size
 };
 const int foveon_count = sizeof(foveon_data)/sizeof(foveon_data[0]);
 
@@ -1053,14 +1058,16 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
 		imgdata.sizes.left_margin++;
 		imgdata.sizes.width--;
 	}
-	if(!imgdata.idata.dng_version && !strcmp(imgdata.idata.make,"Fujifilm") && !strcmp(imgdata.idata.model,"S20Pro"))
+	if(!imgdata.idata.dng_version && !strcmp(imgdata.idata.make,"Fujifilm") 
+           && (!strncmp(imgdata.idata.model,"S20Pro",6) || !strncmp(imgdata.idata.model,"F700",4))
+           )
 	{
-		if(imgdata.idata.raw_count>1)
-			imgdata.idata.raw_count = 1;
+          imgdata.sizes.raw_width/=2;
+          load_raw= &LibRaw::unpacked_load_raw_fuji_f700s20;
 	}
 	if(load_raw == &LibRaw::packed_load_raw && !strcasecmp(imgdata.idata.make,"Nikon")
 		 && !libraw_internal_data.unpacker_data.load_flags
-		 && (!strcasecmp(imgdata.idata.model,"D810") || !strcasecmp(imgdata.idata.model,"D4S"))
+		 && (!strncasecmp(imgdata.idata.model,"D810",4) || !strcasecmp(imgdata.idata.model,"D4S"))
 		 && libraw_internal_data.unpacker_data.data_size*2 == imgdata.sizes.raw_height*imgdata.sizes.raw_width*3)
 	{
 		libraw_internal_data.unpacker_data.load_flags = 80;
@@ -1083,7 +1090,7 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
       {
            load_raw= &LibRaw::nikon_load_sraw;
            C.black =0;
-		   memset(C.cblack,0,sizeof(C.cblack));
+           memset(C.cblack,0,sizeof(C.cblack));
            imgdata.idata.filters = 0;
            libraw_internal_data.unpacker_data.tiff_samples=3;
            imgdata.idata.colors = 3;
@@ -1108,7 +1115,7 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
         || load_raw == &LibRaw::packed_load_raw)
        && !strcasecmp(imgdata.idata.make,"Nikon")
        && strncmp(imgdata.idata.model,"COOLPIX",7)
-	   && strncmp(imgdata.idata.model,"1 ",2)
+//	   && strncmp(imgdata.idata.model,"1 ",2)
        && libraw_internal_data.unpacker_data.tiff_bps == 12)
       {
         C.maximum = 4095;
@@ -1330,7 +1337,14 @@ int LibRaw::unpack(void)
 	if(imgdata.idata.dng_version && libraw_internal_data.unpacker_data.tiff_samples == 2)
 		rawspeed_enabled = 0;
 	// Disable rawspeed for double-sized Oly files
-	if(!strncasecmp(imgdata.idata.make,"Olympus",7) && !strncasecmp(imgdata.idata.model,"E-M5MarkII",10) && imgdata.sizes.raw_width == 9280)
+	if(!strncasecmp(imgdata.idata.make,"Olympus",7) && 
+		( (!strncasecmp(imgdata.idata.model,"E-M5MarkII",10) && imgdata.sizes.raw_width == 9280) || !strncasecmp(imgdata.idata.model,"SH-2",4) || !strncasecmp(imgdata.idata.model,"TG-4",4))
+		)
+		rawspeed_enabled = 0;
+
+	if(!strncasecmp(imgdata.idata.make,"Canon",5) 
+ 		&& !strncasecmp(imgdata.idata.model,"EOS 5DS",7) 
+		&& (load_raw == &LibRaw::canon_sraw_load_raw))
 		rawspeed_enabled = 0;
 
     // RawSpeed Supported,
@@ -1527,6 +1541,24 @@ int LibRaw::unpack(void)
   catch (std::exception ee) {
     EXCEPTION_HANDLER(LIBRAW_EXCEPTION_IO_CORRUPT);
   }
+}
+
+void LibRaw::unpacked_load_raw_fuji_f700s20()
+{
+  int base_offset = 0;
+  int row_size = imgdata.sizes.raw_width * 2; // in bytes
+  if(imgdata.idata.raw_count==2 && imgdata.params.shot_select)
+    {
+      libraw_internal_data.internal_data.input->seek(-row_size,SEEK_CUR);
+      base_offset = row_size; // in bytes
+    }
+  unsigned char *buffer = (unsigned char*)malloc(row_size*2);
+  for(int row = 0; row < imgdata.sizes.raw_height; row++)
+    {
+      read_shorts((ushort*)buffer,imgdata.sizes.raw_width * 2);
+      memmove(&imgdata.rawdata.raw_image[row*imgdata.sizes.raw_pitch/2],buffer+base_offset,row_size);
+    }
+  free(buffer);
 }
 
 void LibRaw::nikon_load_sraw()
@@ -2647,6 +2679,8 @@ int LibRaw::unpack_thumb(void)
             T.thumb = (char *) malloc (T.tlength);
             merror (T.thumb, "jpeg_thumb()");
             ID.input->read (T.thumb, 1, T.tlength);
+			T.thumb[0] = 0xff;
+			T.thumb[1] = 0xd8;
             T.tcolors = 3;
             T.tformat = LIBRAW_THUMBNAIL_JPEG;
             SET_PROC_FLAG(LIBRAW_PROGRESS_THUMB_LOAD);
@@ -3344,6 +3378,7 @@ static const char  *static_camera_list[] =
 "Canon PowerShot G1 X Mark II",
 "Canon PowerShot G2",
 "Canon PowerShot G3",
+"Canon PowerShot G3 X",
 "Canon PowerShot G5",
 "Canon PowerShot G6",
 "Canon PowerShot G7 (CHDK hack)",
@@ -3381,6 +3416,8 @@ static const char  *static_camera_list[] =
 "Canon EOS D30",
 "Canon EOS D60",
 "Canon EOS 5D",
+"Canon EOS 5DS",
+"Canon EOS 5DS R",
 "Canon EOS 5D Mark II",
 "Canon EOS 5D Mark III",
 "Canon EOS 6D",
@@ -3404,6 +3441,8 @@ static const char  *static_camera_list[] =
 "Canon EOS 600D / Digital Rebel T3i / Kiss Digital X5",
 "Canon EOS 650D / Digital Rebel T4i / Kiss Digital X6i",
 "Canon EOS 700D / Digital Rebel T5i",
+"Canon EOS 750D / Digital Rebel T6i",
+"Canon EOS 760D / Digital Rebel T6S",
 "Canon EOS 100D / Digital Rebel SL1",
 "Canon EOS 1000D / Digital Rebel XS / Kiss Digital F",
 "Canon EOS 1100D / Digital Rebel T3 / Kiss Digital X50",
@@ -3411,6 +3450,8 @@ static const char  *static_camera_list[] =
 "Canon EOS C500",
 "Canon EOS D2000C",
 "Canon EOS M",
+"Canon EOS M2",
+"Canon EOS M3",
 "Canon EOS-1D",
 "Canon EOS-1DS",
 "Canon EOS-1D C",
@@ -3459,7 +3500,9 @@ static const char  *static_camera_list[] =
 "Casio EX-ZR1200",
 "Casio EX-ZR1300",
 "Casio EX-ZR1500",
+"Casio EX-ZR3000",
 "Casio EX-100",
+"Casio EX-100F",
 "Casio EX-10",
 "Casio Exlim Pro 505",
 "Casio Exlim Pro 600",
@@ -3514,6 +3557,7 @@ static const char  *static_camera_list[] =
 "FujiFilm X-Pro1",
 "FujiFilm X-S1",
 "FujiFilm XQ1",
+"FujiFilm XQ2",
 "FujiFilm X100",
 "FujiFilm X100S",
 "FujiFilm X100T",
@@ -3521,12 +3565,14 @@ static const char  *static_camera_list[] =
 "FujiFilm X20",
 "FujiFilm X30",
 "FujiFilm X-A1",
+"FujiFilm X-A2",
 "FujiFilm X-E1",
 "FujiFilm X-E2",
 "FujiFilm X-M1",
 "FujiFilm XF1",
 "FujiFilm X-T1",
 "FujiFilm X-T1 Graphite Silver",
+"FujiFilm X-T10",
 "FujiFilm IS-1",
 "Hasselblad H5D-60",
 "Hasselblad H5D-50",
@@ -3551,6 +3597,7 @@ static const char  *static_camera_list[] =
 "Hasselblad CF-31",
 "Hasselblad CF-39",
 "Hasselblad V96C",
+"Hasselblad Lusso",
 "Hasselblad Lunar",
 "Hasselblad Stellar",
 "Hasselblad Stellar II",
@@ -3654,9 +3701,11 @@ static const char  *static_camera_list[] =
 "Leica M9",
 "Leica M (Typ 240)",
 "Leica Monochrom (Typ 240)",
+"Leica Monochrom (Typ 246)",
 "Leica M-E",
 "Leica M-P",
 "Leica R8",
+"Leica Q (Typ 116)",
 "Leica S",
 "Leica S2",
 //"Leica S3",
@@ -3722,6 +3771,7 @@ static const char  *static_camera_list[] =
 "Nikon D800",
 "Nikon D800E",
 "Nikon D810",
+"Nikon D810A",
 "Nikon D3000",
 "Nikon D3100",
 "Nikon D3200",
@@ -3733,12 +3783,14 @@ static const char  *static_camera_list[] =
 "Nikon D5500",
 "Nikon D7000",
 "Nikon D7100",
+"Nikon D7200",
 "Nikon Df",
 "Nikon 1 AW1",
 "Nikon 1 J1",
 "Nikon 1 J2",
 "Nikon 1 J3",
 "Nikon 1 J4",
+"Nikon 1 J5",
 "Nikon 1 S1",
 "Nikon 1 S2",
 "Nikon 1 V1",
@@ -3778,6 +3830,7 @@ static const char  *static_camera_list[] =
 "Nokia 1200x1600",
 "Nokia Lumia 1020",
 "Nokia Lumia 1520",
+"Olympus AIR A01",
 "Olympus C3030Z",
 "Olympus C5050Z",
 "Olympus C5060Z",
@@ -3832,6 +3885,8 @@ static const char  *static_camera_list[] =
 "Olympus SP570UZ",
 "Olympus STYLUS1",
 "Olympus STYLUS1s",
+"Olympus SH-2",
+"Olympus TG-4",
 "Olympus XZ-1",
 "Olympus XZ-2",
 "Olympus XZ-10",
@@ -3849,6 +3904,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-FZ100",
 "Panasonic DMC-FZ150",
 "Panasonic DMC-FZ200",
+"Panasonic DMC-FZ300/330",
 "Panasonic DMC-FZ1000",
 "Panasonic DMC-FX150",
 "Panasonic DMC-G1",
@@ -3857,6 +3913,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-G3",
 "Panasonic DMC-G5",
 "Panasonic DMC-G6",
+"Panasonic DMC-G7/G70",
 "Panasonic DMC-GF1",
 "Panasonic DMC-GF2",
 "Panasonic DMC-GF3",
@@ -3874,6 +3931,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-GM5",
 "Panasonic DMC-GX1",
 "Panasonic DMC-GX7",
+"Panasonic DMC-GX8",
 "Panasonic DMC-L1",
 "Panasonic DMC-L10",
 "Panasonic DMC-LC1",
@@ -3885,7 +3943,7 @@ static const char  *static_camera_list[] =
 "Panasonic DMC-LX7",
 "Panasonic DMC-LX100",
 "Panasonic DMC-TZ60/61/SZ40",
-"Panasonic DMC-TZ70",
+"Panasonic DMC-TZ70/71/ZS50",
 "Pentax *ist D",
 "Pentax *ist DL",
 "Pentax *ist DL2",
@@ -3903,6 +3961,7 @@ static const char  *static_camera_list[] =
 "Pentax K-r",
 "Pentax K-01",
 "Pentax K-3",
+"Pentax K-3 II (std mode)",
 "Pentax K-30",
 "Pentax K-5",
 "Pentax K-5 II",
@@ -3911,6 +3970,7 @@ static const char  *static_camera_list[] =
 "Pentax K-500",
 "Pentax K-7",
 "Pentax K-S1",
+"Pentax K-S2",
 "Pentax MX-1",
 "Pentax Q",
 "Pentax Q7",
@@ -3946,6 +4006,7 @@ static const char  *static_camera_list[] =
 "PhaseOne P 45+",
 "PhaseOne P 65",
 "PhaseOne P 65+",
+"Photron BC2-HD",
 "Pixelink A782",
 "Polaroid x530",
 "Ricoh GR",
@@ -3988,6 +4049,7 @@ static const char  *static_camera_list[] =
 "Samsung NX300",
 "Samsung NX300M",
 "Samsung NX3000",
+"Samsung NX500",
 "Samsung NX mini",
 "Samsung Pro815",
 "Samsung WB550",
@@ -4015,8 +4077,11 @@ static const char  *static_camera_list[] =
 "Sigma DP2 Merill",
 "Sigma DP2S",
 "Sigma DP2X",
+"Sigma DP3 Merill",
+"Sigma dp0 Quattro",
 "Sigma dp1 Quattro",
 "Sigma dp2 Quattro",
+"Sigma dp3 Quattro",
 "Sinar eMotion 22",
 "Sinar eMotion 54",
 "Sinar eSpirit 65",
@@ -4033,6 +4098,7 @@ static const char  *static_camera_list[] =
 "Sony A7",
 "Sony A7 II",
 "Sony A7R",
+"Sony A7R II",
 "Sony A7S",
 "Sony ILCA-77M2 (A77-II)",
 "Sony ILCE-3000",
@@ -4045,9 +4111,11 @@ static const char  *static_camera_list[] =
 "Sony DSC-RX1",
 "Sony DSC-RX1R",
 "Sony DSC-RX10",
+"Sony DSC-RX10II",
 "Sony DSC-RX100",
 "Sony DSC-RX100II",
 "Sony DSC-RX100III",
+"Sony DSC-RX100IV",
 "Sony DSC-V3",
 "Sony DSLR-A100",
 "Sony DSLR-A200",
@@ -4380,8 +4448,11 @@ void LibRaw::x3f_thumb_loader()
       char *src0 = (char*)ID->data;
       for(int row = 0; row < ID->rows;row++)
         {
+		  int offset = row * ID->row_stride;
+		  if (offset + ID->columns * 3 > ID->data_size)
+			break;
           char *dest = &imgdata.thumbnail.thumb[row*ID->columns*3];
-          char *src = &src0[row * ID->row_stride];
+          char *src = &src0[offset];
           memmove(dest,src,ID->columns*3);
         }
     }
@@ -4501,7 +4572,7 @@ void LibRaw::x3f_load_raw()
       imgdata.rawdata.color3_image = (ushort (*)[3])data;
 
 	  if(!strcasecmp(imgdata.idata.make,"Sigma")
-		  && (!strcasecmp(imgdata.idata.model,"dp2 Quattro")  || !strcasecmp(imgdata.idata.model,"dp1 Quattro"))
+		  && !strncasecmp(imgdata.idata.model,"dp",2)  && !strncasecmp(imgdata.idata.model+4,"Quattro",7)
 		  && (imgdata.params.x3f_flags & LIBRAW_DP2Q_INTERPOLATEAF)
 		  )
 	  {
@@ -4516,7 +4587,7 @@ void LibRaw::x3f_load_raw()
 	  }
 
 	  if(!strcasecmp(imgdata.idata.make,"Sigma")
-		  && (!strcasecmp(imgdata.idata.model,"dp2 Quattro") || !strcasecmp(imgdata.idata.model,"dp1 Quattro"))
+		  && !strncasecmp(imgdata.idata.model,"dp",2)  && !strncasecmp(imgdata.idata.model+4,"Quattro",7)
 		  && (imgdata.params.x3f_flags & LIBRAW_DP2Q_INTERPOLATERG)
 		  && (imgdata.sizes.raw_width== 5888)
 		  )

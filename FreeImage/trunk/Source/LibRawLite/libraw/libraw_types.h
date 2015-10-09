@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_types.h
- * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2015 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
  * LibRaw C data structures
@@ -205,7 +205,7 @@ typedef struct
 	int CanonColorDataSubVer;
 	int SpecularWhiteLevel;
 	int AverageBlackLevel;
-} canon_makernotes_t;
+} libraw_canon_makernotes_t;
 
 typedef struct
 {
@@ -228,9 +228,10 @@ typedef struct
   unsigned    profile_length;
   unsigned    black_stat[8];
   libraw_dng_color_t  dng_color[2];
-  canon_makernotes_t canon_makernotes;
+  libraw_canon_makernotes_t canon_makernotes;
   float	      baseline_exposure;
   int		  OlympusSensorCalibration[2];
+  float       FujiExpoMidPointShift;
   int		digitalBack_color;
 }libraw_colordata_t;
 
@@ -247,9 +248,9 @@ typedef struct
 
 typedef struct
 {
-	float latitude[3]; // Deg,min,sec
-	float longtitude[3]; // Deg,min,sec
-	float gpstimestamp[3]; // Deg,min,sec
+	float latitude[3]; /* Deg,min,sec */
+	float longtitude[3]; /* Deg,min,sec */
+	float gpstimestamp[3]; /* Deg,min,sec */
 	float altitude;
 	char  altref, latref, longref, gpsstatus;
 	char  gpsparsed;
@@ -372,13 +373,13 @@ typedef struct
 {
 	unsigned long long LensID;
 	char	Lens[128];
-	ushort	LensFormat;		// to characterize the image circle the lens covers
-	ushort	LensMount;		// 'male', lens itself
-	unsigned long CamID;
-	ushort	CameraFormat;	// some of the sensor formats
-	ushort	CameraMount;	// 'female', body throat
+	ushort	LensFormat;    /* to characterize the image circle the lens covers */
+	ushort	LensMount;     /* 'male', lens itself */
+	unsigned long long  CamID;
+	ushort	CameraFormat;  /* some of the sensor formats */
+	ushort	CameraMount;   /* 'female', body throat */
 	char	body[64];
-	short	FocalType;		// -1/0 is unknown; 1 is fixed focal; 2 is zoom
+	short	FocalType;       /* -1/0 is unknown; 1 is fixed focal; 2 is zoom */
 	char	LensFeatures_pre[16], LensFeatures_suf[16];
 	float	MinFocal, MaxFocal;
 	float	MaxAp4MinFocal, MaxAp4MaxFocal, MinAp4MinFocal, MinAp4MaxFocal;

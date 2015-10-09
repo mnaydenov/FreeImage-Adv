@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_internal_funcs.h
- * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2015 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  14, 2008
 
 LibRaw is free software; you can redistribute it and/or modify
@@ -34,11 +34,12 @@ it under the terms of the one of three licenses as you choose:
     ushort      sget2 (uchar *s);
     ushort      sget2Rev(uchar *s);
     void	setCanonBodyFeatures (unsigned id);
-    void 	processCanonCameraInfo (unsigned id, uchar *CameraInfo);
+    void 	processCanonCameraInfo (unsigned id, uchar *CameraInfo, unsigned maxlen);
     void	processNikonLensData (uchar *LensData, unsigned len);
-    void	setOlympusBodyFeatures (unsigned long id);
+    void	setOlympusBodyFeatures (unsigned long long id);
     void	setPhaseOneFeatures (unsigned id);
     void	setPentaxBodyFeatures (unsigned id);
+    void	PentaxLensInfo (unsigned id, unsigned len);
     void	setSonyBodyFeatures (unsigned id);
     void	parseSonyLensType2 (uchar a, uchar b);
     void 	parseSonyLensFeatures (uchar a, uchar b);
@@ -129,6 +130,7 @@ void        crw_init_tables (unsigned table, ushort *huff[2]);
     void        packed_load_raw();
     float	find_green(int,int,int,int);
     void        unpacked_load_raw();
+    void        unpacked_load_raw_fuji_f700s20();
     void        parse_sinar_ia();
     void        parse_phase_one (int base);
 
