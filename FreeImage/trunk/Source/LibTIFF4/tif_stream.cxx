@@ -1,4 +1,4 @@
-/* $Id: tif_stream.cxx,v 1.11 2015-02-19 22:39:59 drolon Exp $ */
+/* $Id: tif_stream.cxx,v 1.12 2015-10-09 21:36:11 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1996 Sam Leffler
@@ -421,9 +421,10 @@ TIFFStreamOpen(const char* name, istream *is)
 
 /* vim: set ts=8 sts=8 sw=8 noet: */
 /*
-  Local Variables:
-  mode: c
-  indent-tabs-mode: true
-  c-basic-offset: 8
-  End:
-*/
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 8
+ * fill-column: 78
+ * End:
+ */
+
