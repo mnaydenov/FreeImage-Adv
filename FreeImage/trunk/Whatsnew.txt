@@ -6,6 +6,10 @@ What's New for FreeImage
 + : added
 
 Month day, 2015 - 3.17.1
+! FreeImage now uses LibRaw 0.17.0
+! FreeImage now uses LibWebP 0.4.3 (GIT patch 2015-10-09)
+! FreeImage now uses LibPNG 1.6.18
+! FreeImage now uses LibTIFF 4.0.6
 * [Pengsu Cheng] fixed PCX loader against malicious images with a bad window specification
 * [Herve Drolon] fixed TIFF loader with loading of RGB[A]F float images
 
