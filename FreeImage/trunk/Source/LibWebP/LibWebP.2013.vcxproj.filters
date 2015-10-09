@@ -433,5 +433,38 @@
     <ClCompile Include="src\utils\utils.utils.c">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="src\dsp\dsp.alpha_processing_sse41.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.dec_sse41.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.enc_sse41.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.lossless_enc.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.lossless_enc_mips_dsp_r2.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.lossless_enc_mips32.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.lossless_enc_neon.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.lossless_enc_sse2.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.lossless_enc_sse41.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.rescaler_neon.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dsp\dsp.rescaler_sse2.c">
+      <Filter>Source Files\dsp</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
