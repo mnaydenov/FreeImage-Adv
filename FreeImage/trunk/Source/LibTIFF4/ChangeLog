@@ -1,3 +1,464 @@
+2015-09-12  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff 4.0.6 released.
+
+	* html/v4.0.6.html: Added release notes for 4.0.6.
+
+2015-09-06  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/tiffgt.c: Silence glut API deprecation warnings on MacOS
+	X.  Patch by Roger Leigh.
+
+	* Makefile.am: Added a 'coverity' rule to assist with Coverity
+	submissions.
+
+	* tools/tiff2pdf.c: Fix compiler warning about unused function
+	when JPEG is not available.
+
+	* tools/fax2ps.c (main): Detect failure to write to temporary
+	file.
+
+2015-09-05  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_dirread.c (TIFFReadDirEntryCheckRangeSlongSlong8):
+	Change implementation so that it does not sometimes overflow the
+	range of a 32-bit int and to avoid a signed vs unsigned compare
+	compiler warning.
+	(TIFF_INT64_MAX): Avoid use of platform-specific large constants.
+	(TIFF_UINT32_MAX): Avoid use of platform-specific large constants.
+
+2015-09-01  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* Makefile.am (distcheck-hook), configure.ac: Applied patches by
+	Roger Leigh (via tiff mailing list on 2015-09-01) to fix issue
+	with BSD make and to make use of cmake in 'distcheck' target
+	conditional on if cmake is available.
+
+	* CMakeLists.txt, Makefile.am, configure.ac: Applied patches by
+	Roger Leigh (via tiff mailing list on 2015-09-01).
+
+	CMake build is now included in 'distcheck' target.
+
+	Builds with CMake 2.8.9 and newer.
+
+	Tar is now resquested to use POSIX PAX format.
+
+2015-08-31  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* CMakeLists.txt, libtiff/test/Makefile.am: Applied patches by
+	Roger Leigh (via tiff mailing list on 2015-08-31.
+
+	CMake reads all version information directly from configure.ac to
+	avoid duplication of values.  This basically greps over the file
+	for the LIBTIFF_* variables, then translates them to the form
+	needed for cmake. This includes the release version and libtool
+	shared library version information.
+
+	Make shared/static library building configurable.  Currently it
+	always builds shared libraries, with static libs having a _static
+	suffix (copying zlib, but it means it's got a non-standard name).
+	CMake has a -DBUILD_SHARED_LIBS=ON|OFF option to select one or the
+	other, which is now used instead.  There's now a single "tiff"
+	target to build either shared or static as required, and all the
+	tests and tools are linked with this. Note: the Windows tests fail
+	when linked with a static libtiff (says: libtiff.dll not found).
+	Not really a regression since this was not tested up to this
+	point, and it's likely the unit tests haven't (ever?) been run on
+	Windows with a static libtiff, so there's some additional
+	portability issue here to address.  Works fine on UNIX systems,
+	and fine on Windows with the default to build a DLL.
+
+	Add a missing file which wasn't being distributed, causing unit
+	tests to fail.  Note that "find . -name '*.cmake'" lists all the
+	CMake files which need distributing in addition to all the
+	CMakeLists.txt files (which now are distributed).
+
+2015-08-31  Even Rouault <even.rouault at spatialys.com>
+
+	* libtiff/tif_predict.c: pedantic change to add explicit masking
+	with 0xff before casting to uchar in floating-point horizontal
+	differencing and accumulation routines.
+
+2015-08-31  Even Rouault <even.rouault at spatialys.com>
+
+	* libtiff/tif_predict.c: fix generation of output with 16 bit
+	or 32 bit integer, when byte swapping is needed, in
+	horizontal predictor (#2521). Also fixes decoding when there is
+	a single pixel to code (unlikely case...) and byte swapping is
+	involved.
+
+2015-08-30  Even Rouault <even.rouault at spatialys.com>
+
+	* libtiff/tif_lzw.c: make nextdata a unsigned type to avoid
+	undefined behaviour with shifts (gcc -fsanitize=shift)
+
+2015-08-30  Even Rouault <even.rouault at spatialys.com>
+
+	* libtiff/tif_fax3.c, libtiff/tif_lzw.c, libtiff/tif_predict.c:
+	add explicit masking with 0xff before casting
+	to unsigned char (make icc -check=conversions happy)
+
+	* libtiff/tif_predict.c: operate on unsigned datatypes when
+	computing/applying differences to avoid undefined behaviour of
+	signed types (C standard compliance)
+
+2015-08-30  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* configure.ac: libtiff 4.0.5 released.
+
+2015-08-29  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* CMakeLists.txt: Applied patch by Roger Leigh (via tiff mailing
+	list on 2015-08-29) to add ld-version-script option to cmake build
+	to match autoconf.  Note: defaults to 'on' to be ABI-compatible by
+	default with common Linux distribution builds.  Note that the
+	autoconf configure script defaults to 'off'.
+
+	* html/build.html: Applied patch by Roger Leigh (via tiff mailing
+	list on 2015-08-29) to describe how to use CMake to build libtiff.
+
+2015-08-28  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* html/v4.0.5.html: Added HTML file describing the changes which
+	will appear in the 4.0.5 release.
+
+2015-08-23  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tiffiop.h: For MinGW comiles, make sure that build
+	supports necessary __MSVCRT_VERSION__ (at least at least 0x800).
+	Otherwise large files can not be supported for POSIX-style I/O.
+
+	* tools/fax2tiff.c (main): Eliminate a compiler warning in 64-bit
+	builds about cast to thandle_t.
+
+	* test/rewrite_tag.c (main): Does not require any arguments.
+
+2015-08-20  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/CMakeLists.txt, port/snprintf.c: Patch by Roger Leigh to
+	fix build issues when using Cmake due to Windows large file
+	changes.
+
+2015-08-18  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tiffiop.h: First cut at supporting large files under
+	Microsoft Windows using tif_unix.c and the libtiff tools.  This
+	only works if the Windows CDK is new enough to support the APIs
+	used (Visual C++ 2005 or later).  Support for large files is not
+	actually tested yet.
+
+2015-08-15  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_jpeg.c: Applied patch by Räisä Olli to assure that
+	client_data is initialized to a known value, and to report an
+	error on two memory allocation failures.
+
+2015-08-13  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* CMakeLists.txt: Applied patch by Roger Leigh to fix libtiffxx
+	symbol versioning.  Patch was mailed to libtiff list on Thu, 13
+	Aug 2015.
+
+2015-07-04  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* cmake: Add d suffix to debug libraries with MSVC.  Patch #3 of 3
+	by Roger Leigh posted to tiff list on Wed, 1 Jul 2015 15:58:20
+	+0100.
+
+	* cmake: Add extra warning flags.  Patch #2 of 3 by Roger Leigh
+	posted to tiff list on Wed, 1 Jul 2015 15:58:20 +0100.
+
+	* cmake: Correct snprintf fallback for VS2015.  Patch #1 of 3 by
+	Roger Leigh posted to tiff list on Wed, 1 Jul 2015 15:58:20 +0100.
+
+2015-06-24  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* CMakeLists.txt: Add CMake patchset by Roger Leigh as posted to
+	libtiff mailing list on Mon, 22 Jun 2015 21:21:01 +0100. Several
+	corrections to ensure that the autotools build still works were
+	added by me.  I have not yet tested the build using 'cmake' or
+	MSVC with 'nmake'.
+
+2015-06-21  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* test/Makefile.am: tiff2rgba-quad-tile.jpg.sh depends on the JPEG
+	library so only execute if JPEG is available.
+
+	* libtiff 4.0.4 released.
+
+	* configure.ac: Add a HAVE_FOO Automake conditional for each
+	add-on library.
+
+	* test/Makefile.am (JPEG_DEPENDENT_CHECK_PROG): raw_decode
+	requires JPEG support to compile.  Use Automake conditional to
+	only include it when JPEG support is available.
+
+	* html/build.html: Try to improve the nmake-based VC++ build
+	description.
+
+	* libtiff/tiffconf.vc.h: Build fixes based on testing.
+
+	* libtiff/tif_config.vc.h: Build fixes based on testing.
+
+	* libtiff/libtiff.def: TIFFRasterScanline does not exist so remove
+	export for it.
+
+2015-06-20  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_config.vc.h: Make adjustments to match the new
+	definitions that configure produces, including for WIN64.  Still
+	needs to be tested.
+
+	* configure.ac: For 64-bit MinGW, fix SSIZE_FORMAT formatting
+	specifier.  64-bit MinGW supports 'long long' but support for
+	'lld' is not assured by the run-time DLLs and so GCC warns.
+	Add TIFF_SIZE_T and TIFF_SIZE_FORMAT to provide a type definition
+	and printf format specifier to deal with printing values of
+	'size_t' type.  In particular, this was necessary for WIN64.
+	Added a configure test for if the system headers provide 'optarg'
+	(normal case) and block out the many explicit 'extern' statements
+	in the utilities.  This was found to be necessary under Windows
+	when getopt is in a DLL and the symbols are already imported with
+	dllimport via standard header files.
+
+	* test/raw_decode.c (XMD_H): Avoid conflicting typedefs for INT32
+	and boolean in MinGW build due to including jpeglib.h.
+
+	* test/rewrite_tag.c (main): Fix problem with location of variable
+	declaration.
+
+	* libtiff/libtiff.def: Added exports for TIFFGetConfiguredCODECs,
+	TIFFReadRGBAImageOriented, TIFFSetCompressionScheme,
+	TIFFSwabArrayOfTriples, TIFFVGetFieldDefaulted, _TIFFCheckRealloc,
+	TIFFRasterScanline, TIFFSetErrorHandlerExt,
+	TIFFSetWarningHandlerExt, TIFFNumberOfDirectories,
+	TIFFCreateCustomDirectory, TIFFCreateEXIFDirectory,
+	TIFFWriteCustomDirectory, _TIFFRewriteField as recommended by
+	Roger Leigh and justified by use in libtiff tests, documentation,
+	and changelog notes.  Also sorted symbol list and removed
+	duplicate entries.
+
+2015-06-16  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_getimage.c: Fix four Coverity issues related to
+	unintended sign extension.
+
+2015-06-16  Even Rouault <even.rouault at spatialys.com>
+
+	* libtiff/tif_unix.c: fix compilation with MSVC (fix by Jeff McKenna)
+
+2015-06-14  Lee Howard  <faxguy@howardsilvan.com>
+
+	* libtiff/tif_unix.c: contribution from Vadim Zeitlin on
+	Bugzilla Bug #2510 fixes several harmless but still annoying
+	warnings
+
+	* configure: contribution from Ludolf Holzheid on Bugzilla
+	Bug #2498.  Adds an option to select the file I/O style on
+	Windows hosts.
+
+	* libtiff/tif_getimage.c: contribution from Gary Cramblitt
+	on Bugzilla Bug #2409.  Correct reading of certain tiled TIFFs.
+
+	* configure, configure.ac: contribution from Marcos H. Woehrmann
+	on Bugzilla Bug #2405.  Correct shell equality operator.
+
+	* tools/tiffgt.c (raster_draw): contribution from Jay Berkenbilt
+	on Bugzilla Bug #2401.  Appropriately call glFlush().
+
+	* tools/tiff2pdf.c: change ColorTransform from "0" to "1"
+	following Bugzilla Bug #2150.
+
+2015-06-13  Lee Howard  <faxguy@howardsilvan.com>
+
+	* libtiff/tif_lzw.c: contribution from Andy Cave - decode
+	files that contain consecutive CODE_CLEAR codes.
+
+	* tools/tiff2pdf.c: contribution from Antti S. Lankila on
+	Bugzilla Bug #2078. Suppress initial output of the header.
+
+	* tools/tiff2pdf.c: contribution from Yuriy M. Kaminskiy -
+	Take care in using the return value from snprintf().
+
+	* tools/tiffcrop.c: contribution from Eduardo Robles Elvira -
+	correctly copy the compression tag from the source TIFF.
+
+	* tools/tiff2ps.c: contribution from Eduardo Robles Elvira -
+	correct sizing and scaling problems with output document.
+
+2015-06-10  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_jpeg.c (JPEGDecode): Split JPEGDecode() into two
+	clean implementations in order to avoid pre-processor hell.  Only
+	one of the implementations is used in a given build.
+
+2015-06-08  Even Rouault <even.rouault at spatialys.com>
+
+	* libtiff/tif_jpeg.c: Fix compilation in BITS_IN_JSAMPLE == 12
+	case
+
+2015-06-07  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_write.c (TIFFWriteEncodedStrip): Fix Coverity 715975
+	"Division or modulo by zero".
+	(TIFFWriteEncodedTile): Fix Coverity 715976 and 715977 "Division
+	or modulo by zero".
+	(TIFFWriteRawStrip): Fix Coverity 715978 "Division or modulo by
+	zero".
+	(TIFFWriteScanline): Fix Coverity 715979 "Division or modulo by
+	zero".
+
+	* libtiff/tif_read.c (TIFFStartTile): Fix Coverity 715973 and
+	715974 "Division or modulo by zero".
+
+2015-05-31  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_dir.c (TIFFNumberOfDirectories): Quiet Coverity
+	1134470 "Logically dead code" by making the roll-over check
+	explicit.
+
+	* libtiff/tif_luv.c (LogLuvDecodeTile): Fix Coverity 991227
+	"Division or modulo by zero".
+	(LogLuvDecodeStrip): Fix Coverity 991239 "Division or modulo by
+	zero".
+	(LogLuvEncodeStrip): Fix Coverity 991240 "Division or modulo by
+	zero".
+	(LogLuvEncodeTile): Fix Coverity 991241 "Division or modulo by
+	zero".
+
+	* libtiff/tif_dirread.c (TIFFReadDirEntryDoubleArray): Fix
+	Coverity 298626 "Logically dead code".
+	(TIFFReadDirEntryFloatArray): Fix Coverity 298627 "Logically dead
+	code".
+	(TIFFReadDirEntryIfd8Array): Fix Coverity 298628 "Logically dead
+	code".
+	(TIFFReadDirEntrySlong8Array): Fix Coverity 298629 "Logically dead
+	code"
+
+	* libtiff/tif_dir.c (TIFFNumberOfDirectories): Don't depend on ++
+	operator precedenc in evaluation.  Might quench Coverity 1134470
+	"Logically dead code".
+
+	* libtiff/tif_jpeg.c (JPEGDecode): Fix Coverity 602597 "Operands
+	don't affect result".  This change uses ifdefs to include
+	applicable code based on properties of libjpeg.  Still needs to be
+	re-tested with 12-bit "6b" and "MK1".
+
+2015-05-30  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* libtiff/tif_dirwrite.c (_TIFFRewriteField): Fix Coverity 1024310
+	"Resource leak".
+
+	* libtiff/tif_ojpeg.c (OJPEGReadHeaderInfoSecStreamDht): Fix
+	Coverity 601720 "Resource leak".
+
+	* libtiff/tif_jpeg.c (JPEGCleanup): Fix Coverity 298624
+	"Dereference before null check".
+
+	* libtiff/tif_ojpeg.c (OJPEGReadBufferFill): Fix Coverity 603400
+	"Missing break in switch".
+
+	* contrib/addtiffo/tif_overview.c (TIFF_DownSample): Check buffer
+	size calculation for overflow.
+
+	* contrib/addtiffo/addtiffo.c (main): Possibly address Coverity
+	1024226 "Untrusted value as argument".
+
+	* tools/gif2tiff.c (readgifimage): Fix Coverity 1024222 "Untrusted
+	value as argument".
+	(checksignature): Fix Coverity 1024894 "Ignoring number of bytes
+	read".
+	(readextension): Fix Coverity 1024893 "Ignoring number of bytes
+	read".
+	(readgifimage): Fix Coverity 1024890 "Ignoring number of bytes
+	read".
+	(readraster): Fix Coverity 1024891 "Ignoring number of bytes
+	read".
+	(readgifimage): Fix Coverity 1024892 "Ignoring number of bytes
+	read".
+
+	* tools/tiff2pdf.c (t2p_readwrite_pdf_image): Fix Coverity 1024181
+	"Structurally dead code".
+
+	* tools/raw2tiff.c (main): Fix Coverity 1024887 "Unchecked return
+	value from library".
+	(guessSize): Fix Coverity 1024888 "Unchecked return value from
+	library".
+	(guessSize): Fix Coverity 1214162 "Ignoring number of bytes read".
+	(guessSize): Fix Coverity 1024889 "Unchecked return value from
+	library".
+
+	* tools/tiff2pdf.c (t2p_readwrite_pdf_image): Fix Coverity 298621
+	"Resource leak".
+	(t2p_readwrite_pdf_image): Fix Coverity 1024181 "Structurally dead
+	code".
+	(t2p_write_pdf): Fix Coverity 1227690 "Unused value".
+
+2015-05-29  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* contrib/iptcutil/iptcutil.c (formatIPTC): Fix Coverity 1024468
+	"Infinite loop".
+	(formatIPTC): Fix Coverity 1024727 "Truncated stdio return value".
+	(formatIPTC): Fix Coverity 1214240 "Untrusted loop bound".
+
+2015-05-28  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* contrib/addtiffo/tif_ovrcache.c (TIFFCreateOvrCache): Fix
+	Coverity 298615 "Resource leak".
+	(TIFFGetOvrBlock): Fix Coverity 1024649 "Unintended sign
+	extension".
+
+	* tools/bmp2tiff.c (main): Fix Coverity 1024225 "Untrusted value
+	as argument".
+	(main): Fix Coverity 1024678 "Unchecked return value from
+	library".
+	(main): Fix Coverity 1024679 "Unchecked return value from
+	library".
+	(main): Fix Coverity 1214160 "Ignoring number of bytes read".
+
+	* contrib/addtiffo/tif_ovrcache.c (TIFFCreateOvrCache): Fix
+	Coverity 298615 "Resource leak".
+
+	* tools/tiffcp.c: Fix Coverity 1024306, 1024307, 1024308, 1024309
+	"Resource leak".
+
+	* tools/tiffsplit.c (cpTiles): Fix Coverity 1024304 "Resource
+	leak".
+	(cpStrips): Fix Coverity 1024305 "Resource leak".
+
+2015-05-27  Bob Friesenhahn  <bfriesen@simple.dallas.tx.us>
+
+	* tools/ras2tiff.c: Fix Sun Raster header definition to be safe
+	for 64-bit systems.  Add some header validations.  Should fix many
+	Coverity issues.
+	(main): Fix Coverity 1301206: "Integer handling issues  (BAD_SHIFT)".
+	(main): Quiet Coverity 1024223 "Untrusted value as argument".
+
+	* tools/tiffmedian.c (GetInputLine): Fix Coverity 1024795 "Nesting
+	level does not match indentation".
+	(get_histogram): Quiet Coverity 1024386 "Out-of-bounds read".
+	This was a benign mis-diagnosis but added code to enforce against
+	buffer overflow.
+
+	* tools/tiffcrop.c (ROTATE_ANY): Fix Coverity 1294542 "Logical
+	vs. bitwise operator".
+	(readContigStripsIntoBuffer): Fix Coverity 1024545 "Division or
+	modulo by zero".
+	(readContigTilesIntoBuffer): Fix Coverity 1024586 "Logically dead
+	code".
+	(writeSingleSection): Fix Coverity 1024796 "Nesting level does not
+	match indentation".
+	(writeCroppedImage): Fix Coverity 1024797 "Nesting level does not
+	match indentation".
+	(loadImage): Fix Coverity 1299741 "Dereference before null check".
+	(loadImage): Fix Coverity 1299740 "Out-of-bounds write".
+
+2015-03-02  Even Rouault  <even.rouault@spatialys.com>
+
+	* tools/tiffdither.c: check memory allocations to avoid writing to
+	NULL pointer. Also check multiplication overflow. Fixes #2501,
+	CVE-2014-8128. Derived from patch by Petr Gajdos.
+
 2015-01-26  Even Rouault  <even.rouault@spatialys.com>
 
 	* add html/v4.0.4beta.html under version control
