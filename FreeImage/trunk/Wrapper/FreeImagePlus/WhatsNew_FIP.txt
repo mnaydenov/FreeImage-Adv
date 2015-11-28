@@ -5,6 +5,12 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+Month day, 2015
++ [Herve Drolon] added fipImage._fif handling
++ [Herve Drolon] added fipImage::clearMetadata
+* [Herve Drolon] fixed a bug in fipWinImage::copyFromHandle
+* [Herve Drolon] minor refactoring
+
 March 01st, 2015
 + [Herve Drolon] added fipImage::convertToRGBAF
 + [Herve Drolon] added fipImage::convertToRGBA16
