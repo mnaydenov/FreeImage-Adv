@@ -278,13 +278,13 @@ public:
 	@return Returns TRUE if successful, FALSE otherwise.
 	@see FreeImage_Save, FreeImage documentation
 	*/
-	BOOL save(const char* lpszPathName, int flag = 0) const;
+	BOOL save(const char* lpszPathName, int flag = 0);
 
 	/**
 	UNICODE version of save (this function only works under WIN32 and does nothing on other OS)
 	@see save
 	*/
-	BOOL saveU(const wchar_t* lpszPathName, int flag = 0) const;
+	BOOL saveU(const wchar_t* lpszPathName, int flag = 0);
 
 	/**
 	@brief Saves an image using the specified FreeImageIO struct and fi_handle, and an optional flag.
@@ -295,7 +295,7 @@ public:
 	@return Returns TRUE if successful, FALSE otherwise.
 	@see FreeImage_SaveToHandle, FreeImage documentation
 	*/
-	BOOL saveToHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flag = 0) const;
+	BOOL saveToHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flag = 0);
 
 	/**
 	@brief Saves an image using the specified memory stream and an optional flag.
@@ -305,7 +305,7 @@ public:
 	@return Returns TRUE if successful, FALSE otherwise.
 	@see FreeImage_SaveToMemory, FreeImage documentation
 	*/
-	BOOL saveToMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flag = 0) const;
+	BOOL saveToMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flag = 0);
 
 	//@}
 
@@ -319,6 +319,11 @@ public:
 	@see FreeImage_GetImageType
 	*/
 	FREE_IMAGE_TYPE getImageType() const;
+
+	/**
+	Return the original (or last saved) fif format if available, returns FIF_UNKNOWN otherwise
+	*/
+	FREE_IMAGE_FORMAT getFIF() const;
 
 	/**
 	Returns the image width in pixels
@@ -361,13 +366,13 @@ public:
 	Returns a pointer to the bitmap's BITMAPINFO header. 
 	@see FreeImage_GetInfo
 	*/
-	BITMAPINFO* getInfo() const;
+	const BITMAPINFO* getInfo() const;
 
 	/**
 	Returns a pointer to the bitmap's BITMAPINFOHEADER. 
 	@see FreeImage_GetInfoHeader
 	*/
-    BITMAPINFOHEADER* getInfoHeader() const;
+    const BITMAPINFOHEADER* getInfoHeader() const;
 
 	/**
 	Returns the size of the bitmap in bytes. 
@@ -971,7 +976,7 @@ public:
 	fipImage image;
 	// ...
 	fipTag tag;
-	tag.setKeyValue("Caption/Abstract", "my caption");
+	tag.setKeyValue("Caption-Abstract", "my caption");
 	image.setMetadata(FIMD_IPTC, tag.getKey(), tag);
 	tag.setKeyValue("Keywords", "FreeImage;Library;Images;Compression");
 	image.setMetadata(FIMD_IPTC, tag.getKey(), tag);
@@ -984,8 +989,12 @@ public:
 	@see FreeImage_SetMetadata
 	*/
 	BOOL setMetadata(FREE_IMAGE_MDMODEL model, const char *key, fipTag& tag);
+	
+	/**
+	Clear all metadata contained in the dib
+	*/
+	void clearMetadata();
 	//@}
-
 
   protected:
 	/**@name Internal use */
