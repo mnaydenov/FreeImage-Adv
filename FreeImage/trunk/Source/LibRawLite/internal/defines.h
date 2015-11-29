@@ -27,8 +27,7 @@ it under the terms of the one of three licenses as you choose:
 #ifndef USE_JASPER
 #define NO_JASPER
 #endif
-#define DCRAW_VERSION "9.25"
-
+#define DCRAW_VERSION "9.26"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -60,9 +59,8 @@ it under the terms of the one of three licenses as you choose:
 #include <unistd.h>
 #include <utime.h>
 #include <netinet/in.h>
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
 #ifdef NODEPS
@@ -109,7 +107,7 @@ typedef uint64_t UINT64;
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define LIM(x,min,max) MAX(min,MIN(x,max))
 #define ULIM(x,y,z) ((y) < (z) ? LIM(x,y,z) : LIM(x,z,y))
-#define CLIP(x) LIM(x,0,65535)
+#define CLIP(x) LIM((int)(x),0,65535)
 #define SWAP(a,b) { a=a+b; b=a-b; a=a-b; }
 
 #define my_swap(type, i, j) {type t = i; i = j; j = t;}

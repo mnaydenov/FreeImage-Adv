@@ -80,7 +80,8 @@ DllDef    void                libraw_set_dataerror_handler(libraw_data_t*,data_c
 DllDef    void                libraw_set_progress_handler(libraw_data_t*,progress_callback cb,void *datap);
 DllDef    const char *        libraw_unpack_function_name(libraw_data_t* lr);
 DllDef    int                 libraw_get_decoder_info(libraw_data_t* lr,libraw_decoder_info_t* d);
-DllDef    int libraw_COLOR(libraw_data_t*,int row, int col);
+DllDef    int				  libraw_COLOR(libraw_data_t*,int row, int col);
+DllDef	  unsigned			  libraw_capabilities();
 
     /* DCRAW compatibility */
 DllDef    int                 libraw_adjust_sizes_info_only(libraw_data_t*);
@@ -143,12 +144,14 @@ class DllDef LibRaw
     void                        raw2image_start();
     void                        free_image();
     int                         adjust_maximum();
-    void		      	set_exifparser_handler( exif_parser_callback cb,void *data) {callbacks.exifparser_data = data; callbacks.exif_cb = cb; }
+    void		      			set_exifparser_handler( exif_parser_callback cb,void *data) {callbacks.exifparser_data = data; callbacks.exif_cb = cb; }
     void                        set_memerror_handler( memory_callback cb,void *data) {callbacks.memcb_data = data; callbacks.mem_cb = cb; }
     void                        set_dataerror_handler(data_callback func, void *data) { callbacks.datacb_data = data; callbacks.data_cb = func;}
     void                        set_progress_handler(progress_callback pcb, void *data) { callbacks.progresscb_data = data; callbacks.progress_cb = pcb;}
 
+	void						convertFloatToInt(float dmin=4096.f, float dmax=32767.f, float dtarget = 16383.f);
     /* helpers */
+	static unsigned				capabilities();
     static const char*          version();
     static int                  versionNumber();
     static const char**         cameraList();
@@ -165,6 +168,8 @@ class DllDef LibRaw
 	int sraw_midpoint();
 	int is_nikon_sraw();
 	int is_coolscan_nef();
+	int is_floating_point();
+	int have_fpdata();
     /* memory writers */
     virtual libraw_processed_image_t*   dcraw_make_mem_image(int *errcode=NULL);  
     virtual libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);
@@ -197,17 +202,20 @@ class DllDef LibRaw
   int phase_one_correct();
 
   int  set_rawspeed_camerafile(char *filename);
-  void setCancelFlag();
-  void clearCancelFlag();
+  virtual void setCancelFlag();
+  virtual void clearCancelFlag();
   virtual void adobe_coeff (const char *, const char *, int internal_only=0);
 
+  void	set_dng_host(void *);
 
 protected:
+	int  is_curve_linear();
     void checkCancel();
 	void        cam_xyz_coeff(float _rgb_cam[3][4], double cam_xyz[4][3]);
     void phase_one_allocate_tempbuffer();
     void phase_one_free_tempbuffer();
     virtual int  is_phaseone_compressed();
+	virtual int  is_canon_600();
     /* Hotspots */
     virtual void copy_fuji_uncropped(unsigned short cblack[4], unsigned short *dmaxp);
     virtual void copy_bayer(unsigned short cblack[4], unsigned short *dmaxp);
@@ -249,6 +257,7 @@ protected:
     void        (LibRaw:: *write_fun)();
     void        (LibRaw:: *load_raw)();
     void        (LibRaw:: *thumb_load_raw)();
+    void        (LibRaw:: *pentax_component_load_raw)();
 
     void        kodak_thumb_loader();
     void        write_thumb_ppm_tiff(FILE *); 
@@ -327,14 +336,25 @@ protected:
     void        cubic_spline (const int *x_, const int *y_, const int len);
 
   /* RawSpeed data */
-  void		*_rawspeed_camerameta;
+  void			*_rawspeed_camerameta;
   void          *_rawspeed_decoder;
-  void		fix_after_rawspeed(int bl);
+  void			fix_after_rawspeed(int bl);
+  int			try_rawspeed(); /* returns LIBRAW_SUCCESS on success */
   /* Fast cancel flag */
   long          _exitflag;
 
+  /* DNG SDK data */
+  void		    *dnghost;
+  int			valid_for_dngsdk();
+  int			try_dngsdk();
   /* X3F data */
   void          *_x3f_data;
+
+  int raw_was_read()
+  {
+	  return imgdata.rawdata.raw_image || imgdata.rawdata.color4_image || imgdata.rawdata.color3_image
+		  || imgdata.rawdata.float_image || imgdata.rawdata.float3_image || imgdata.rawdata.float4_image;
+  }
 
 #ifdef LIBRAW_LIBRARY_BUILD 
 #include "internal/libraw_internal_funcs.h"
