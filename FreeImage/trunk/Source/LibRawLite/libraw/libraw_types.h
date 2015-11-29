@@ -73,9 +73,8 @@ extern "C" {
 typedef __int64 INT64;
 typedef unsigned __int64 UINT64;
 #else
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
 typedef unsigned char uchar;
@@ -182,6 +181,9 @@ typedef struct
     double      pixel_aspect;
     int         flip;
     int         mask[8][4];
+    int         OlympusCropID;
+    ushort      OlympusFrame[4];	/* upper left XY, lower right XY */
+
 
 } libraw_image_sizes_t;
 
@@ -197,6 +199,7 @@ typedef struct
   unsigned short illuminant;
   float calibration[4][4];
   float colormatrix[4][3];
+  float forwardmatrix[3][4];
 } libraw_dng_color_t;
 
 typedef struct
@@ -214,6 +217,8 @@ typedef struct
   unsigned    black;
   unsigned    data_maximum;
   unsigned    maximum;
+  float		  fmaximum;
+  float		  fnorm;
   ushort      white[8][8];
   float       cam_mul[4];
   float       pre_mul[4];
@@ -233,6 +238,8 @@ typedef struct
   int		  OlympusSensorCalibration[2];
   float       FujiExpoMidPointShift;
   int		digitalBack_color;
+  int		WB_Coeffs[256][4];	/* R, G1, B, G2 coeffs */
+  float		WBCT_Coeffs[64][5];	/* CCT, than R, G1, B, G2 coeffs */
 }libraw_colordata_t;
 
 typedef struct
@@ -332,6 +339,8 @@ typedef struct
     float wf_deband_treshold[4];
 	/* Raw speed */
     int use_rawspeed;
+	/* DNG SDK */
+	int use_dngsdk;
   /* Disable Auto-scale */
     int no_auto_scale;
   /* Disable intepolation */
@@ -340,9 +349,10 @@ typedef struct
   int sraw_ycc;
   /* Force use x3f data decoding either if demosaic pack GPL2 enabled */
   int force_foveon_x3f;
-  int x3f_flags;
+  /*  int x3f_flags; */
   /* Sony ARW2 digging mode */
-  int sony_arw2_options;
+  /* int sony_arw2_options; */
+  unsigned raw_processing_options;
   int sony_arw2_posterization_thr;
   /* Nikon Coolscan */
   float coolscan_nef_gamma;
@@ -358,6 +368,12 @@ typedef struct
   ushort        (*color4_image)[4] ;
   /* alias to 3-color variand decoded by RawSpeed */
   ushort        (*color3_image)[3];
+  /* float bayer */
+  float			*float_image;
+  /* float 3-component */
+  float			(*float3_image)[3];
+  /* float 4-component */
+  float			(*float4_image)[4];
 
   /* Phase One black level data; */
   short  (*ph1_cblack)[2];
@@ -386,6 +402,8 @@ typedef struct
 	float	MaxAp, MinAp;
 	float	CurFocal, CurAp;
 	float	MaxAp4CurFocal, MinAp4CurFocal;
+	float	MinFocusDistance;
+	float	FocusRangeIndex;
 	float	LensFStops;
 	unsigned long long TeleconverterID;
 	char	Teleconverter[128];
@@ -439,5 +457,33 @@ typedef struct
 #ifdef __cplusplus
 }
 #endif
+
+/* Byte order */
+#if defined(__POWERPC__)
+#define LibRawBigEndian 1
+
+#elif defined(__INTEL__)
+#define LibRawBigEndian 0
+
+#elif defined(_M_IX86)
+#define LibRawBigEndian 0
+
+#elif defined(_M_X64) || defined(__amd64__)
+#define LibRawBigEndian 0
+
+#elif defined(__LITTLE_ENDIAN__)
+#define LibRawBigEndian 0
+
+#elif defined(__BIG_ENDIAN__)
+#define LibRawBigEndian 1
+#elif defined(_ARM_)
+#define LibRawBigEndian 0
+#else
+#ifndef qXCodeRez
+#error Unable to figure out byte order.
+#endif
+#endif
+
+
 
 #endif
