@@ -354,10 +354,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\src\dsp\dsp.lossless_mips32.c"
-					>
-				</File>
-				<File
 					RelativePath=".\src\dsp\dsp.lossless_mips_dsp_r2.c"
 					>
 				</File>

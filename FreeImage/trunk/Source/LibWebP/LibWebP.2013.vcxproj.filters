@@ -280,9 +280,6 @@
     <ClCompile Include="src\dsp\dsp.lossless_mips_dsp_r2.c">
       <Filter>Source Files\dsp</Filter>
     </ClCompile>
-    <ClCompile Include="src\dsp\dsp.lossless_mips32.c">
-      <Filter>Source Files\dsp</Filter>
-    </ClCompile>
     <ClCompile Include="src\dsp\dsp.lossless_neon.c">
       <Filter>Source Files\dsp</Filter>
     </ClCompile>

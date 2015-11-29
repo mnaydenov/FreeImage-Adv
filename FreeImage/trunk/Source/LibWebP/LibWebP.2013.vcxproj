@@ -264,7 +264,6 @@
     <ClCompile Include="src\dsp\dsp.lossless_enc_neon.c" />
     <ClCompile Include="src\dsp\dsp.lossless_enc_sse2.c" />
     <ClCompile Include="src\dsp\dsp.lossless_enc_sse41.c" />
-    <ClCompile Include="src\dsp\dsp.lossless_mips32.c" />
     <ClCompile Include="src\dsp\dsp.lossless_mips_dsp_r2.c" />
     <ClCompile Include="src\dsp\dsp.lossless_neon.c" />
     <ClCompile Include="src\dsp\dsp.lossless_sse2.c" />
