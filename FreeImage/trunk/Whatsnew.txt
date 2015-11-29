@@ -11,9 +11,11 @@ Month day, 2015 - 3.18.0
 ! FreeImage now uses LibPNG 1.6.19
 ! FreeImage now uses LibTIFF 4.0.6
 + [Garrick Meeker] added saving support to the PSD plugin
++ [Tom Whittock] FreeImage_ConvertToRawBits now deals with palletized images containing transparency during conversion
 * [Pengsu Cheng] fixed PCX loader against malicious images with a bad window specification
 * [Herve Drolon] fixed TIFF loader with loading of RGB[A]F float images
 * [Garrick Meeker] improved loading speed of PSD plugin
+* [Herve Drolon] fixed support of snprintf in Visual Studio 2015
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
