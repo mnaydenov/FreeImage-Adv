@@ -84,7 +84,8 @@ If your big endian system isn't being detected, add an OS specific check
 #endif // BYTE_ORDER
 
 #ifdef _WIN32
-#if _MSC_VER < 1900
+/* Visual Studio 2015 / VC 14 / MSVC 19.00 finally has snprintf() */
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
 #define snprintf _snprintf
 #endif // _MSC_VER
 #define lfind _lfind
