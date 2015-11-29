@@ -433,6 +433,16 @@ __SwapUInt32(DWORD arg) {
 	return result; 
 #endif 
 } 
+
+inline void
+SwapShort(WORD *sp) {
+	*sp = __SwapUInt16(*sp);
+}
+
+inline void
+SwapLong(DWORD *lp) {
+	*lp = __SwapUInt32(*lp);
+}
  
 inline void
 SwapInt64(UINT64 *arg) {
@@ -450,16 +460,6 @@ SwapInt64(UINT64 *arg) {
 	result.ul[1] = tmp.ul[0];
 	*arg = result.sv;
 #endif
-}
-
-inline void
-SwapShort(WORD *sp) {
-	*sp = __SwapUInt16(*sp);
-}
-
-inline void
-SwapLong(DWORD *lp) {
-	*lp = __SwapUInt32(*lp);
 }
 
 // ==========================================================
