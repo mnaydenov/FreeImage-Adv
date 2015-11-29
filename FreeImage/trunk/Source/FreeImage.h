@@ -29,7 +29,7 @@
 // Version information ------------------------------------------------------
 
 #define FREEIMAGE_MAJOR_VERSION   3
-#define FREEIMAGE_MINOR_VERSION   17
+#define FREEIMAGE_MINOR_VERSION   18
 #define FREEIMAGE_RELEASE_SERIAL  0
 
 // Compiler options ---------------------------------------------------------
@@ -731,6 +731,9 @@ typedef void (DLL_CALLCONV *FI_InitProc)(Plugin *plugin, int format_id);
 #define PSD_DEFAULT         0
 #define PSD_CMYK			1		//! reads tags for separated CMYK (default is conversion to RGB)
 #define PSD_LAB				2		//! reads tags for CIELab (default is conversion to RGB)
+#define PSD_NONE			0x0100	//! save without any compression
+#define PSD_RLE				0x0200	//! save using RLE compression
+#define PSD_PSB             0x2000  //! save using Adobe Large Document Format (use | to combine with other save flags)
 #define RAS_DEFAULT         0
 #define RAW_DEFAULT         0		//! load the file as linear RGB 48-bit
 #define RAW_PREVIEW			1		//! try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit

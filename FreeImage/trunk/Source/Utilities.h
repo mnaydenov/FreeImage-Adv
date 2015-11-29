@@ -434,24 +434,23 @@ __SwapUInt32(DWORD arg) {
 #endif 
 } 
  
-/**
-for later use ...
-inline uint64_t 
-SwapInt64(uint64_t arg) { 
-#if defined(_MSC_VER) && _MSC_VER >= 1310 
-	return _byteswap_uint64(arg); 
-#else 
-	union Swap { 
-		uint64_t sv; 
-		uint32_t ul[2]; 
-	} tmp, result; 
-	tmp.sv = arg; 
-	result.ul[0] = SwapInt32(tmp.ul[1]);  
-	result.ul[1] = SwapInt32(tmp.ul[0]); 
-	return result.sv; 
-#endif 
-} 
-*/
+inline void
+SwapInt64(UINT64 *arg) {
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+	*arg = _byteswap_uint64(*arg);
+#else
+	union Swap {
+		UINT64 sv;
+		DWORD ul[2];
+	} tmp, result;
+	tmp.sv = *arg;
+	SwapLong(&tmp.ul[0]);
+	SwapLong(&tmp.ul[1]);
+	result.ul[0] = tmp.ul[1];
+	result.ul[1] = tmp.ul[0];
+	*arg = result.sv;
+#endif
+}
 
 inline void
 SwapShort(WORD *sp) {
