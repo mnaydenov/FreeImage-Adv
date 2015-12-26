@@ -16,6 +16,8 @@ Month day, 2015 - 3.18.0
 * [Herve Drolon] fixed TIFF loader with loading of RGB[A]F float images
 * [Garrick Meeker] improved loading speed of PSD plugin
 * [Herve Drolon] fixed support of snprintf in Visual Studio 2015
+* [Herve Drolon] improved GIF signature validation
+* [Herve Drolon] improved TARGA signature validation
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
