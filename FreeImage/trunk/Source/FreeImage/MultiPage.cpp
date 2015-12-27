@@ -217,7 +217,7 @@ FreeImage_InternalGetPageCount(FIMULTIBITMAP *bitmap) {
 
    			void *data = FreeImage_Open(header->node, header->io, header->handle, TRUE);
 
-			int page_count = (header->node->m_plugin->pagecount_proc != NULL) ? header->node->m_plugin->pagecount_proc(header->io, header->handle, data) : 1;
+			int page_count = (header->node->plugin->pagecount_proc != NULL) ? header->node->plugin->pagecount_proc(header->io, header->handle, data) : 1;
 
 			FreeImage_Close(header->node, header->io, header->handle, data);
 
@@ -248,7 +248,7 @@ FreeImage_OpenMultiBitmap(FREE_IMAGE_FORMAT fif, const char *filename, BOOL crea
 		PluginList *list = FreeImage_GetPluginList();
 
 		if (list) {
-			PluginNode *node = list->FindNodeFromFIF(fif);
+			PluginNode *node = list->findNodeFromFIF(fif);
 
 			if (node) {
 				std::auto_ptr<FreeImageIO> io (new FreeImageIO);
@@ -333,7 +333,7 @@ FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_h
 			PluginList *list = FreeImage_GetPluginList();
 		
 			if (list) {
-				PluginNode *node = list->FindNodeFromFIF(fif);
+				PluginNode *node = list->findNodeFromFIF(fif);
 			
 				if (node) {
 					std::auto_ptr<FIMULTIBITMAP> bitmap (new FIMULTIBITMAP);
@@ -394,7 +394,7 @@ FreeImage_SaveMultiBitmapToHandle(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, 
 	PluginList *list = FreeImage_GetPluginList();
 	
 	if (list) {
-		PluginNode *node = list->FindNodeFromFIF(fif);
+		PluginNode *node = list->findNodeFromFIF(fif);
 
 		if(node) {
 			MULTIBITMAPHEADER *header = FreeImage_GetMultiBitmapHeader(bitmap);
@@ -424,10 +424,10 @@ FreeImage_SaveMultiBitmapToHandle(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, 
 							for (int j = block->m_start; j <= block->m_end; j++) {
 
 								// load the original source data
-								FIBITMAP *dib = header->node->m_plugin->load_proc(header->io, header->handle, j, header->load_flags, data_read);
+								FIBITMAP *dib = header->node->plugin->load_proc(header->io, header->handle, j, header->load_flags, data_read);
 								
 								// save the data
-								success = node->m_plugin->save_proc(io, dib, handle, count, flags, data);
+								success = node->plugin->save_proc(io, dib, handle, count, flags, data);
 								count++;
 								
 								FreeImage_Unload(dib);
@@ -457,7 +457,7 @@ FreeImage_SaveMultiBitmapToHandle(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, 
 							
 							// save the data
 							
-							success = node->m_plugin->save_proc(io, dib, handle, count, flags, data);
+							success = node->plugin->save_proc(io, dib, handle, count, flags, data);
 							count++;
 							
 							// unload the dib
@@ -745,7 +745,7 @@ FreeImage_LockPage(FIMULTIBITMAP *bitmap, int page) {
 		// load the bitmap data
 
 		if (data != NULL) {
-			FIBITMAP *dib = (header->node->m_plugin->load_proc != NULL) ? header->node->m_plugin->load_proc(header->io, header->handle, page, header->load_flags, data) : NULL;
+			FIBITMAP *dib = (header->node->plugin->load_proc != NULL) ? header->node->plugin->load_proc(header->io, header->handle, page, header->load_flags, data) : NULL;
 
 			// close the file
 
@@ -901,7 +901,7 @@ FreeImage_LoadMultiBitmapFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, int
 	PluginList *list = FreeImage_GetPluginList();
 
 	if (list) {
-		PluginNode *node = list->FindNodeFromFIF(fif);
+		PluginNode *node = list->findNodeFromFIF(fif);
 
 		if (node) {
 			FreeImageIO *io = new(std::nothrow) FreeImageIO;

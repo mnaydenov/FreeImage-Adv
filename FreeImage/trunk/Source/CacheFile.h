@@ -19,8 +19,8 @@
 // Use at your own risk!
 // ==========================================================
 
-#ifndef CACHEFILE_H
-#define CACHEFILE_H
+#ifndef FREEIMAGE_CACHEFILE_H
+#define FREEIMAGE_CACHEFILE_H
 
 // ----------------------------------------------------------
 
@@ -89,4 +89,4 @@ private :
 	BOOL m_keep_in_memory;
 };
 
-#endif // CACHEFILE_H
+#endif // FREEIMAGE_CACHEFILE_H
