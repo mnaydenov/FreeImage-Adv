@@ -24,60 +24,96 @@
 #pragma warning (disable : 4786) // identifier was truncated to 'number' characters
 #endif 
 
-#ifndef PLUGIN_H
-#define PLUGIN_H
+#ifndef FREEIMAGE_PLUGIN_H
+#define FREEIMAGE_PLUGIN_H
 
 #include "FreeImage.h"
 #include "Utilities.h"
 
-// ==========================================================
-
-struct Plugin;
-
-// =====================================================================
-//  Plugin Node
-// =====================================================================
-
-FI_STRUCT (PluginNode) {
+/**
+Plugin Node.
+This structure is used to store all information about a plugin.
+*/
+typedef struct tagPluginNode {
 	/** FREE_IMAGE_FORMAT attached to this plugin */
-	int m_id;
+	int id;
 	/** Handle to a user plugin DLL (NULL for standard plugins) */
-	void *m_instance;
+	void *instance;
 	/** The actual plugin, holding the function pointers */
-	Plugin *m_plugin;
+	Plugin *plugin;
 	/** Enable/Disable switch */
-	BOOL m_enabled;
+	bool isEnabled;
 
 	/** Unique format string for the plugin */
-	const char *m_format;
+	const char *format;
 	/** Description string for the plugin */
-	const char *m_description;
+	const char *description;
 	/** Comma separated list of file extensions indicating what files this plugin can open */
-	const char *m_extension;
+	const char *extension;
 	/** optional regular expression to help	software identifying a bitmap type */
-	const char *m_regexpr;
-};
+	const char *regexpr;
+} PluginNode;
 
-// =====================================================================
-//  Internal Plugin List
-// =====================================================================
-
+/**
+Internal Plugin List.
+This class is used to manage all FIF plugins.
+This class is declared as static inside the library initialization function. 
+It is thus a singleton, internal to the library.
+*/
 class PluginList {
-public :
+public:
+	//! helper for map<FREE_IMAGE_FORMAT, PluginNode*>
+	typedef std::map<int, PluginNode*> PluginMap;
+	//! iterator helper for map<FREE_IMAGE_FORMAT, PluginNode*>
+	typedef std::map<int, PluginNode*>::iterator PluginMapIterator;
+
+private:
+	//! list of FIF plugins
+	PluginMap m_plugin_map;
+	//! number of FIF plugins
+	int m_node_count;
+
+public:
+	//! Default constructor
 	PluginList();
+	//! Destructor
 	~PluginList();
 
-	FREE_IMAGE_FORMAT AddNode(FI_InitProc proc, void *instance = NULL, const char *format = 0, const char *description = 0, const char *extension = 0, const char *regexpr = 0);
-	PluginNode *FindNodeFromFormat(const char *format);
-	PluginNode *FindNodeFromMime(const char *mime);
-	PluginNode *FindNodeFromFIF(int node_id);
+	/**
+	Add a new FIF to the library
+	@param proc Plugin Init procedure 
+	@param instance Plugin instance (for external loaded libraries)
+	@param format FreeImage format
+	@param description FreeImage description
+	@param extension FreeImage extension
+	@param regexpr FreeImage regexp
+	@return Returns a new FIF to be added to the list of supported FIF
+	*/
+	FREE_IMAGE_FORMAT addNode(FI_InitProc proc, void *instance = NULL, const char *format = 0, const char *description = 0, const char *extension = 0, const char *regexpr = 0);
+	/**
+	@param format A filename
+	@return Returns the corresponding FIF plugin
+	*/
+	PluginNode *findNodeFromFormat(const char *format);
+	/**
+	@param mime A MIME type
+	@return Returns the corresponding FIF plugin
+	*/
+	PluginNode *findNodeFromMime(const char *mime);
+	/**
+	@param node_id A FREE_IMAGE_FORMAT id
+	@return Returns the corresponding FIF plugin
+	*/
+	PluginNode *findNodeFromFIF(int node_id);
 
-	int Size() const;
-	BOOL IsEmpty() const;
-
-private :
-	std::map<int, PluginNode *> m_plugin_map;
-	int m_node_count;
+	/**
+	@return Returns the number of registered plugins
+	*/
+	size_t size() const;
+	/**
+	@return Returns true if no plugin is available
+	*/
+	bool isEmpty() const;
 };
 
 // ==========================================================
@@ -97,10 +133,10 @@ int FreeImage_stricmp(const char *s1, const char *s2);
 // ==========================================================
 
 extern "C" {
-	BOOL DLL_CALLCONV FreeImage_Validate(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle);
-    void * DLL_CALLCONV FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading);
-    void DLL_CALLCONV FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data); // plugin.cpp
-    PluginList * DLL_CALLCONV FreeImage_GetPluginList(); // plugin.cpp
+BOOL DLL_CALLCONV FreeImage_Validate(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle);
+void * DLL_CALLCONV FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading);
+void DLL_CALLCONV FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data);
+PluginList * DLL_CALLCONV FreeImage_GetPluginList();
 }
 
 // ==========================================================
@@ -141,4 +177,4 @@ void DLL_CALLCONV InitJNG(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitWEBP(Plugin *plugin, int format_id);
 void DLL_CALLCONV InitJXR(Plugin *plugin, int format_id);
 
-#endif //!PLUGIN_H
+#endif // FREEIMAGE_PLUGIN_H

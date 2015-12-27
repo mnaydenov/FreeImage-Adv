@@ -19,8 +19,8 @@
 // Use at your own risk!
 // ==========================================================
 
-#ifndef FREEIMAGETAG_H
-#define FREEIMAGETAG_H
+#ifndef FREEIMAGE_TAG_H
+#define FREEIMAGE_TAG_H
 
 // ==========================================================
 // Exif JPEG tags
@@ -501,6 +501,6 @@ BOOL write_iptc_profile(FIBITMAP *dib, BYTE **profile, unsigned *profile_size);
 #endif
 
 
-#endif // FREEIMAGETAG_H
+#endif // FREEIMAGE_TAG_H
 
 

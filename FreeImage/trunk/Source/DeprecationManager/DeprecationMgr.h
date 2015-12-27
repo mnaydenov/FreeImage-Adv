@@ -19,8 +19,8 @@
 // Use at your own risk!
 // ==========================================================
 
-#ifndef DEPRECATIONMGR_H
-#define DEPRECATIONMGR_H
+#ifndef FREEIMAGE_DEPRECATIONMGR_H
+#define FREEIMAGE_DEPRECATIONMGR_H
 
 #ifdef _MSC_VER 
 #pragma warning(disable : 4786 )  // identifier was truncated to 'number' characters
@@ -80,4 +80,4 @@ public:
 	void AddDeprecatedFunction(const char *old_function_name, const char *new_function_name, const void *frame_ptr);
 };
 
-#endif //DEPRECATIONMGR_H
+#endif //FREEIMAGE_DEPRECATIONMGR_H

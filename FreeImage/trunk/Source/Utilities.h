@@ -22,8 +22,8 @@
 // Use at your own risk!
 // ==========================================================
 
-#ifndef UTILITIES_H
-#define UTILITIES_H
+#ifndef FREEIMAGE_UTILITIES_H
+#define FREEIMAGE_UTILITIES_H
 
 // ==========================================================
 //   Standard includes used by the library
@@ -512,4 +512,4 @@ static const char *FI_MSG_ERROR_UNSUPPORTED_FORMAT = "Unsupported format";
 static const char *FI_MSG_ERROR_UNSUPPORTED_COMPRESSION = "Unsupported compression type";
 static const char *FI_MSG_WARNING_INVALID_THUMBNAIL = "Warning: attached thumbnail cannot be written to output file (invalid format) - Thumbnail saving aborted";
 
-#endif // UTILITIES_H
+#endif // FREEIMAGE_UTILITIES_H

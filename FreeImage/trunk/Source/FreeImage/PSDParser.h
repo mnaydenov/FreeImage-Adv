@@ -23,8 +23,8 @@
 // Use at your own risk!
 // ==========================================================
 
-#ifndef PSDPARSER_H
-#define PSDPARSER_H
+#ifndef FREEIMAGE_PSDPARSER_H
+#define FREEIMAGE_PSDPARSER_H
 
 /**
 Table 2-12: File header section. 
@@ -332,5 +332,6 @@ public:
 	}
 };
 
-#endif // PSDPARSER_H
+#endif // FREEIMAGE_PSDPARSER_H
+
 
