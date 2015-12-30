@@ -32,6 +32,7 @@
 
 #include "CacheFile.h"
 #include "FreeImageIO.h"
+#include "FreeImageThreads.h"
 #include "Plugin.h"
 #include "Utilities.h"
 #include "FreeImage.h"
