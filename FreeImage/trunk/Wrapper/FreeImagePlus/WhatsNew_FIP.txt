@@ -6,6 +6,7 @@ What's New for FreeImagePlus
 + : added
 
 Month day, 2015
+! [Herve Drolon] fipMultiPage::open now use FreeImage_GetFileType
 + [Herve Drolon] added fipImage._fif handling
 + [Herve Drolon] added fipImage::clearMetadata
 * [Herve Drolon] fixed a bug in fipWinImage::copyFromHandle
