@@ -4,6 +4,7 @@
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
 // - Rui Lopes (ruiglopes@yahoo.com)
+// - Herve Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -27,14 +28,16 @@
 #ifndef FREEIMAGE_PLUGIN_H
 #define FREEIMAGE_PLUGIN_H
 
-#include "FreeImage.h"
-#include "Utilities.h"
+#ifndef FREEIMAGE_THREADS_H
+#error "FreeImageThreads.h must be included first"
+#endif
 
 /**
 Plugin Node.
-This structure is used to store all information about a plugin.
+This class is used to store all information about a plugin.
 */
-typedef struct tagPluginNode {
+class PluginNode {
+public:
 	/** FREE_IMAGE_FORMAT attached to this plugin */
 	int id;
 	/** Handle to a user plugin DLL (NULL for standard plugins) */
@@ -52,13 +55,38 @@ typedef struct tagPluginNode {
 	const char *extension;
 	/** optional regular expression to help	software identifying a bitmap type */
 	const char *regexpr;
-} PluginNode;
+
+public:
+	PluginNode() : id(0), instance(NULL), plugin(NULL), isEnabled(false), format(NULL), description(NULL), extension(NULL), regexpr(NULL) {
+	}
+	~PluginNode() {
+	}
+};
+
+// --------------------------------------------------------------------------
+
+/**
+helper used to keep a Most Recently Used list of plugins
+*/
+typedef struct tagFIFItem {
+	FREE_IMAGE_FORMAT fif;	//! FreeImage format
+	size_t weight;			//! weight used to measure how many times this FreeImage format was found
+} FIFItem;
+
+/**
+helper used to define a Most Recently Used list of FIF plugins
+*/
+typedef std::vector<FIFItem> MRUList;
 
 /**
 Internal Plugin List.
 This class is used to manage all FIF plugins.
-This class is declared as static inside the library initialization function. 
-It is thus a singleton, internal to the library.
+It is declared as static inside Plugin.cpp and 
+initialized / destroyed using FreeImage_Initialise / FreeImage_DeInitialise functions.
+
+The class uses a MRU list (impklemented as a priority queue) to dynamically sort plugins from the most recently used to the least recently used. 
+This way, when using FreeImage_GetFileTypeFromHandle to scan the signature of a file, there are a lot of chances
+that the right plugin is quickly found, whatever the order plugins were registered inside FreeImage_Initialise.
 */
 class PluginList {
 public:
@@ -69,15 +97,26 @@ public:
 
 private:
 	//! list of FIF plugins
-	PluginMap m_plugin_map;
-	//! number of FIF plugins
-	int m_node_count;
+	PluginMap _plugin_map;
+
+	//! priority queue of Most Recently Used FIF plugins
+	MRUList _mru_list;
+
+	//! prevent concurrent access to the plugin list
+	FreeImage::Mutex _mutex;
 
 public:
 	//! Default constructor
 	PluginList();
+
 	//! Destructor
 	~PluginList();
+
+	//! lock access to the plugin list
+	void lock();
+
+	//! unlock access to the plugin list
+	void unlock();
 
 	/**
 	Add a new FIF to the library
@@ -114,6 +153,18 @@ public:
 	@return Returns true if no plugin is available
 	*/
 	bool isEmpty() const;
+
+	/**
+	Update a FREE_IMAGE_FORMAT in the MRU list
+	@param fif Registered FREE_IMAGE_FORMAT
+	@see FreeImage_GetFileTypeFromHandle
+	*/
+	void updateMRUList(FREE_IMAGE_FORMAT fif);
+
+	/**
+	@return Returns a refence to the MRU list
+	*/
+	MRUList& getMRUList();
 };
 
 // ==========================================================
@@ -134,8 +185,8 @@ int FreeImage_stricmp(const char *s1, const char *s2);
 
 extern "C" {
 BOOL DLL_CALLCONV FreeImage_Validate(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle);
-void * DLL_CALLCONV FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading);
-void DLL_CALLCONV FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data);
+void * DLL_CALLCONV FreeImage_Open(const PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading);
+void DLL_CALLCONV FreeImage_Close(const PluginNode *node, FreeImageIO *io, fi_handle handle, void *data);
 PluginList * DLL_CALLCONV FreeImage_GetPluginList();
 }
 

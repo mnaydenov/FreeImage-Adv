@@ -37,6 +37,7 @@
 #include "FreeImage.h"
 #include "Utilities.h"
 #include "FreeImageIO.h"
+#include "FreeImageThreads.h"
 #include "Plugin.h"
 
 #include "../Metadata/FreeImageTag.h"
@@ -84,7 +85,15 @@ FreeImage_stricmp(const char *s1, const char *s2) {
 //  Implementation of PluginList
 // =====================================================================
 
-PluginList::PluginList() : m_plugin_map(), m_node_count(0) {
+PluginList::PluginList() {
+}
+
+void PluginList::lock() {
+	_mutex.lock();
+}
+
+void PluginList::unlock() {
+	_mutex.unlock();
 }
 
 FREE_IMAGE_FORMAT
@@ -92,14 +101,17 @@ PluginList::addNode(FI_InitProc init_proc, void *instance, const char *format, c
 	PluginNode *node = NULL;
 	Plugin *plugin = NULL;
 
+	// prevent concurrent access
+	FreeImage::ScopedMutex scopedMutex(_mutex);
+
 	try {
 		if(init_proc == NULL) {
 			throw "Invalid Init plugin procedure";
 		}
 		// the new FIF to be handled
-		node = (PluginNode*)malloc(sizeof(PluginNode));
+		node = new(std::nothrow) PluginNode;
 		// the way to load this FIF
-		plugin = (Plugin*)malloc(sizeof(Plugin));
+		plugin = new(std::nothrow) Plugin;
 
 		if(!node || !plugin) {
 			throw FI_MSG_ERROR_MEMORY;
@@ -110,7 +122,7 @@ PluginList::addNode(FI_InitProc init_proc, void *instance, const char *format, c
 		// fill-in the plugin structure
 		// note we have memset to 0, so all unset pointers should be NULL
 
-		init_proc(plugin, (int)m_plugin_map.size());
+		init_proc(plugin, (int)_plugin_map.size());
 
 		// get the format string (two possible ways)
 
@@ -125,16 +137,24 @@ PluginList::addNode(FI_InitProc init_proc, void *instance, const char *format, c
 		// add the node if it wasn't there already
 
 		if (the_format != NULL) {
-			node->id = (int)m_plugin_map.size();
+			node->id = (int)_plugin_map.size();
 			node->instance = instance;
 			node->plugin = plugin;
-			node->format = format;
+			node->format = the_format;
 			node->description = description;
 			node->extension = extension;
 			node->regexpr = regexpr;
 			node->isEnabled = true;
 
-			m_plugin_map[(const int)m_plugin_map.size()] = node;
+			_plugin_map[node->id] = node;
+
+			// update the MRU list
+			{
+				FIFItem item;
+				item.fif = (FREE_IMAGE_FORMAT)node->id;
+				item.weight = 0;
+				_mru_list.push_back(item);
+			}
 
 			return (FREE_IMAGE_FORMAT)node->id;
 		}
@@ -143,8 +163,8 @@ PluginList::addNode(FI_InitProc init_proc, void *instance, const char *format, c
 		throw FI_MSG_ERROR_MEMORY;
 
 	} catch(const char *text) {
-		free(plugin);
-		free(node);
+		delete plugin;
+		delete node;
 
 		if(text != NULL) {
 			FreeImage_OutputMessageProc(FIF_UNKNOWN, text);
@@ -157,9 +177,9 @@ PluginList::addNode(FI_InitProc init_proc, void *instance, const char *format, c
 
 PluginNode *
 PluginList::findNodeFromFormat(const char *format) {
-	for (PluginMapIterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
+	for (PluginMapIterator i = _plugin_map.begin(); i != _plugin_map.end(); ++i) {
 		PluginNode *node = (*i).second;
-		if (node->isEnabled) {
+		if (node && node->isEnabled) {
 			const char *the_format = (NULL != node->format) ? node->format : node->plugin->format_proc();
 			if (FreeImage_stricmp(the_format, format) == 0) {
 				return node;
@@ -172,9 +192,9 @@ PluginList::findNodeFromFormat(const char *format) {
 
 PluginNode *
 PluginList::findNodeFromMime(const char *mime) {
-	for (PluginMapIterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
+	for (PluginMapIterator i = _plugin_map.begin(); i != _plugin_map.end(); ++i) {
 		PluginNode *node = (*i).second;
-		if (node->isEnabled) {
+		if (node && node->isEnabled) {
 			const char *the_mime = (NULL != node->plugin->mime_proc) ? node->plugin->mime_proc() : "";
 			if ((the_mime != NULL) && (strcmp(the_mime, mime) == 0)) {
 				return node;
@@ -187,9 +207,9 @@ PluginList::findNodeFromMime(const char *mime) {
 
 PluginNode *
 PluginList::findNodeFromFIF(int node_id) {
-	PluginMapIterator i = m_plugin_map.find(node_id);
+	PluginMapIterator i = _plugin_map.find(node_id);
 
-	if (i != m_plugin_map.end()) {
+	if (i != _plugin_map.end()) {
 		PluginNode *node = (*i).second;
 		return node;
 	}
@@ -199,16 +219,16 @@ PluginList::findNodeFromFIF(int node_id) {
 
 size_t
 PluginList::size() const {
-	return m_plugin_map.size();
+	return _plugin_map.size();
 }
 
 bool
 PluginList::isEmpty() const {
-	return m_plugin_map.empty();
+	return _plugin_map.empty();
 }
 
 PluginList::~PluginList() {
-	for (PluginMapIterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
+	for (PluginMapIterator i = _plugin_map.begin(); i != _plugin_map.end(); ++i) {
 		PluginNode *node = (*i).second;
 #ifdef _WIN32
 		if (node->instance != NULL) {
@@ -216,8 +236,47 @@ PluginList::~PluginList() {
 		}
 #endif
 		free(node->plugin);
-		free(node);
+		delete node;
 	}
+}
+
+void 
+PluginList::updateMRUList(FREE_IMAGE_FORMAT fif) {
+	size_t index = 0;
+	bool bFound = false;
+	
+	const size_t mruListSize = _mru_list.size();
+
+	// get the FIF index
+	for (size_t k = 0; k < mruListSize; k++) {
+		if (_mru_list[k].fif == fif) {
+			index = k;
+			bFound = true;
+			break;
+		}
+	}
+
+	if (bFound) {
+		// update the FIF weight
+		_mru_list[index].weight += 1;
+
+		// comparison with the members of the queue, slide larger values up
+		for (size_t k = 0; k < index; k++) {
+			// compare weights
+			if (_mru_list[k].weight < _mru_list[index].weight) {
+				// swap items
+				FIFItem item = _mru_list[k];
+				_mru_list[k] = _mru_list[index];
+				_mru_list[index] = item;
+				break;
+			}
+		}
+	}
+}
+
+MRUList& 
+PluginList::getMRUList() {
+	return _mru_list;
 }
 
 // =====================================================================
@@ -235,6 +294,7 @@ FreeImage_GetPluginList() {
 
 void DLL_CALLCONV
 FreeImage_Initialise(BOOL load_local_plugins_only) {
+
 	if (s_plugin_reference_count++ == 0) {
 		
 		/*
@@ -373,7 +433,7 @@ FreeImage_DeInitialise() {
 // =====================================================================
 
 void * DLL_CALLCONV
-FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading) {
+FreeImage_Open(const PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading) {
 	if(NULL != node->plugin->open_proc) {
        return node->plugin->open_proc(io, handle, open_for_reading);
 	}
@@ -382,7 +442,7 @@ FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_fo
 }
 
 void DLL_CALLCONV
-FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data) {
+FreeImage_Close(const PluginNode *node, FreeImageIO *io, fi_handle handle, void *data) {
 	if(NULL != node->plugin->close_proc) {
 		node->plugin->close_proc(io, handle, data);
 	}
@@ -395,7 +455,7 @@ FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data)
 FIBITMAP * DLL_CALLCONV
 FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		const PluginNode *node = s_plugins->findNodeFromFIF(fif);
 		
 		if (node != NULL) {
 			if(NULL != node->plugin->load_proc) {
@@ -462,7 +522,7 @@ FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi
 	}
 
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		const PluginNode *node = s_plugins->findNodeFromFIF(fif);
 		
 		if (node) {
 			if(NULL != node->plugin->save_proc) {
@@ -817,12 +877,14 @@ FreeImage_Validate(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle) {
 
 		PluginNode *node = s_plugins->findNodeFromFIF(fif);
 
-		if (node) {
-			long tell = io->tell_proc(handle);
+		if (node && node->isEnabled) {
+			if (NULL != node->plugin->validate_proc) {
+				long tell = io->tell_proc(handle);
 
-			validated = (node != NULL) ? (node->isEnabled) ? (node->plugin->validate_proc != NULL) ? node->plugin->validate_proc(io, handle) : FALSE : FALSE : FALSE;
+				validated = node->plugin->validate_proc(io, handle);
 
-			io->seek_proc(handle, tell, SEEK_SET);
+				io->seek_proc(handle, tell, SEEK_SET);
+			}
 		}
 
 		return validated;

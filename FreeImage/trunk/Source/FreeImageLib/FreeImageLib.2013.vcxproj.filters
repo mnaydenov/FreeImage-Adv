@@ -30,6 +30,9 @@
     <Filter Include="Toolkit Files">
       <UniqueIdentifier>{12c22d35-0ae9-4ab6-95f5-ace2cb1d01c5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Threads">
+      <UniqueIdentifier>{5335e9bb-60bb-44c3-a65d-e8989814c480}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\FreeImage\BitmapAccess.cpp">
@@ -305,6 +308,9 @@
     <ClCompile Include="..\FreeImage\ConversionRGBA16.cpp">
       <Filter>Source Files\Conversion</Filter>
     </ClCompile>
+    <ClCompile Include="..\Threads\FreeImageMutex.cpp">
+      <Filter>Source Files\Threads</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CacheFile.h">
@@ -344,6 +350,9 @@
       <Filter>Toolkit Files</Filter>
     </ClInclude>
     <ClInclude Include="..\MapIntrospector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FreeImageThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
