@@ -23,6 +23,7 @@ Month day, 2015 - 3.18.0
 * [Ghislain Vaillant] fixed endianness detection on some architectures
 * [Mihail Naydenov] fixed saving of 32-bit CMYK converted to 24-bit RGB on loading (remove ICC profile from Exif metadata)
 * [Mihail Naydenov] fixed FreeImage_IsTransparent and FreeImage_GetColorType returned value for RGBA[16,F] images flagged as CMYK
+* [Mihail Naydenov] fixed a bug in FreeImage_Clone when working with wrapped buffer (obtained from FreeImage_ConvertFromRawBitsEx)
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
