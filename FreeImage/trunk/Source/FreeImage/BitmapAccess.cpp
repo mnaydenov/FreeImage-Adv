@@ -543,6 +543,7 @@ FreeImage_Clone(FIBITMAP *dib) {
 	unsigned height	= FreeImage_GetHeight(dib);
 	unsigned bpp	= FreeImage_GetBPP(dib);
 
+	// if the FIBITMAP is a wrapper to a user provided pixel buffer, get a pointer to this buffer
 	const BYTE *ext_bits = ((FREEIMAGEHEADER *)dib->data)->external_bits;
 	
 	// check for pixel availability ...
@@ -564,7 +565,7 @@ FreeImage_Clone(FIBITMAP *dib) {
 		METADATAMAP *src_metadata = ((FREEIMAGEHEADER *)dib->data)->metadata;
 		METADATAMAP *dst_metadata = ((FREEIMAGEHEADER *)new_dib->data)->metadata;
 
-		// calculate the size of the src image
+		// calculate the size of the dst image
 		// align the palette and the pixels on a FIBITMAP_ALIGNMENT bytes alignment boundary
 		// palette is aligned on a 16 bytes boundary
 		// pixels are aligned on a 16 bytes boundary
@@ -584,6 +585,10 @@ FreeImage_Clone(FIBITMAP *dib) {
 
 		// reset thumbnail link for new_dib
 		((FREEIMAGEHEADER *)new_dib->data)->thumbnail = NULL;
+
+		// reset external wrapped buffer link for new_dib
+		((FREEIMAGEHEADER *)new_dib->data)->external_bits = NULL;
+		((FREEIMAGEHEADER *)new_dib->data)->external_pitch = 0;
 
 		// copy possible ICC profile
 		FreeImage_CreateICCProfile(new_dib, src_iccProfile->data, src_iccProfile->size);
