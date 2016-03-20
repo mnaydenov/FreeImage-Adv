@@ -6,7 +6,6 @@
 // - Rui Lopes (ruiglopes@yahoo.com)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Pytelka (pyta@lightcomp.com)
-// - Herve Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -37,7 +36,6 @@
 #include "FreeImage.h"
 #include "Utilities.h"
 #include "FreeImageIO.h"
-#include "FreeImageThreads.h"
 #include "Plugin.h"
 
 #include "../Metadata/FreeImageTag.h"
@@ -50,18 +48,14 @@ using namespace std;
 // Plugin search list
 // =====================================================================
 
-//! Where to look for external plugins
-const char * s_search_list[] = {
+const char *
+s_search_list[] = {
 	"",
 	"plugins\\",
 };
 
 static int s_search_list_size = sizeof(s_search_list) / sizeof(char *);
-
-//! Internal plugin list
 static PluginList *s_plugins = NULL;
-
-//! Internal reference counter
 static int s_plugin_reference_count = 0;
 
 
@@ -85,44 +79,29 @@ FreeImage_stricmp(const char *s1, const char *s2) {
 //  Implementation of PluginList
 // =====================================================================
 
-PluginList::PluginList() {
-}
-
-void PluginList::lock() {
-	_mutex.lock();
-}
-
-void PluginList::unlock() {
-	_mutex.unlock();
+PluginList::PluginList() :
+m_plugin_map(),
+m_node_count(0) {
 }
 
 FREE_IMAGE_FORMAT
-PluginList::addNode(FI_InitProc init_proc, void *instance, const char *format, const char *description, const char *extension, const char *regexpr) {
-	PluginNode *node = NULL;
-	Plugin *plugin = NULL;
-
-	// prevent concurrent access
-	FreeImage::ScopedMutex scopedMutex(_mutex);
-
-	try {
-		if(init_proc == NULL) {
-			throw "Invalid Init plugin procedure";
-		}
-		// the new FIF to be handled
-		node = new(std::nothrow) PluginNode;
-		// the way to load this FIF
-		plugin = new(std::nothrow) Plugin;
-
+PluginList::AddNode(FI_InitProc init_proc, void *instance, const char *format, const char *description, const char *extension, const char *regexpr) {
+	if (init_proc != NULL) {
+		PluginNode *node = new(std::nothrow) PluginNode;
+		Plugin *plugin = new(std::nothrow) Plugin;
 		if(!node || !plugin) {
-			throw FI_MSG_ERROR_MEMORY;
+			if(node) delete node;
+			if(plugin) delete plugin;
+			FreeImage_OutputMessageProc(FIF_UNKNOWN, FI_MSG_ERROR_MEMORY);
+			return FIF_UNKNOWN;
 		}
 
 		memset(plugin, 0, sizeof(Plugin));
 
 		// fill-in the plugin structure
-		// note we have memset to 0, so all unset pointers should be NULL
+		// note we have memset to 0, so all unset pointers should be NULL)
 
-		init_proc(plugin, (int)_plugin_map.size());
+		init_proc(plugin, (int)m_plugin_map.size());
 
 		// get the format string (two possible ways)
 
@@ -130,59 +109,44 @@ PluginList::addNode(FI_InitProc init_proc, void *instance, const char *format, c
 
 		if (format != NULL) {
 			the_format = format;
-		} else if (NULL != plugin->format_proc) {
+		} else if (plugin->format_proc != NULL) {
 			the_format = plugin->format_proc();
 		}
 
 		// add the node if it wasn't there already
 
 		if (the_format != NULL) {
-			node->id = (int)_plugin_map.size();
-			node->instance = instance;
-			node->plugin = plugin;
-			node->format = the_format;
-			node->description = description;
-			node->extension = extension;
-			node->regexpr = regexpr;
-			node->isEnabled = true;
+			node->m_id = (int)m_plugin_map.size();
+			node->m_instance = instance;
+			node->m_plugin = plugin;
+			node->m_format = format;
+			node->m_description = description;
+			node->m_extension = extension;
+			node->m_regexpr = regexpr;
+			node->m_enabled = TRUE;
 
-			_plugin_map[node->id] = node;
+			m_plugin_map[(const int)m_plugin_map.size()] = node;
 
-			// update the MRU list
-			{
-				FIFItem item;
-				item.fif = (FREE_IMAGE_FORMAT)node->id;
-				item.weight = 0;
-				_mru_list.push_back(item);
-			}
-
-			return (FREE_IMAGE_FORMAT)node->id;
+			return (FREE_IMAGE_FORMAT)node->m_id;
 		}
 
 		// something went wrong while allocating the plugin... cleanup
-		throw FI_MSG_ERROR_MEMORY;
 
-	} catch(const char *text) {
 		delete plugin;
 		delete node;
-
-		if(text != NULL) {
-			FreeImage_OutputMessageProc(FIF_UNKNOWN, text);
-		} else {
-			FreeImage_OutputMessageProc(FIF_UNKNOWN, FI_MSG_ERROR_MEMORY);
-		}
-		return FIF_UNKNOWN;
 	}
+
+	return FIF_UNKNOWN;
 }
 
 PluginNode *
-PluginList::findNodeFromFormat(const char *format) {
-	for (PluginMapIterator i = _plugin_map.begin(); i != _plugin_map.end(); ++i) {
-		PluginNode *node = (*i).second;
-		if (node && node->isEnabled) {
-			const char *the_format = (NULL != node->format) ? node->format : node->plugin->format_proc();
+PluginList::FindNodeFromFormat(const char *format) {
+	for (map<int, PluginNode *>::iterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
+		const char *the_format = ((*i).second->m_format != NULL) ? (*i).second->m_format : (*i).second->m_plugin->format_proc();
+
+		if ((*i).second->m_enabled) {
 			if (FreeImage_stricmp(the_format, format) == 0) {
-				return node;
+				return (*i).second;
 			}
 		}
 	}
@@ -191,13 +155,13 @@ PluginList::findNodeFromFormat(const char *format) {
 }
 
 PluginNode *
-PluginList::findNodeFromMime(const char *mime) {
-	for (PluginMapIterator i = _plugin_map.begin(); i != _plugin_map.end(); ++i) {
-		PluginNode *node = (*i).second;
-		if (node && node->isEnabled) {
-			const char *the_mime = (NULL != node->plugin->mime_proc) ? node->plugin->mime_proc() : "";
+PluginList::FindNodeFromMime(const char *mime) {
+	for (map<int, PluginNode *>::iterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
+		const char *the_mime = ((*i).second->m_plugin->mime_proc != NULL) ? (*i).second->m_plugin->mime_proc() : "";
+
+		if ((*i).second->m_enabled) {
 			if ((the_mime != NULL) && (strcmp(the_mime, mime) == 0)) {
-				return node;
+				return (*i).second;
 			}
 		}
 	}
@@ -206,77 +170,36 @@ PluginList::findNodeFromMime(const char *mime) {
 }
 
 PluginNode *
-PluginList::findNodeFromFIF(int node_id) {
-	PluginMapIterator i = _plugin_map.find(node_id);
+PluginList::FindNodeFromFIF(int node_id) {
+	map<int, PluginNode *>::iterator i = m_plugin_map.find(node_id);
 
-	if (i != _plugin_map.end()) {
-		PluginNode *node = (*i).second;
-		return node;
+	if (i != m_plugin_map.end()) {
+		return (*i).second;
 	}
 
 	return NULL;
 }
 
-size_t
-PluginList::size() const {
-	return _plugin_map.size();
+int
+PluginList::Size() const {
+	return (int)m_plugin_map.size();
 }
 
-bool
-PluginList::isEmpty() const {
-	return _plugin_map.empty();
+BOOL
+PluginList::IsEmpty() const {
+	return m_plugin_map.empty();
 }
 
 PluginList::~PluginList() {
-	for (PluginMapIterator i = _plugin_map.begin(); i != _plugin_map.end(); ++i) {
-		PluginNode *node = (*i).second;
+	for (map<int, PluginNode *>::iterator i = m_plugin_map.begin(); i != m_plugin_map.end(); ++i) {
 #ifdef _WIN32
-		if (node->instance != NULL) {
-			FreeLibrary((HINSTANCE)node->instance);
+		if ((*i).second->m_instance != NULL) {
+			FreeLibrary((HINSTANCE)(*i).second->m_instance);
 		}
 #endif
-		free(node->plugin);
-		delete node;
+		delete (*i).second->m_plugin;
+		delete ((*i).second);
 	}
-}
-
-void 
-PluginList::updateMRUList(FREE_IMAGE_FORMAT fif) {
-	size_t index = 0;
-	bool bFound = false;
-	
-	const size_t mruListSize = _mru_list.size();
-
-	// get the FIF index
-	for (size_t k = 0; k < mruListSize; k++) {
-		if (_mru_list[k].fif == fif) {
-			index = k;
-			bFound = true;
-			break;
-		}
-	}
-
-	if (bFound) {
-		// update the FIF weight
-		_mru_list[index].weight += 1;
-
-		// comparison with the members of the queue, slide larger values up
-		for (size_t k = 0; k < index; k++) {
-			// compare weights
-			if (_mru_list[k].weight < _mru_list[index].weight) {
-				// swap items
-				FIFItem item = _mru_list[k];
-				_mru_list[k] = _mru_list[index];
-				_mru_list[index] = item;
-				break;
-			}
-		}
-	}
-}
-
-MRUList& 
-PluginList::getMRUList() {
-	return _mru_list;
 }
 
 // =====================================================================
@@ -294,7 +217,6 @@ FreeImage_GetPluginList() {
 
 void DLL_CALLCONV
 FreeImage_Initialise(BOOL load_local_plugins_only) {
-
 	if (s_plugin_reference_count++ == 0) {
 		
 		/*
@@ -314,43 +236,45 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 			The order used to initialize internal plugins below MUST BE the same order 
 			as the one used to define the FREE_IMAGE_FORMAT enum. 
 			*/
-			s_plugins->addNode(InitBMP);
-			s_plugins->addNode(InitICO);
-			s_plugins->addNode(InitJPEG);
-			s_plugins->addNode(InitJNG);
-			s_plugins->addNode(InitKOALA);
-			s_plugins->addNode(InitIFF);
-			s_plugins->addNode(InitMNG);
-			s_plugins->addNode(InitPNM, NULL, "PBM", "Portable Bitmap (ASCII)", "pbm", "^P1");
-			s_plugins->addNode(InitPNM, NULL, "PBMRAW", "Portable Bitmap (RAW)", "pbm", "^P4");
-			s_plugins->addNode(InitPCD);
-			s_plugins->addNode(InitPCX);
-			s_plugins->addNode(InitPNM, NULL, "PGM", "Portable Greymap (ASCII)", "pgm", "^P2");
-			s_plugins->addNode(InitPNM, NULL, "PGMRAW", "Portable Greymap (RAW)", "pgm", "^P5");
-			s_plugins->addNode(InitPNG);
-			s_plugins->addNode(InitPNM, NULL, "PPM", "Portable Pixelmap (ASCII)", "ppm", "^P3");
-			s_plugins->addNode(InitPNM, NULL, "PPMRAW", "Portable Pixelmap (RAW)", "ppm", "^P6");
-			s_plugins->addNode(InitRAS);
-			s_plugins->addNode(InitTARGA);
-			s_plugins->addNode(InitTIFF);
-			s_plugins->addNode(InitWBMP);
-			s_plugins->addNode(InitPSD);
-			s_plugins->addNode(InitCUT);
-			s_plugins->addNode(InitXBM);
-			s_plugins->addNode(InitXPM);
-			s_plugins->addNode(InitDDS);
-	        s_plugins->addNode(InitGIF);
-	        s_plugins->addNode(InitHDR);
-			s_plugins->addNode(InitG3);
-			s_plugins->addNode(InitSGI);
-			s_plugins->addNode(InitEXR);
-			s_plugins->addNode(InitJ2K);
-			s_plugins->addNode(InitJP2);
-			s_plugins->addNode(InitPFM);
-			s_plugins->addNode(InitPICT);
-			s_plugins->addNode(InitRAW);
-			s_plugins->addNode(InitWEBP);
-			s_plugins->addNode(InitJXR);	// unsupported by MS Visual Studio 2003 !!!
+			s_plugins->AddNode(InitBMP);
+			s_plugins->AddNode(InitICO);
+			s_plugins->AddNode(InitJPEG);
+			s_plugins->AddNode(InitJNG);
+			s_plugins->AddNode(InitKOALA);
+			s_plugins->AddNode(InitIFF);
+			s_plugins->AddNode(InitMNG);
+			s_plugins->AddNode(InitPNM, NULL, "PBM", "Portable Bitmap (ASCII)", "pbm", "^P1");
+			s_plugins->AddNode(InitPNM, NULL, "PBMRAW", "Portable Bitmap (RAW)", "pbm", "^P4");
+			s_plugins->AddNode(InitPCD);
+			s_plugins->AddNode(InitPCX);
+			s_plugins->AddNode(InitPNM, NULL, "PGM", "Portable Greymap (ASCII)", "pgm", "^P2");
+			s_plugins->AddNode(InitPNM, NULL, "PGMRAW", "Portable Greymap (RAW)", "pgm", "^P5");
+			s_plugins->AddNode(InitPNG);
+			s_plugins->AddNode(InitPNM, NULL, "PPM", "Portable Pixelmap (ASCII)", "ppm", "^P3");
+			s_plugins->AddNode(InitPNM, NULL, "PPMRAW", "Portable Pixelmap (RAW)", "ppm", "^P6");
+			s_plugins->AddNode(InitRAS);
+			s_plugins->AddNode(InitTARGA);
+			s_plugins->AddNode(InitTIFF);
+			s_plugins->AddNode(InitWBMP);
+			s_plugins->AddNode(InitPSD);
+			s_plugins->AddNode(InitCUT);
+			s_plugins->AddNode(InitXBM);
+			s_plugins->AddNode(InitXPM);
+			s_plugins->AddNode(InitDDS);
+	        s_plugins->AddNode(InitGIF);
+	        s_plugins->AddNode(InitHDR);
+			s_plugins->AddNode(InitG3);
+			s_plugins->AddNode(InitSGI);
+			s_plugins->AddNode(InitEXR);
+			s_plugins->AddNode(InitJ2K);
+			s_plugins->AddNode(InitJP2);
+			s_plugins->AddNode(InitPFM);
+			s_plugins->AddNode(InitPICT);
+			s_plugins->AddNode(InitRAW);
+			s_plugins->AddNode(InitWEBP);
+#if !(defined(_MSC_VER) && (_MSC_VER <= 1310))
+			s_plugins->AddNode(InitJXR);
+#endif // unsupported by MS Visual Studio 2003 !!!
 			
 			// external plugin initialization
 
@@ -395,7 +319,7 @@ FreeImage_Initialise(BOOL load_local_plugins_only) {
 								FARPROC proc_address = GetProcAddress(instance, "_Init@8");
 
 								if (proc_address != NULL) {
-									s_plugins->addNode((FI_InitProc)proc_address, (void *)instance);
+									s_plugins->AddNode((FI_InitProc)proc_address, (void *)instance);
 								} else {
 									FreeLibrary(instance);
 								}
@@ -433,18 +357,18 @@ FreeImage_DeInitialise() {
 // =====================================================================
 
 void * DLL_CALLCONV
-FreeImage_Open(const PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading) {
-	if(NULL != node->plugin->open_proc) {
-       return node->plugin->open_proc(io, handle, open_for_reading);
+FreeImage_Open(PluginNode *node, FreeImageIO *io, fi_handle handle, BOOL open_for_reading) {
+	if (node->m_plugin->open_proc != NULL) {
+       return node->m_plugin->open_proc(io, handle, open_for_reading);
 	}
 
 	return NULL;
 }
 
 void DLL_CALLCONV
-FreeImage_Close(const PluginNode *node, FreeImageIO *io, fi_handle handle, void *data) {
-	if(NULL != node->plugin->close_proc) {
-		node->plugin->close_proc(io, handle, data);
+FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data) {
+	if (node->m_plugin->close_proc != NULL) {
+		node->m_plugin->close_proc(io, handle, data);
 	}
 }
 
@@ -455,13 +379,13 @@ FreeImage_Close(const PluginNode *node, FreeImageIO *io, fi_handle handle, void 
 FIBITMAP * DLL_CALLCONV
 FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
-		const PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 		
 		if (node != NULL) {
-			if(NULL != node->plugin->load_proc) {
+			if(node->m_plugin->load_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, TRUE);
 					
-				FIBITMAP *bitmap = node->plugin->load_proc(io, handle, -1, flags, data);
+				FIBITMAP *bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
 					
 				FreeImage_Close(node, io, handle, data);
 					
@@ -522,13 +446,13 @@ FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi
 	}
 
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
-		const PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 		
 		if (node) {
-			if(NULL != node->plugin->save_proc) {
+			if(node->m_plugin->save_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, FALSE);
 					
-				BOOL result = node->plugin->save_proc(io, dib, handle, -1, flags, data);
+				BOOL result = node->m_plugin->save_proc(io, dib, handle, -1, flags, data);
 					
 				FreeImage_Close(node, io, handle, data);
 					
@@ -587,7 +511,7 @@ FreeImage_SaveU(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const wchar_t *filename, i
 
 FREE_IMAGE_FORMAT DLL_CALLCONV
 FreeImage_RegisterLocalPlugin(FI_InitProc proc_address, const char *format, const char *description, const char *extension, const char *regexpr) {
-	return s_plugins->addNode(proc_address, NULL, format, description, extension, regexpr);
+	return s_plugins->AddNode(proc_address, NULL, format, description, extension, regexpr);
 }
 
 #ifdef _WIN32
@@ -599,7 +523,7 @@ FreeImage_RegisterExternalPlugin(const char *path, const char *format, const cha
 		if (instance != NULL) {
 			FARPROC proc_address = GetProcAddress(instance, "_Init@8");
 
-			FREE_IMAGE_FORMAT result = s_plugins->addNode((FI_InitProc)proc_address, (void *)instance, format, description, extension, regexpr);
+			FREE_IMAGE_FORMAT result = s_plugins->AddNode((FI_InitProc)proc_address, (void *)instance, format, description, extension, regexpr);
 
 			if (result == FIF_UNKNOWN)
 				FreeLibrary(instance);
@@ -615,12 +539,12 @@ FreeImage_RegisterExternalPlugin(const char *path, const char *format, const cha
 int DLL_CALLCONV
 FreeImage_SetPluginEnabled(FREE_IMAGE_FORMAT fif, BOOL enable) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
 		if (node != NULL) {
-			BOOL previous_state = node->isEnabled;
+			BOOL previous_state = node->m_enabled;
 
-			node->isEnabled = enable ? true : false;
+			node->m_enabled = enable;
 
 			return previous_state;
 		}
@@ -632,9 +556,9 @@ FreeImage_SetPluginEnabled(FREE_IMAGE_FORMAT fif, BOOL enable) {
 int DLL_CALLCONV
 FreeImage_IsPluginEnabled(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ? node->isEnabled : FALSE;
+		return (node != NULL) ? node->m_enabled : FALSE;
 	}
 	
 	return -1;
@@ -646,14 +570,15 @@ FreeImage_IsPluginEnabled(FREE_IMAGE_FORMAT fif) {
 
 int DLL_CALLCONV
 FreeImage_GetFIFCount() {
-	return (s_plugins != NULL) ? (int)s_plugins->size() : 0;
+	return (s_plugins != NULL) ? s_plugins->Size() : 0;
 }
 
 FREE_IMAGE_FORMAT DLL_CALLCONV
 FreeImage_GetFIFFromFormat(const char *format) {
 	if (s_plugins != NULL) {
-		const PluginNode *node = s_plugins->findNodeFromFormat(format);
-		return (node != NULL) ? (FREE_IMAGE_FORMAT)node->id : FIF_UNKNOWN;
+		PluginNode *node = s_plugins->FindNodeFromFormat(format);
+
+		return (node != NULL) ? (FREE_IMAGE_FORMAT)node->m_id : FIF_UNKNOWN;
 	}
 
 	return FIF_UNKNOWN;
@@ -662,8 +587,9 @@ FreeImage_GetFIFFromFormat(const char *format) {
 FREE_IMAGE_FORMAT DLL_CALLCONV
 FreeImage_GetFIFFromMime(const char *mime) {
 	if (s_plugins != NULL) {
-		const PluginNode *node = s_plugins->findNodeFromMime(mime);
-		return (node != NULL) ? (FREE_IMAGE_FORMAT)node->id : FIF_UNKNOWN;
+		PluginNode *node = s_plugins->FindNodeFromMime(mime);
+
+		return (node != NULL) ? (FREE_IMAGE_FORMAT)node->m_id : FIF_UNKNOWN;
 	}
 
 	return FIF_UNKNOWN;
@@ -672,27 +598,31 @@ FreeImage_GetFIFFromMime(const char *mime) {
 const char * DLL_CALLCONV
 FreeImage_GetFormatFromFIF(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
-		return (node != NULL) ? (node->format != NULL) ? node->format : node->plugin->format_proc() : NULL;
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
+
+		return (node != NULL) ? (node->m_format != NULL) ? node->m_format : node->m_plugin->format_proc() : NULL;
 	}
+
 	return NULL;
 }
 
 const char * DLL_CALLCONV 
 FreeImage_GetFIFMimeType(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
-		return (node != NULL) ? (node->plugin != NULL) ? ( node->plugin->mime_proc != NULL )? node->plugin->mime_proc() : NULL : NULL : NULL;
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
+
+		return (node != NULL) ? (node->m_plugin != NULL) ? ( node->m_plugin->mime_proc != NULL )? node->m_plugin->mime_proc() : NULL : NULL : NULL;
 	}
+
 	return NULL;
 }
 
 const char * DLL_CALLCONV
 FreeImage_GetFIFExtensionList(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ? (node->extension != NULL) ? node->extension : (node->plugin->extension_proc != NULL) ? node->plugin->extension_proc() : NULL : NULL;
+		return (node != NULL) ? (node->m_extension != NULL) ? node->m_extension : (node->m_plugin->extension_proc != NULL) ? node->m_plugin->extension_proc() : NULL : NULL;
 	}
 
 	return NULL;
@@ -701,9 +631,9 @@ FreeImage_GetFIFExtensionList(FREE_IMAGE_FORMAT fif) {
 const char * DLL_CALLCONV
 FreeImage_GetFIFDescription(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ? (node->description != NULL) ? node->description : (node->plugin->description_proc != NULL) ? node->plugin->description_proc() : NULL : NULL;
+		return (node != NULL) ? (node->m_description != NULL) ? node->m_description : (node->m_plugin->description_proc != NULL) ? node->m_plugin->description_proc() : NULL : NULL;
 	}
 
 	return NULL;
@@ -712,9 +642,9 @@ FreeImage_GetFIFDescription(FREE_IMAGE_FORMAT fif) {
 const char * DLL_CALLCONV
 FreeImage_GetFIFRegExpr(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ? (node->regexpr != NULL) ? node->regexpr : (node->plugin->regexpr_proc != NULL) ? node->plugin->regexpr_proc() : NULL : NULL;
+		return (node != NULL) ? (node->m_regexpr != NULL) ? node->m_regexpr : (node->m_plugin->regexpr_proc != NULL) ? node->m_plugin->regexpr_proc() : NULL : NULL;
 	}
 
 	return NULL;
@@ -723,9 +653,9 @@ FreeImage_GetFIFRegExpr(FREE_IMAGE_FORMAT fif) {
 BOOL DLL_CALLCONV
 FreeImage_FIFSupportsReading(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ? node->plugin->load_proc != NULL : FALSE;
+		return (node != NULL) ? node->m_plugin->load_proc != NULL : FALSE;
 	}
 
 	return FALSE;
@@ -734,9 +664,9 @@ FreeImage_FIFSupportsReading(FREE_IMAGE_FORMAT fif) {
 BOOL DLL_CALLCONV
 FreeImage_FIFSupportsWriting(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ? node->plugin->save_proc != NULL : FALSE ;
+		return (node != NULL) ? node->m_plugin->save_proc != NULL : FALSE ;
 	}
 
 	return FALSE;
@@ -745,11 +675,11 @@ FreeImage_FIFSupportsWriting(FREE_IMAGE_FORMAT fif) {
 BOOL DLL_CALLCONV
 FreeImage_FIFSupportsExportBPP(FREE_IMAGE_FORMAT fif, int depth) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
 		return (node != NULL) ? 
-			(node->plugin->supports_export_bpp_proc != NULL) ? 
-				node->plugin->supports_export_bpp_proc(depth) : FALSE : FALSE;
+			(node->m_plugin->supports_export_bpp_proc != NULL) ? 
+				node->m_plugin->supports_export_bpp_proc(depth) : FALSE : FALSE;
 	}
 
 	return FALSE;
@@ -758,11 +688,11 @@ FreeImage_FIFSupportsExportBPP(FREE_IMAGE_FORMAT fif, int depth) {
 BOOL DLL_CALLCONV
 FreeImage_FIFSupportsExportType(FREE_IMAGE_FORMAT fif, FREE_IMAGE_TYPE type) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
 		return (node != NULL) ? 
-			(node->plugin->supports_export_type_proc != NULL) ? 
-				node->plugin->supports_export_type_proc(type) : FALSE : FALSE;
+			(node->m_plugin->supports_export_type_proc != NULL) ? 
+				node->m_plugin->supports_export_type_proc(type) : FALSE : FALSE;
 	}
 
 	return FALSE;
@@ -771,11 +701,11 @@ FreeImage_FIFSupportsExportType(FREE_IMAGE_FORMAT fif, FREE_IMAGE_TYPE type) {
 BOOL DLL_CALLCONV
 FreeImage_FIFSupportsICCProfiles(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
 		return (node != NULL) ? 
-			(node->plugin->supports_icc_profiles_proc != NULL) ? 
-				node->plugin->supports_icc_profiles_proc() : FALSE : FALSE;
+			(node->m_plugin->supports_icc_profiles_proc != NULL) ? 
+				node->m_plugin->supports_icc_profiles_proc() : FALSE : FALSE;
 	}
 
 	return FALSE;
@@ -784,11 +714,11 @@ FreeImage_FIFSupportsICCProfiles(FREE_IMAGE_FORMAT fif) {
 BOOL DLL_CALLCONV
 FreeImage_FIFSupportsNoPixels(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
 		return (node != NULL) ? 
-			(node->plugin->supports_no_pixels_proc != NULL) ? 
-				node->plugin->supports_no_pixels_proc() : FALSE : FALSE;
+			(node->m_plugin->supports_no_pixels_proc != NULL) ? 
+				node->m_plugin->supports_no_pixels_proc() : FALSE : FALSE;
 	}
 
 	return FALSE;
@@ -808,7 +738,7 @@ FreeImage_GetFIFFromFilename(const char *filename) {
 
 		for (int i = 0; i < FreeImage_GetFIFCount(); ++i) {
 
-			if (s_plugins->findNodeFromFIF(i)->isEnabled) {
+			if (s_plugins->FindNodeFromFIF(i)->m_enabled) {
 
 				// compare the format id with the extension
 
@@ -875,16 +805,14 @@ FreeImage_Validate(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle) {
 	if (s_plugins != NULL) {
 		BOOL validated = FALSE;
 
-		PluginNode *node = s_plugins->findNodeFromFIF(fif);
+		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		if (node && node->isEnabled) {
-			if (NULL != node->plugin->validate_proc) {
-				long tell = io->tell_proc(handle);
+		if (node) {
+			long tell = io->tell_proc(handle);
 
-				validated = node->plugin->validate_proc(io, handle);
+			validated = (node != NULL) ? (node->m_enabled) ? (node->m_plugin->validate_proc != NULL) ? node->m_plugin->validate_proc(io, handle) : FALSE : FALSE : FALSE;
 
-				io->seek_proc(handle, tell, SEEK_SET);
-			}
+			io->seek_proc(handle, tell, SEEK_SET);
 		}
 
 		return validated;

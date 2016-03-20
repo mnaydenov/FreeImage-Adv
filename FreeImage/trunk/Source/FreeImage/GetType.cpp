@@ -3,7 +3,6 @@
 //
 // Design and implementation by
 // - Floris van den Berg (flvdberg@wxs.nl)
-// - Herve Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -24,53 +23,35 @@
 #pragma warning (disable : 4786) // identifier was truncated to 'number' characters
 #endif 
 
-#include "FreeImageIO.h"
-#include "Utilities.h"
-#include "FreeImageThreads.h"
-#include "Plugin.h"
 #include "FreeImage.h"
+#include "Utilities.h"
+#include "FreeImageIO.h"
+#include "Plugin.h"
+#include "../DeprecationManager/DeprecationMgr.h"
 
 // ----------------------------------------------------------
 
 FREE_IMAGE_FORMAT DLL_CALLCONV
 FreeImage_GetFileTypeFromHandle(FreeImageIO *io, fi_handle handle, int size) {
-	FREE_IMAGE_FORMAT returned_fif = FIF_UNKNOWN;
-
 	if (handle != NULL) {
-		PluginList * list = FreeImage_GetPluginList();
+		int fif_count = FreeImage_GetFIFCount();
 
-		// get exclusive access
-		list->lock();
-
-		const MRUList& mruList = list->getMRUList();
-		const size_t mruListSize = mruList.size();
-
-		// scan the plugins from the Most Recently Used to the Least Recently Used
-		for (size_t k = 0; k < mruListSize; k++) {
-			FREE_IMAGE_FORMAT fif = mruList[k].fif;
+		for (int i = 0; i < fif_count; ++i) {
+			FREE_IMAGE_FORMAT fif = (FREE_IMAGE_FORMAT)i;
 			if (FreeImage_Validate(fif, io, handle)) {
-				if (fif == FIF_TIFF) {
+				if(fif == FIF_TIFF) {
 					// many camera raw files use a TIFF signature ...
 					// ... try to revalidate against FIF_RAW (even if it breaks the code genericity)
 					if (FreeImage_Validate(FIF_RAW, io, handle)) {
-						fif = FIF_RAW;
+						return FIF_RAW;
 					}
 				}
-
-				// update the MRU list
-				list->updateMRUList(fif);
-
-				returned_fif = fif;
-
-				break;
+				return fif;
 			}
 		}
-
-		// release exclusive access
-		list->unlock();
 	}
 
-	return returned_fif;
+	return FIF_UNKNOWN;
 }
 
 FREE_IMAGE_FORMAT DLL_CALLCONV
