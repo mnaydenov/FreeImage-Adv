@@ -392,7 +392,6 @@ copy Source\FreeImage.h Dist\x64
     <ClCompile Include="Source\FreeImageToolkit\MultigridPoissonSolver.cpp" />
     <ClCompile Include="Source\FreeImageToolkit\Rescale.cpp" />
     <ClCompile Include="Source\FreeImageToolkit\Resize.cpp" />
-    <ClCompile Include="Source\Threads\FreeImageMutex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="FreeImage.rc" />
@@ -409,7 +408,6 @@ copy Source\FreeImage.h Dist\x64
     <ClInclude Include="Source\Plugin.h" />
     <ClInclude Include="Source\FreeImage\PSDParser.h" />
     <ClInclude Include="Source\Quantizers.h" />
-    <ClInclude Include="Source\FreeImageThreads.h" />
     <ClInclude Include="Source\ToneMapping.h" />
     <ClInclude Include="Source\Utilities.h" />
     <ClInclude Include="Source\FreeImageToolkit\Resize.h" />

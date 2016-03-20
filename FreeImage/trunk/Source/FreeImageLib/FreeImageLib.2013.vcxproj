@@ -331,12 +331,10 @@ copy ..\FreeImage.h ..\..\Dist\x64
     <ClCompile Include="..\FreeImageToolkit\MultigridPoissonSolver.cpp" />
     <ClCompile Include="..\FreeImageToolkit\Rescale.cpp" />
     <ClCompile Include="..\FreeImageToolkit\Resize.cpp" />
-    <ClCompile Include="..\Threads\FreeImageMutex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CacheFile.h" />
     <ClInclude Include="..\DeprecationManager\DeprecationMgr.h" />
-    <ClInclude Include="..\FreeImageThreads.h" />
     <ClInclude Include="..\MapIntrospector.h" />
     <ClInclude Include="..\Metadata\FIRational.h" />
     <ClInclude Include="..\FreeImage.h" />

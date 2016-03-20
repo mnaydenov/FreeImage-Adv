@@ -763,14 +763,6 @@
 					>
 				</File>
 			</Filter>
-			<Filter
-				Name="Threads"
-				>
-				<File
-					RelativePath=".\Source\Threads\FreeImageMutex.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -798,10 +790,6 @@
 			</File>
 			<File
 				RelativePath="Source\Metadata\FreeImageTag.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\FreeImageThreads.h"
 				>
 			</File>
 			<File
