@@ -703,12 +703,14 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 				return FIC_MINISBLACK;
 			}
 			break;
+
 			case FIT_RGB16:
 			case FIT_RGBF:
 				return FIC_RGB;
+
 			case FIT_RGBA16:
 			case FIT_RGBAF:
-				return FIC_RGBALPHA;
+				return (((FreeImage_GetICCProfile(dib)->flags) & FIICC_COLOR_IS_CMYK) == FIICC_COLOR_IS_CMYK) ? FIC_CMYK : FIC_RGBALPHA;
 		}
 
 		return FIC_MINISBLACK;
@@ -773,7 +775,7 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 
 		case 32:
 		{
-			if (FreeImage_GetICCProfile(dib)->flags & FIICC_COLOR_IS_CMYK) {
+			if (((FreeImage_GetICCProfile(dib)->flags) & FIICC_COLOR_IS_CMYK) == FIICC_COLOR_IS_CMYK) {
 				return FIC_CMYK;
 			}
 
@@ -950,7 +952,7 @@ FreeImage_IsTransparent(FIBITMAP *dib) {
 				break;
 			case FIT_RGBA16:
 			case FIT_RGBAF:
-				return TRUE;
+				return (((FreeImage_GetICCProfile(dib)->flags) & FIICC_COLOR_IS_CMYK) == FIICC_COLOR_IS_CMYK) ? FALSE : TRUE;
 			default:
 				break;
 		}
