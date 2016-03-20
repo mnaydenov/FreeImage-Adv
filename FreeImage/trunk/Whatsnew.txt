@@ -12,6 +12,7 @@ Month day, 2015 - 3.18.0
 ! FreeImage now uses LibTIFF 4.0.6
 + [Garrick Meeker] added saving support to the PSD plugin
 + [Tom Whittock] FreeImage_ConvertToRawBits now deals with palletized images containing transparency during conversion
++ [Mihail Naydenov] added saving support for 32-bit CMYK in JPEG plugin
 * [Pengsu Cheng] fixed PCX loader against malicious images with a bad window specification
 * [Herve Drolon] fixed TIFF loader with loading of RGB[A]F float images
 * [Garrick Meeker] improved loading speed of PSD plugin
