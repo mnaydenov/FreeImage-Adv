@@ -21,6 +21,7 @@ Month day, 2015 - 3.18.0
 * [Herve Drolon] improved TARGA signature validation
 * [Herve Drolon] disabled ICC sRGB profile checking in PluginPNG:Save
 * [Ghislain Vaillant] fixed endianness detection on some architectures
+* [Mihail Naydenov] fixed saving of 32-bit CMYK converted to 24-bit RGB on loading (remove ICC profile from Exif metadata)
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
