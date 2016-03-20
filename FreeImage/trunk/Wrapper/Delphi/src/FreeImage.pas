@@ -34,6 +34,7 @@ unit FreeImage;
 // 2013-11-25  MAU   Added type FreeImageAnsiString for handling accents on MAC OSX filenames/path
 // 2014-05-05  LM    Updated to 3.16.1
 // 2015-09-17  LM    Updated to 3.17.0
+// 2016-01-06  LM    Updated to 3.18.0
 //
 
 //
@@ -122,8 +123,8 @@ const
 const
   // Version information
   FREEIMAGE_MAJOR_VERSION  = 3;
-  FREEIMAGE_MINOR_VERSION  = 17;
-  FREEIMAGE_RELEASE_SERIAL = 1;
+  FREEIMAGE_MINOR_VERSION  = 18;
+  FREEIMAGE_RELEASE_SERIAL = 0;
   // This really only affects 24 and 32 bit formats, the rest are always RGB order.
   FREEIMAGE_COLORORDER_BGR = 0;
   FREEIMAGE_COLORORDER_RGB = 1;
@@ -588,6 +589,9 @@ const
   PSD_DEFAULT         = 0;
   PSD_CMYK            = 1; //! reads tags for separated CMYK (default is conversion to RGB)
   PSD_LAB             = 2; //! reads tags for CIELab (default is conversion to RGB)
+  PSD_NONE            = $0100; //! save without any compression
+  PSD_RLE             = $0200; //! save using RLE compression
+  PSD_PSB             = $2000; //! save using Adobe Large Document Format (use | to combine with other save flags)
   RAS_DEFAULT         = 0;
   RAW_DEFAULT         = 0; //! load the file as linear RGB 48-bit
   RAW_PREVIEW         = 1; //! try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
@@ -1211,14 +1215,26 @@ procedure FreeImage_ConvertLine1To32(target, source: PByte; width_in_pixels: Int
   palette: PRGBQuad); {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To32@16'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_ConvertLine1To32'{$ENDIF};
+procedure FreeImage_ConvertLine1To32MapTransparency(target, source: PByte; width_in_pixels: Integer;
+  palette: PRGBQuad; table: PByte; transparent_pixels: Integer); {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine1To32MapTransparency@24'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_ConvertLine1To32MapTransparency'{$ENDIF};
 procedure FreeImage_ConvertLine4To32(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine4To32@16'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_ConvertLine4To32'{$ENDIF};
+procedure FreeImage_ConvertLine4To32MapTransparency(target, source: PByte; width_in_pixels: Integer;
+  palette: PRGBQuad; table: PByte; transparent_pixels: Integer); {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine4To32MapTransparency@24'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_ConvertLine4To32MapTransparency'{$ENDIF};
 procedure FreeImage_ConvertLine8To32(target, source: PByte; width_in_pixels: Integer;
   palette: PRGBQuad); {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine8To32@16'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_ConvertLine8To32'{$ENDIF};
+procedure FreeImage_ConvertLine8To32MapTransparency(target, source: PByte; width_in_pixels: Integer;
+  palette: PRGBQuad; table: PByte; transparent_pixels: Integer); {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
+  external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine8To32MapTransparency@24'{$ENDIF}
+  {$IFDEF MACOS}name '_FreeImage_ConvertLine8To32MapTransparency'{$ENDIF};
 procedure FreeImage_ConvertLine16To32_555(target, source: PByte; width_in_pixels: Integer); {$IFDEF MSWINDOWS}stdcall;{$ELSE}cdecl;{$ENDIF}
   external FIDLL {$IFDEF WIN32}name '_FreeImage_ConvertLine16To32_555@12'{$ENDIF}
   {$IFDEF MACOS}name '_FreeImage_ConvertLine16To32_555'{$ENDIF};
