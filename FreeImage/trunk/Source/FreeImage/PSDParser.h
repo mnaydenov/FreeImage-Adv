@@ -55,13 +55,17 @@ public:
 	short _ColourMode;	//! Colour mode of the file, Bitmap=0, Grayscale=1, Indexed=2, RGB=3, CMYK=4, Multichannel=7, Duotone=8, Lab=9. 
 
 public:
+	//! Default constructor
 	psdHeaderInfo();
+	//! Destructor
 	~psdHeaderInfo();
 	/**
+	Read the psdHeader structure
 	@return Returns true if successful, false otherwise
 	*/
 	bool Read(FreeImageIO *io, fi_handle handle);
 	/**
+	Write the psdHeader structure
 	@return Returns true if successful, false otherwise
 	*/
 	bool Write(FreeImageIO *io, fi_handle handle);
