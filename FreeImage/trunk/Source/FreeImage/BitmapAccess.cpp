@@ -1091,6 +1091,9 @@ FreeImage_DestroyICCProfile(FIBITMAP *dib) {
 		profile->data = NULL;
 		profile->size = 0;
 	}
+
+	// destroy also Exif-Main ICC profile
+	FreeImage_SetMetadata(FIMD_EXIF_MAIN, dib, "InterColorProfile", NULL);
 }
 
 // ----------------------------------------------------------
@@ -1339,6 +1342,11 @@ FreeImage_SetMetadata(FREE_IMAGE_MDMODEL model, FIBITMAP *dib, const char *key, 
 	}
 
 	if(key != NULL) {
+
+		if ((tag == NULL) && !tagmap) {
+			// remove a tag from an unknown tagmap, nothing to do
+			return TRUE;
+		}
 
 		if(!tagmap) {
 			// this model, doesn't exist: create it 
