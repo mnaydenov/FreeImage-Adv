@@ -59,7 +59,7 @@ BOOL fipMultiPage::open(fipMemoryIO& memIO, int flags) {
 
 BOOL fipMultiPage::open(FreeImageIO *io, fi_handle handle, int flags) {
 	// try to guess the file format from the handle
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromHandle(io, handle, 0);
+	FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromHandle(io, handle);
 
 	// open the stream
 	_mpage = FreeImage_OpenMultiBitmapFromHandle(fif, io, handle, flags);

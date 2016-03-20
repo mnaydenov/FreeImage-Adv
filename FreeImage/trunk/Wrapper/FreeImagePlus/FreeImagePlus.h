@@ -194,6 +194,26 @@ public:
 	*/
 	BOOL crop(int left, int top, int right, int bottom);
 
+	/**
+	@brief Returns a reference (a.k.a. "dynamic view") to a sub part of the current image.
+
+	A dynamic view is a FreeImage bitmap with its own width and height, that, however, shares its
+	bits with another FreeImage bitmap. Typically, views are used to define one or more
+	rectangular sub-images of an existing bitmap. All FreeImage operations, like saving,
+	displaying and all the toolkit functions, when applied to the view, only affect the view's
+	rectangular area.
+	This method works with any bitmap type.
+
+	@param dynamicView  Returns a reference to the specified dynamic view
+	@param left Specifies the left position of the view's area
+	@param top Specifies the top position of the view's area
+	@param right Specifies the right position of the view's area
+	@param bottom Specifies the bottom position of the view's area
+	@return Returns TRUE if successful, returns FALSE otherwise
+	@see FreeImage_CreateView
+	*/
+	BOOL createView(fipImage& dynamicView, unsigned left, unsigned top, unsigned right, unsigned bottom);
+
 	//@}
 
 	/** @name File type identification
@@ -238,19 +258,36 @@ public:
 	 */
 	//@{	
 	/**
-	@brief Loads an image from disk, given its file name and an optional flag.
+	Loads an image from disk, given its file name and an optional flag.
+	The function will use FreeImage_GetFileType to get the right FREE_IMAGE_FORMAT.
+	@param lpszPathName Path and file name of the image to load.
+	@param flag The signification of this flag depends on the image to be read.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_Load, FreeImage_GetFileType, FreeImage documentation
+	*/
+	BOOL load(const char* lpszPathName, int flag = 0);
+
+	/**
+	@brief Loads an image from disk, given its format, file name and an optional flag.
+	@param fif Format identifier (FreeImage format)
 	@param lpszPathName Path and file name of the image to load.
 	@param flag The signification of this flag depends on the image to be read.
 	@return Returns TRUE if successful, FALSE otherwise.
 	@see FreeImage_Load, FreeImage documentation
 	*/
-	BOOL load(const char* lpszPathName, int flag = 0);
+	BOOL load(FREE_IMAGE_FORMAT fif, const char* lpszPathName, int flag = 0);
 
 	/**
 	UNICODE version of load (this function only works under WIN32 and does nothing on other OS)
 	@see load
 	*/
 	BOOL loadU(const wchar_t* lpszPathName, int flag = 0);
+
+	/**
+	UNICODE version of load (this function only works under WIN32 and does nothing on other OS)
+	@see load
+	*/
+	BOOL loadU(FREE_IMAGE_FORMAT fif, const wchar_t* lpszPathName, int flag = 0);
 
 	/**
 	@brief Loads an image using the specified FreeImageIO struct and fi_handle, and an optional flag.
@@ -272,19 +309,36 @@ public:
 	BOOL loadFromMemory(fipMemoryIO& memIO, int flag = 0);
 
 	/**
-	@brief Saves an image to disk, given its file name and an optional flag.
+	Saves an image to disk, given its file name and an optional flag.
+	The function will use FreeImage_GetFIFFromFilename to get the right FREE_IMAGE_FORMAT.
+	@param lpszPathName Path and file name of the image to save.
+	@param flag The signification of this flag depends on the image to be saved.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_Save, FreeImage_GetFIFFromFilename, FreeImage documentation
+	*/
+	BOOL save(const char* lpszPathName, int flag = 0);
+
+	/**
+	Saves an image to disk, given its format, file name and an optional flag.
+	@param fif Format identifier (FreeImage format)
 	@param lpszPathName Path and file name of the image to save.
 	@param flag The signification of this flag depends on the image to be saved.
 	@return Returns TRUE if successful, FALSE otherwise.
 	@see FreeImage_Save, FreeImage documentation
 	*/
-	BOOL save(const char* lpszPathName, int flag = 0);
+	BOOL save(FREE_IMAGE_FORMAT fif, const char* lpszPathName, int flag = 0);
 
 	/**
 	UNICODE version of save (this function only works under WIN32 and does nothing on other OS)
 	@see save
 	*/
 	BOOL saveU(const wchar_t* lpszPathName, int flag = 0);
+
+	/**
+	UNICODE version of save (this function only works under WIN32 and does nothing on other OS)
+	@see save
+	*/
+	BOOL saveU(FREE_IMAGE_FORMAT fif, const wchar_t* lpszPathName, int flag = 0);
 
 	/**
 	@brief Saves an image using the specified FreeImageIO struct and fi_handle, and an optional flag.

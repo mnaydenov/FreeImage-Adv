@@ -142,6 +142,10 @@ BOOL fipImage::crop(int left, int top, int right, int bottom) {
 	return FALSE;
 }
 
+BOOL fipImage::createView(fipImage& dynamicView, unsigned left, unsigned top, unsigned right, unsigned bottom) {
+	dynamicView = FreeImage_CreateView(_dib, left, top, right, bottom);
+	return dynamicView.isValid();
+}
 
 ///////////////////////////////////////////////////////////////////
 // Information functions
@@ -323,7 +327,7 @@ FREE_IMAGE_FORMAT fipImage::identifyFIFU(const wchar_t* lpszPathName) {
 FREE_IMAGE_FORMAT fipImage::identifyFIFFromHandle(FreeImageIO *io, fi_handle handle) {
 	if(io && handle) {
 		// check the file signature and get its format
-		return FreeImage_GetFileTypeFromHandle(io, handle, 16);
+		return FreeImage_GetFileTypeFromHandle(io, handle);
 	}
 	return FIF_UNKNOWN;
 }
@@ -339,6 +343,19 @@ FREE_IMAGE_FORMAT fipImage::identifyFIFFromMemory(FIMEMORY *hmem) {
 ///////////////////////////////////////////////////////////////////
 // Loading & Saving
 
+BOOL fipImage::load(FREE_IMAGE_FORMAT fif, const char* lpszPathName, int flag) {
+	// free the previous dib
+	if (_dib) {
+		FreeImage_Unload(_dib);
+	}
+	// load the file
+	_dib = FreeImage_Load(fif, lpszPathName, flag);
+	_fif = fif;
+	_bHasChanged = TRUE;
+
+	return (_dib == NULL) ? FALSE : TRUE;
+}
+
 BOOL fipImage::load(const char* lpszPathName, int flag) {
 	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
 
@@ -352,17 +369,23 @@ BOOL fipImage::load(const char* lpszPathName, int flag) {
 	}
 	// check that the plugin has reading capabilities ...
 	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
-		// Free the previous dib
-		if(_dib) {
-			FreeImage_Unload(_dib);			
-		}
-		// Load the file
-		_dib = FreeImage_Load(fif, lpszPathName, flag);
-		_fif = fif;
-		_bHasChanged = TRUE;
-		return (_dib == NULL) ? FALSE : TRUE;
+		return load(fif, lpszPathName, flag);
 	}
+
 	return FALSE;
+}
+
+BOOL fipImage::loadU(FREE_IMAGE_FORMAT fif, const wchar_t* lpszPathName, int flag) {
+	// free the previous dib
+	if (_dib) {
+		FreeImage_Unload(_dib);
+	}
+	// load the file
+	_dib = FreeImage_LoadU(fif, lpszPathName, flag);
+	_fif = fif;
+	_bHasChanged = TRUE;
+
+	return (_dib == NULL) ? FALSE : TRUE;
 }
 
 BOOL fipImage::loadU(const wchar_t* lpszPathName, int flag) {
@@ -378,17 +401,9 @@ BOOL fipImage::loadU(const wchar_t* lpszPathName, int flag) {
 	}
 	// check that the plugin has reading capabilities ...
 	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
-		// Free the previous dib
-		if(_dib) {
-			FreeImage_Unload(_dib);			
-		}
-		// Load the file
-		_dib = FreeImage_LoadU(fif, lpszPathName, flag);
-		_fif = fif;
-		_bHasChanged = TRUE;
-
-		return (_dib == NULL) ? FALSE : TRUE;
+		return loadU(fif, lpszPathName, flag);
 	}
+
 	return FALSE;
 }
 
@@ -396,7 +411,7 @@ BOOL fipImage::loadFromHandle(FreeImageIO *io, fi_handle handle, int flag) {
 	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
 
 	// check the file signature and get its format
-	fif = FreeImage_GetFileTypeFromHandle(io, handle, 16);
+	fif = FreeImage_GetFileTypeFromHandle(io, handle);
 	if((fif != FIF_UNKNOWN) && FreeImage_FIFSupportsReading(fif)) {
 		// Free the previous dib
 		if(_dib) {
@@ -432,6 +447,12 @@ BOOL fipImage::loadFromMemory(fipMemoryIO& memIO, int flag) {
 	return FALSE;
 }
 
+BOOL  fipImage::save(FREE_IMAGE_FORMAT fif, const char* lpszPathName, int flag) {
+	BOOL bSuccess = FreeImage_Save(fif, _dib, lpszPathName, flag);
+	_fif = fif;
+	return bSuccess;
+}
+
 BOOL fipImage::save(const char* lpszPathName, int flag) {
 	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
 	BOOL bSuccess = FALSE;
@@ -458,6 +479,12 @@ BOOL fipImage::save(const char* lpszPathName, int flag) {
 			return bSuccess;
 		}
 	}
+	return bSuccess;
+}
+
+BOOL  fipImage::saveU(FREE_IMAGE_FORMAT fif, const wchar_t* lpszPathName, int flag) {
+	BOOL bSuccess = FreeImage_SaveU(fif, _dib, lpszPathName, flag);
+	_fif = fif;
 	return bSuccess;
 }
 
