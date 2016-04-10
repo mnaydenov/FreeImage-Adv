@@ -32,6 +32,7 @@ del TestAPI\test.jpg
 del TestAPI\TestImageType.tif
 del TestAPI\viewport.png
 del TestAPI\zoneplate.png
+del TestAPI\test_view.bmp
 rd Source\FreeImageLib\Debug /s /q
 rd Source\FreeImageLib\Release /s /q
 rd Source\FreeImageLib\Win32 /s /q
