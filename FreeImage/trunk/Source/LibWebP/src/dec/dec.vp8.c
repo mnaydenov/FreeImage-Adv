@@ -190,25 +190,27 @@ static VP8StatusCode ParsePartitions(VP8Decoder* const dec,
   const uint8_t* sz = buf;
   const uint8_t* buf_end = buf + size;
   const uint8_t* part_start;
-  int last_part;
-  int p;
+  size_t size_left = size;
+  size_t last_part;
+  size_t p;
 
   dec->num_parts_ = 1 << VP8GetValue(br, 2);
   last_part = dec->num_parts_ - 1;
-  part_start = buf + last_part * 3;
-  if (buf_end < part_start) {
+  if (size < 3 * last_part) {
     // we can't even read the sizes with sz[]! That's a failure.
     return VP8_STATUS_NOT_ENOUGH_DATA;
   }
+  part_start = buf + last_part * 3;
+  size_left -= last_part * 3;
   for (p = 0; p < last_part; ++p) {
-    const uint32_t psize = sz[0] | (sz[1] << 8) | (sz[2] << 16);
-    const uint8_t* part_end = part_start + psize;
-    if (part_end > buf_end) part_end = buf_end;
-    VP8InitBitReader(dec->parts_ + p, part_start, part_end);
-    part_start = part_end;
+    size_t psize = sz[0] | (sz[1] << 8) | (sz[2] << 16);
+    if (psize > size_left) psize = size_left;
+    VP8InitBitReader(dec->parts_ + p, part_start, psize);
+    part_start += psize;
+    size_left -= psize;
     sz += 3;
   }
-  VP8InitBitReader(dec->parts_ + last_part, part_start, buf_end);
+  VP8InitBitReader(dec->parts_ + last_part, part_start, size_left);
   return (part_start < buf_end) ? VP8_STATUS_OK :
            VP8_STATUS_SUSPENDED;   // Init is ok, but there's not enough data
 }
@@ -301,15 +303,22 @@ int VP8GetHeaders(VP8Decoder* const dec, VP8Io* const io) {
 
     dec->mb_w_ = (pic_hdr->width_ + 15) >> 4;
     dec->mb_h_ = (pic_hdr->height_ + 15) >> 4;
+
     // Setup default output area (can be later modified during io->setup())
     io->width = pic_hdr->width_;
     io->height = pic_hdr->height_;
-    io->use_scaling  = 0;
+    // IMPORTANT! use some sane dimensions in crop_* and scaled_* fields.
+    // So they can be used interchangeably without always testing for
+    // 'use_cropping'.
     io->use_cropping = 0;
     io->crop_top  = 0;
     io->crop_left = 0;
     io->crop_right  = io->width;
     io->crop_bottom = io->height;
+    io->use_scaling  = 0;
+    io->scaled_width = io->width;
+    io->scaled_height = io->height;
+
     io->mb_w = io->width;   // sanity check
     io->mb_h = io->height;  // ditto
 
@@ -325,7 +334,7 @@ int VP8GetHeaders(VP8Decoder* const dec, VP8Io* const io) {
   }
 
   br = &dec->br_;
-  VP8InitBitReader(br, buf, buf + frm_hdr->partition_length_);
+  VP8InitBitReader(br, buf, frm_hdr->partition_length_);
   buf += frm_hdr->partition_length_;
   buf_size -= frm_hdr->partition_length_;
 
@@ -647,8 +656,7 @@ void VP8Clear(VP8Decoder* const dec) {
     return;
   }
   WebPGetWorkerInterface()->End(&dec->worker_);
-  ALPHDelete(dec->alph_dec_);
-  dec->alph_dec_ = NULL;
+  WebPDeallocateAlphaMemory(dec);
   WebPSafeFree(dec->mem_);
   dec->mem_ = NULL;
   dec->mem_size_ = 0;
@@ -657,4 +665,3 @@ void VP8Clear(VP8Decoder* const dec) {
 }
 
 //------------------------------------------------------------------------------
-

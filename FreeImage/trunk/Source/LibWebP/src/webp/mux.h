@@ -15,14 +15,13 @@
 #ifndef WEBP_WEBP_MUX_H_
 #define WEBP_WEBP_MUX_H_
 
-#include "./encode.h"
 #include "./mux_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define WEBP_MUX_ABI_VERSION 0x0105        // MAJOR(8b) + MINOR(8b)
+#define WEBP_MUX_ABI_VERSION 0x0106        // MAJOR(8b) + MINOR(8b)
 
 //------------------------------------------------------------------------------
 // Mux API
@@ -68,6 +67,7 @@ extern "C" {
 typedef struct WebPMux WebPMux;   // main opaque object.
 typedef struct WebPMuxFrameInfo WebPMuxFrameInfo;
 typedef struct WebPMuxAnimParams WebPMuxAnimParams;
+typedef struct WebPAnimEncoderOptions WebPAnimEncoderOptions;
 
 // Error codes
 typedef enum WebPMuxError {
@@ -417,8 +417,12 @@ WEBP_EXTERN(WebPMuxError) WebPMuxAssemble(WebPMux* mux,
 
 typedef struct WebPAnimEncoder WebPAnimEncoder;  // Main opaque object.
 
+// Forward declarations. Defined in encode.h.
+struct WebPPicture;
+struct WebPConfig;
+
 // Global options.
-typedef struct {
+struct WebPAnimEncoderOptions {
   WebPMuxAnimParams anim_params;  // Animation parameters.
   int minimize_size;    // If true, minimize the output size (slow). Implicitly
                         // disables key-frame insertion.
@@ -432,12 +436,10 @@ typedef struct {
                         // then all frames will be key-frames.
   int allow_mixed;      // If true, use mixed compression mode; may choose
                         // either lossy and lossless for each frame.
+  int verbose;          // If true, print info and warning messages to stderr.
 
-  // TODO(urvang): Instead of printing errors to STDERR, we should have an error
-  // string attached to the encoder.
-  int verbose;          // If true, print encoding info.
   uint32_t padding[4];  // Padding for later use.
-} WebPAnimEncoderOptions;
+};
 
 // Internal, version-checked, entry point.
 WEBP_EXTERN(int) WebPAnimEncoderOptionsInitInternal(
@@ -445,8 +447,8 @@ WEBP_EXTERN(int) WebPAnimEncoderOptionsInitInternal(
 
 // Should always be called, to initialize a fresh WebPAnimEncoderOptions
 // structure before modification. Returns false in case of version mismatch.
-// WebPAnimEncoderOptionsInit() must have succeeded before using the 'options'
-// object.
+// WebPAnimEncoderOptionsInit() must have succeeded before using the
+// 'enc_options' object.
 static WEBP_INLINE int WebPAnimEncoderOptionsInit(
     WebPAnimEncoderOptions* enc_options) {
   return WebPAnimEncoderOptionsInitInternal(enc_options, WEBP_MUX_ABI_VERSION);
@@ -459,8 +461,8 @@ WEBP_EXTERN(WebPAnimEncoder*) WebPAnimEncoderNewInternal(
 // Creates and initializes a WebPAnimEncoder object.
 // Parameters:
 //   width/height - (in) canvas width and height of the animation.
-//   encoder_options - (in) encoding options; can be passed NULL to pick
-//                     reasonable defaults.
+//   enc_options - (in) encoding options; can be passed NULL to pick
+//                      reasonable defaults.
 // Returns:
 //   A pointer to the newly created WebPAnimEncoder object.
 //   Or NULL in case of memory error.
@@ -489,8 +491,8 @@ static WEBP_INLINE WebPAnimEncoder* WebPAnimEncoderNew(
 //   On error, returns false and frame->error_code is set appropriately.
 //   Otherwise, returns true.
 WEBP_EXTERN(int) WebPAnimEncoderAdd(
-    WebPAnimEncoder* enc, WebPPicture* frame, int timestamp_ms,
-    const WebPConfig* config);
+    WebPAnimEncoder* enc, struct WebPPicture* frame, int timestamp_ms,
+    const struct WebPConfig* config);
 
 // Assemble all frames added so far into a WebP bitstream.
 // This call should be preceded by  a call to 'WebPAnimEncoderAdd' with
@@ -504,10 +506,20 @@ WEBP_EXTERN(int) WebPAnimEncoderAdd(
 WEBP_EXTERN(int) WebPAnimEncoderAssemble(WebPAnimEncoder* enc,
                                          WebPData* webp_data);
 
+// Get error string corresponding to the most recent call using 'enc'. The
+// returned string is owned by 'enc' and is valid only until the next call to
+// WebPAnimEncoderAdd() or WebPAnimEncoderAssemble() or WebPAnimEncoderDelete().
+// Parameters:
+//   enc - (in/out) object from which the error string is to be fetched.
+// Returns:
+//   NULL if 'enc' is NULL. Otherwise, returns the error string if the last call
+//   to 'enc' had an error, or an empty string if the last call was a success.
+WEBP_EXTERN(const char*) WebPAnimEncoderGetError(WebPAnimEncoder* enc);
+
 // Deletes the WebPAnimEncoder object.
 // Parameters:
-//   anim_enc - (in/out) object to be deleted
-WEBP_EXTERN(void) WebPAnimEncoderDelete(WebPAnimEncoder* anim_enc);
+//   enc - (in/out) object to be deleted
+WEBP_EXTERN(void) WebPAnimEncoderDelete(WebPAnimEncoder* enc);
 
 //------------------------------------------------------------------------------
 

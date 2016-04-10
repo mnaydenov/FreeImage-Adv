@@ -67,6 +67,11 @@ static int EncodeLossless(const uint8_t* const data, int width, int height,
 
   WebPConfigInit(&config);
   config.lossless = 1;
+  // Enable exact, or it would alter RGB values of transparent alpha, which is
+  // normally OK but not here since we are not encoding the input image but  an
+  // internal encoding-related image containing necessary exact information in
+  // RGB channels.
+  config.exact = 1;
   config.method = effort_level;  // impact is very small
   // Set a low default quality for encoding alpha. Ensure that Alpha quality at
   // lower methods (3 and below) is less than the threshold for triggering
@@ -86,7 +91,6 @@ static int EncodeLossless(const uint8_t* const data, int width, int height,
     return 0;
   }
   return 1;
-
 }
 
 // -----------------------------------------------------------------------------
@@ -169,16 +173,6 @@ static int EncodeAlphaInternal(const uint8_t* const data, int width, int height,
 }
 
 // -----------------------------------------------------------------------------
-
-// TODO(skal): move to dsp/ ?
-static void CopyPlane(const uint8_t* src, int src_stride,
-                      uint8_t* dst, int dst_stride, int width, int height) {
-  while (height-- > 0) {
-    memcpy(dst, src, width);
-    src += src_stride;
-    dst += dst_stride;
-  }
-}
 
 static int GetNumColors(const uint8_t* data, int width, int height,
                         int stride) {
@@ -330,7 +324,7 @@ static int EncodeAlpha(VP8Encoder* const enc,
   }
 
   // Extract alpha data (width x height) from raw_data (stride x height).
-  CopyPlane(pic->a, pic->a_stride, quant_alpha, width, width, height);
+  WebPCopyPlane(pic->a, pic->a_stride, quant_alpha, width, width, height);
 
   if (reduce_levels) {  // No Quantization required for 'quality = 100'.
     // 16 alpha levels gives quite a low MSE w.r.t original alpha plane hence
