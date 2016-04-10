@@ -282,13 +282,14 @@ CalculateLine(unsigned width, unsigned bitdepth) {
 
 inline unsigned
 CalculatePitch(unsigned line) {
-	return line + 3 & ~3;
+	return (line + 3) & ~3;
 }
 
 inline unsigned
 CalculateUsedPaletteEntries(unsigned bit_count) {
-	if ((bit_count >= 1) && (bit_count <= 8))
+	if ((bit_count >= 1) && (bit_count <= 8)) {
 		return 1 << bit_count;
+	}
 
 	return 0;
 }
