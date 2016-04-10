@@ -5,11 +5,12 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2015 - 3.18.0
+Month day, 2016 - 3.18.0
 ! FreeImage now uses LibRaw 0.18.0 (GIT patch 2015-11-24)
-! FreeImage now uses LibWebP 0.4.3 (GIT patch 2015-10-09)
+! FreeImage now uses LibWebP 0.5.1 (GIT patch 2016-04-07)
 ! FreeImage now uses LibPNG 1.6.21
 ! FreeImage now uses LibTIFF 4.0.6
+! FreeImage now uses LibJPEG 9b
 + [Garrick Meeker] added saving support to the PSD plugin
 + [Tom Whittock] FreeImage_ConvertToRawBits now deals with palletized images containing transparency during conversion
 + [Mihail Naydenov] added saving support for 32-bit CMYK in JPEG plugin
@@ -24,6 +25,7 @@ Month day, 2015 - 3.18.0
 * [Mihail Naydenov] fixed saving of 32-bit CMYK converted to 24-bit RGB on loading (remove ICC profile from Exif metadata)
 * [Mihail Naydenov] fixed FreeImage_IsTransparent and FreeImage_GetColorType returned value for RGBA[16,F] images flagged as CMYK
 * [Mihail Naydenov] fixed a bug in FreeImage_Clone when working with wrapped buffer (obtained from FreeImage_ConvertFromRawBitsEx)
+* [Mihail Naydenov] fixed a bug in PluginBMP:Save when saving a dib created with FreeImage_CreateView
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
