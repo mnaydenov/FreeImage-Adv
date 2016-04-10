@@ -105,6 +105,9 @@ int main(int argc, char *argv[]) {
 	// test wrapped user buffer
 	testWrappedBuffer("exif.jpg", 0);
 
+	// test views
+	testCreateView("exif.jpg", 0);
+
 #if defined(FREEIMAGE_LIB) || !defined(WIN32)
 	FreeImage_DeInitialise();
 #endif
