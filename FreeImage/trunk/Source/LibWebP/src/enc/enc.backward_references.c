@@ -16,6 +16,7 @@
 #include "./backward_references.h"
 #include "./histogram.h"
 #include "../dsp/lossless.h"
+#include "../dsp/dsp.h"
 #include "../utils/color_cache.h"
 #include "../utils/utils.h"
 
@@ -56,20 +57,19 @@ static int DistanceToPlaneCode(int xsize, int dist) {
   return dist + 120;
 }
 
-// TODO(vikasa): Evaluate loading (and comparing) 32/64 bits for the inner while
-// loop.
+// Returns the exact index where array1 and array2 are different. For an index
+// inferior or equal to best_len_match, the return value just has to be strictly
+// inferior to best_len_match. The current behavior is to return 0 if this index
+// is best_len_match, and the index itself otherwise.
+// If no two elements are the same, it returns max_limit.
 static WEBP_INLINE int FindMatchLength(const uint32_t* const array1,
                                        const uint32_t* const array2,
-                                       int best_len_match,
-                                       int max_limit) {
-  int match_len = 0;
+                                       int best_len_match, int max_limit) {
   // Before 'expensive' linear match, check if the two arrays match at the
   // current best length index.
   if (array1[best_len_match] != array2[best_len_match]) return 0;
-  while (match_len < max_limit && array1[match_len] == array2[match_len]) {
-    ++match_len;
-  }
-  return match_len;
+
+  return VP8LVectorMismatch(array1, array2, max_limit);
 }
 
 // -----------------------------------------------------------------------------
@@ -183,14 +183,11 @@ int VP8LBackwardRefsCopy(const VP8LBackwardRefs* const src,
 
 // initialize as empty
 static void HashChainReset(VP8LHashChain* const p) {
-  int i;
   assert(p != NULL);
-  for (i = 0; i < p->size_; ++i) {
-    p->chain_[i] = -1;
-  }
-  for (i = 0; i < HASH_SIZE; ++i) {
-    p->hash_to_first_index_[i] = -1;
-  }
+  // Set the int32_t arrays to -1.
+  memset(p->chain_, 0xff, p->size_ * sizeof(*p->chain_));
+  memset(p->hash_to_first_index_, 0xff,
+         HASH_SIZE * sizeof(*p->hash_to_first_index_));
 }
 
 int VP8LHashChainInit(VP8LHashChain* const p, int size) {

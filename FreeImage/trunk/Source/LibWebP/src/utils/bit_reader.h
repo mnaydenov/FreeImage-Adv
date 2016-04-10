@@ -43,10 +43,12 @@ extern "C" {
 #define BITS 56
 #elif defined(__arm__) || defined(_M_ARM)      // ARM
 #define BITS 24
+#elif defined(__aarch64__)                     // ARM 64bit
+#define BITS 56
 #elif defined(__mips__)                        // MIPS
 #define BITS 24
 #else                                          // reasonable default
-#define BITS 24  // TODO(skal): test aarch64 and find the proper BITS value.
+#define BITS 24
 #endif
 
 //------------------------------------------------------------------------------
@@ -74,12 +76,16 @@ struct VP8BitReader {
   // read buffer
   const uint8_t* buf_;        // next byte to be read
   const uint8_t* buf_end_;    // end of read buffer
+  const uint8_t* buf_max_;    // max packed-read position on buffer
   int eof_;                   // true if input is exhausted
 };
 
 // Initialize the bit reader and the boolean decoder.
 void VP8InitBitReader(VP8BitReader* const br,
-                      const uint8_t* const start, const uint8_t* const end);
+                      const uint8_t* const start, size_t size);
+// Sets the working read buffer.
+void VP8BitReaderSetBuffer(VP8BitReader* const br,
+                           const uint8_t* const start, size_t size);
 
 // Update internal pointers to displace the byte buffer by the
 // relative offset 'offset'.

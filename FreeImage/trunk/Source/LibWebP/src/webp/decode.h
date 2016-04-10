@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#define WEBP_DECODER_ABI_VERSION 0x0206    // MAJOR(8b) + MINOR(8b)
+#define WEBP_DECODER_ABI_VERSION 0x0208    // MAJOR(8b) + MINOR(8b)
 
 // Note: forward declaring enumerations is not allowed in (strict) C and C++,
 // the types are left here for reference.
@@ -197,7 +197,10 @@ struct WebPYUVABuffer {              // view as YUVA
 struct WebPDecBuffer {
   WEBP_CSP_MODE colorspace;  // Colorspace.
   int width, height;         // Dimensions.
-  int is_external_memory;    // If true, 'internal_memory' pointer is not used.
+  int is_external_memory;    // If non-zero, 'internal_memory' pointer is not
+                             // used. If value is '2' or more, the external
+                             // memory is considered 'slow' and multiple
+                             // read/write will be avoided.
   union {
     WebPRGBABuffer RGBA;
     WebPYUVABuffer YUVA;
@@ -205,7 +208,7 @@ struct WebPDecBuffer {
   uint32_t       pad[4];     // padding for later use
 
   uint8_t* private_memory;   // Internally allocated memory (only when
-                             // is_external_memory is false). Should not be used
+                             // is_external_memory is 0). Should not be used
                              // externally, but accessed via the buffer union.
 };
 
@@ -269,7 +272,7 @@ typedef enum VP8StatusCode {
 // that of the returned WebPIDecoder object.
 // The supplied 'output_buffer' content MUST NOT be changed between calls to
 // WebPIAppend() or WebPIUpdate() unless 'output_buffer.is_external_memory' is
-// set to 1. In such a case, it is allowed to modify the pointers, size and
+// not set to 0. In such a case, it is allowed to modify the pointers, size and
 // stride of output_buffer.u.RGBA or output_buffer.u.YUVA, provided they remain
 // within valid bounds.
 // All other fields of WebPDecBuffer MUST remain constant between calls.
@@ -409,12 +412,7 @@ struct WebPBitstreamFeatures {
   int has_animation;  // True if the bitstream is an animation.
   int format;         // 0 = undefined (/mixed), 1 = lossy, 2 = lossless
 
-  // Unused for now:
-  int no_incremental_decoding;  // if true, using incremental decoding is not
-                                // recommended.
-  int rotate;                   // TODO(later)
-  int uv_sampling;              // should be 0 for now. TODO(later)
-  uint32_t pad[2];              // padding for later use
+  uint32_t pad[5];    // padding for later use
 };
 
 // Internal, version-checked, entry point
@@ -448,10 +446,7 @@ struct WebPDecoderOptions {
   int flip;                           // flip output vertically
   int alpha_dithering_strength;       // alpha dithering strength in [0..100]
 
-  // Unused for now:
-  int force_rotation;                 // forced rotation (to be applied _last_)
-  int no_enhancement;                 // if true, discard enhancement layer
-  uint32_t pad[3];                    // padding for later use
+  uint32_t pad[5];                    // padding for later use
 };
 
 // Main object storing the configuration for advanced decoding.
