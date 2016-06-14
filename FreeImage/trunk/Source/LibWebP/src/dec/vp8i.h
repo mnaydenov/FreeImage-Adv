@@ -209,8 +209,8 @@ struct VP8Decoder {
   int tl_mb_x_, tl_mb_y_;  // top-left MB that must be in-loop filtered
   int br_mb_x_, br_mb_y_;  // last bottom-right MB that must be decoded
 
-  // number of partitions.
-  int num_parts_;
+  // number of partitions minus one.
+  uint32_t num_parts_minus_one_;
   // per-partition boolean decoders.
   VP8BitReader parts_[MAX_NUM_PARTITIONS];
 
@@ -261,6 +261,7 @@ struct VP8Decoder {
   int is_alpha_decoded_;      // true if alpha_data_ is decoded in alpha_plane_
   uint8_t* alpha_plane_mem_;  // memory allocated for alpha_plane_
   uint8_t* alpha_plane_;      // output. Persistent, contains the whole data.
+  const uint8_t* alpha_prev_line_;  // last decoded alpha row (or NULL)
   int alpha_dithering_;       // derived from decoding options (0=off, 100=full)
 };
 

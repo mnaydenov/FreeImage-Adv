@@ -51,8 +51,10 @@ struct WebPAnimEncoder {
 
   FrameRect prev_rect_;               // Previous WebP frame rectangle.
   WebPConfig last_config_;            // Cached in case a re-encode is needed.
-  WebPConfig last_config2_;           // 2nd cached config; only valid if
-                                      // 'options_.allow_mixed' is true.
+  WebPConfig last_config_reversed_;   // If 'last_config_' uses lossless, then
+                                      // this config uses lossy and vice versa;
+                                      // only valid if 'options_.allow_mixed'
+                                      // is true.
 
   WebPPicture* curr_canvas_;          // Only pointer; we don't own memory.
 
@@ -188,7 +190,8 @@ int WebPAnimEncoderOptionsInitInternal(WebPAnimEncoderOptions* enc_options,
   return 1;
 }
 
-#define TRANSPARENT_COLOR   0x00ffffff
+// This starting value is more fit to WebPCleanupTransparentAreaLossless().
+#define TRANSPARENT_COLOR   0x00000000
 
 static void ClearRectangle(WebPPicture* const picture,
                            int left, int top, int width, int height) {
@@ -643,78 +646,27 @@ static int IsLossyBlendingPossible(const WebPPicture* const src,
   return 1;
 }
 
-#define MIN_COLORS_LOSSY     31  // Don't try lossy below this threshold.
-#define MAX_COLORS_LOSSLESS 194  // Don't try lossless above this threshold.
-#define MAX_COLOR_COUNT     256  // Power of 2 greater than MAX_COLORS_LOSSLESS.
-#define HASH_SIZE (MAX_COLOR_COUNT * 4)
-#define HASH_RIGHT_SHIFT     22  // 32 - log2(HASH_SIZE).
-
-// TODO(urvang): Also used in enc/vp8l.c. Move to utils.
-// If the number of colors in the 'pic' is at least MAX_COLOR_COUNT, return
-// MAX_COLOR_COUNT. Otherwise, return the exact number of colors in the 'pic'.
-static int GetColorCount(const WebPPicture* const pic) {
-  int x, y;
-  int num_colors = 0;
-  uint8_t in_use[HASH_SIZE] = { 0 };
-  uint32_t colors[HASH_SIZE];
-  static const uint32_t kHashMul = 0x1e35a7bd;
-  const uint32_t* argb = pic->argb;
-  const int width = pic->width;
-  const int height = pic->height;
-  uint32_t last_pix = ~argb[0];   // so we're sure that last_pix != argb[0]
-
-  for (y = 0; y < height; ++y) {
-    for (x = 0; x < width; ++x) {
-      int key;
-      if (argb[x] == last_pix) {
-        continue;
-      }
-      last_pix = argb[x];
-      key = (kHashMul * last_pix) >> HASH_RIGHT_SHIFT;
-      while (1) {
-        if (!in_use[key]) {
-          colors[key] = last_pix;
-          in_use[key] = 1;
-          ++num_colors;
-          if (num_colors >= MAX_COLOR_COUNT) {
-            return MAX_COLOR_COUNT;  // Exact count not needed.
-          }
-          break;
-        } else if (colors[key] == last_pix) {
-          break;  // The color is already there.
-        } else {
-          // Some other color sits here, so do linear conflict resolution.
-          ++key;
-          key &= (HASH_SIZE - 1);  // Key mask.
-        }
-      }
-    }
-    argb += pic->argb_stride;
-  }
-  return num_colors;
-}
-
-#undef MAX_COLOR_COUNT
-#undef HASH_SIZE
-#undef HASH_RIGHT_SHIFT
-
 // For pixels in 'rect', replace those pixels in 'dst' that are same as 'src' by
 // transparent pixels.
-static void IncreaseTransparency(const WebPPicture* const src,
-                                 const FrameRect* const rect,
-                                 WebPPicture* const dst) {
+// Returns true if at least one pixel gets modified.
+static int IncreaseTransparency(const WebPPicture* const src,
+                                const FrameRect* const rect,
+                                WebPPicture* const dst) {
   int i, j;
+  int modified = 0;
   assert(src != NULL && dst != NULL && rect != NULL);
   assert(src->width == dst->width && src->height == dst->height);
   for (j = rect->y_offset_; j < rect->y_offset_ + rect->height_; ++j) {
     const uint32_t* const psrc = src->argb + j * src->argb_stride;
     uint32_t* const pdst = dst->argb + j * dst->argb_stride;
     for (i = rect->x_offset_; i < rect->x_offset_ + rect->width_; ++i) {
-      if (psrc[i] == pdst[i]) {
+      if (psrc[i] == pdst[i] && pdst[i] != TRANSPARENT_COLOR) {
         pdst[i] = TRANSPARENT_COLOR;
+        modified = 1;
       }
     }
   }
+  return modified;
 }
 
 #undef TRANSPARENT_COLOR
@@ -722,12 +674,13 @@ static void IncreaseTransparency(const WebPPicture* const src,
 // Replace similar blocks of pixels by a 'see-through' transparent block
 // with uniform average color.
 // Assumes lossy compression is being used.
-static void FlattenSimilarBlocks(const WebPPicture* const src,
-                                 const FrameRect* const rect,
-                                 WebPPicture* const dst,
-                                 float quality) {
+// Returns true if at least one pixel gets modified.
+static int FlattenSimilarBlocks(const WebPPicture* const src,
+                                const FrameRect* const rect,
+                                WebPPicture* const dst, float quality) {
   const int max_allowed_diff_lossy = QualityToMaxDiff(quality);
   int i, j;
+  int modified = 0;
   const int block_size = 8;
   const int y_start = (rect->y_offset_ + block_size) & ~(block_size - 1);
   const int y_end = (rect->y_offset_ + rect->height_) & ~(block_size - 1);
@@ -770,9 +723,11 @@ static void FlattenSimilarBlocks(const WebPPicture* const src,
             pdst[x + y * dst->argb_stride] = color;
           }
         }
+        modified = 1;
       }
     }
   }
+  return modified;
 }
 
 static int EncodeFrame(const WebPConfig* const config, WebPPicture* const pic,
@@ -854,6 +809,9 @@ enum {
   CANDIDATE_COUNT
 };
 
+#define MIN_COLORS_LOSSY     31  // Don't try lossy below this threshold.
+#define MAX_COLORS_LOSSLESS 194  // Don't try lossless above this threshold.
+
 // Generates candidates for a given dispose method given pre-filled sub-frame
 // 'params'.
 static WebPEncodingError GenerateCandidates(
@@ -871,10 +829,14 @@ static WebPEncodingError GenerateCandidates(
   WebPPicture* const curr_canvas = &enc->curr_canvas_copy_;
   const WebPPicture* const prev_canvas =
       is_dispose_none ? &enc->prev_canvas_ : &enc->prev_canvas_disposed_;
-  const int use_blending_ll =
+  int use_blending_ll;
+  int use_blending_lossy;
+
+  CopyCurrentCanvas(enc);
+  use_blending_ll =
       !is_key_frame &&
       IsLosslessBlendingPossible(prev_canvas, curr_canvas, &params->rect_ll_);
-  const int use_blending_lossy =
+  use_blending_lossy =
       !is_key_frame &&
       IsLossyBlendingPossible(prev_canvas, curr_canvas, &params->rect_lossy_,
                               config_lossy->quality);
@@ -884,7 +846,7 @@ static WebPEncodingError GenerateCandidates(
     candidate_ll->evaluate_ = is_lossless;
     candidate_lossy->evaluate_ = !is_lossless;
   } else {  // Use a heuristic for trying lossless and/or lossy compression.
-    const int num_colors = GetColorCount(&params->sub_frame_ll_);
+    const int num_colors = WebPGetColorPalette(&params->sub_frame_ll_, NULL);
     candidate_ll->evaluate_ = (num_colors < MAX_COLORS_LOSSLESS);
     candidate_lossy->evaluate_ = (num_colors >= MIN_COLORS_LOSSY);
   }
@@ -893,8 +855,8 @@ static WebPEncodingError GenerateCandidates(
   if (candidate_ll->evaluate_) {
     CopyCurrentCanvas(enc);
     if (use_blending_ll) {
-      IncreaseTransparency(prev_canvas, &params->rect_ll_, curr_canvas);
-      enc->curr_canvas_copy_modified_ = 1;
+      enc->curr_canvas_copy_modified_ =
+          IncreaseTransparency(prev_canvas, &params->rect_ll_, curr_canvas);
     }
     error_code = EncodeCandidate(&params->sub_frame_ll_, &params->rect_ll_,
                                  config_ll, use_blending_ll, candidate_ll);
@@ -903,14 +865,15 @@ static WebPEncodingError GenerateCandidates(
   if (candidate_lossy->evaluate_) {
     CopyCurrentCanvas(enc);
     if (use_blending_lossy) {
-      FlattenSimilarBlocks(prev_canvas, &params->rect_lossy_, curr_canvas,
-                           config_lossy->quality);
-      enc->curr_canvas_copy_modified_ = 1;
+      enc->curr_canvas_copy_modified_ =
+          FlattenSimilarBlocks(prev_canvas, &params->rect_lossy_, curr_canvas,
+                               config_lossy->quality);
     }
     error_code =
         EncodeCandidate(&params->sub_frame_lossy_, &params->rect_lossy_,
                         config_lossy, use_blending_lossy, candidate_lossy);
     if (error_code != VP8_ENC_OK) return error_code;
+    enc->curr_canvas_copy_modified_ = 1;
   }
   return error_code;
 }
@@ -1095,7 +1058,7 @@ static WebPEncodingError SetFrame(WebPAnimEncoder* const enc,
   config_ll.lossless = 1;
   config_lossy.lossless = 0;
   enc->last_config_ = *config;
-  enc->last_config2_ = config->lossless ? config_lossy : config_ll;
+  enc->last_config_reversed_ = config->lossless ? config_lossy : config_ll;
   *frame_skipped = 0;
 
   if (!SubFrameParamsInit(&dispose_none_params, 1, empty_rect_allowed_none) ||
@@ -1445,7 +1408,7 @@ static int FrameToFullCanvas(WebPAnimEncoder* const enc,
   GetEncodedData(&mem1, full_image);
 
   if (enc->options_.allow_mixed) {
-    if (!EncodeFrame(&enc->last_config_, canvas_buf, &mem2)) goto Err;
+    if (!EncodeFrame(&enc->last_config_reversed_, canvas_buf, &mem2)) goto Err;
     if (mem2.size < mem1.size) {
       GetEncodedData(&mem2, full_image);
       WebPMemoryWriterClear(&mem1);

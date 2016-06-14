@@ -14,8 +14,11 @@
 #ifndef WEBP_DSP_DSP_H_
 #define WEBP_DSP_DSP_H_
 
+#ifdef HAVE_CONFIG_H
+#include "../webp/config.h"
+#endif
+
 #include "../webp/types.h"
-#include "../utils/utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,7 +75,8 @@ extern "C" {
 // The intrinsics currently cause compiler errors with arm-nacl-gcc and the
 // inline assembly would need to be modified for use with Native Client.
 #if (defined(__ARM_NEON__) || defined(WEBP_ANDROID_NEON) || \
-     defined(__aarch64__)) && !defined(__native_client__)
+     defined(__aarch64__) || defined(WEBP_HAVE_NEON)) && \
+    !defined(__native_client__)
 #define WEBP_USE_NEON
 #endif
 
@@ -92,12 +96,37 @@ extern "C" {
 #endif
 #endif
 
+#if defined(__mips_msa) && defined(__mips_isa_rev) && (__mips_isa_rev >= 5)
+#define WEBP_USE_MSA
+#endif
+
 // This macro prevents thread_sanitizer from reporting known concurrent writes.
 #define WEBP_TSAN_IGNORE_FUNCTION
 #if defined(__has_feature)
 #if __has_feature(thread_sanitizer)
 #undef WEBP_TSAN_IGNORE_FUNCTION
 #define WEBP_TSAN_IGNORE_FUNCTION __attribute__((no_sanitize_thread))
+#endif
+#endif
+
+#define WEBP_UBSAN_IGNORE_UNDEF
+#define WEBP_UBSAN_IGNORE_UNSIGNED_OVERFLOW
+#if !defined(WEBP_FORCE_ALIGNED) && defined(__clang__) && \
+    defined(__has_attribute)
+#if __has_attribute(no_sanitize)
+// This macro prevents the undefined behavior sanitizer from reporting
+// failures. This is only meant to silence unaligned loads on platforms that
+// are known to support them.
+#undef WEBP_UBSAN_IGNORE_UNDEF
+#define WEBP_UBSAN_IGNORE_UNDEF \
+  __attribute__((no_sanitize("undefined")))
+
+// This macro prevents the undefined behavior sanitizer from reporting
+// failures related to unsigned integer overflows. This is only meant to
+// silence cases where this well defined behavior is expected.
+#undef WEBP_UBSAN_IGNORE_UNSIGNED_OVERFLOW
+#define WEBP_UBSAN_IGNORE_UNSIGNED_OVERFLOW \
+  __attribute__((no_sanitize("unsigned-integer-overflow")))
 #endif
 #endif
 
@@ -109,7 +138,8 @@ typedef enum {
   kAVX2,
   kNEON,
   kMIPS32,
-  kMIPSdspR2
+  kMIPSdspR2,
+  kMSA
 } CPUFeature;
 // returns true if the CPU supports the feature.
 typedef int (*VP8CPUInfo)(CPUFeature feature);
@@ -295,6 +325,15 @@ extern VP8LumaFilterFunc VP8VFilter16i;   // filtering 3 inner edges altogether
 extern VP8LumaFilterFunc VP8HFilter16i;
 extern VP8ChromaFilterFunc VP8VFilter8i;  // filtering u and v altogether
 extern VP8ChromaFilterFunc VP8HFilter8i;
+
+// Dithering. Combines dithering values (centered around 128) with dst[],
+// according to: dst[] = clip(dst[] + (((dither[]-128) + 8) >> 4)
+#define VP8_DITHER_DESCALE 4
+#define VP8_DITHER_DESCALE_ROUNDER (1 << (VP8_DITHER_DESCALE - 1))
+#define VP8_DITHER_AMP_BITS 7
+#define VP8_DITHER_AMP_CENTER (1 << VP8_DITHER_AMP_BITS)
+extern void (*VP8DitherCombine8x8)(const uint8_t* dither, uint8_t* dst,
+                                   int dst_stride);
 
 // must be called before anything using the above
 void VP8DspInit(void);
@@ -503,8 +542,10 @@ typedef enum {     // Filter types.
 
 typedef void (*WebPFilterFunc)(const uint8_t* in, int width, int height,
                                int stride, uint8_t* out);
-typedef void (*WebPUnfilterFunc)(int width, int height, int stride,
-                                 int row, int num_rows, uint8_t* data);
+// In-place un-filtering.
+// Warning! 'prev_line' pointer can be equal to 'cur_line' or 'preds'.
+typedef void (*WebPUnfilterFunc)(const uint8_t* prev_line, const uint8_t* preds,
+                                 uint8_t* cur_line, int width);
 
 // Filter the given data using the given predictor.
 // 'in' corresponds to a 2-dimensional pixel array of size (stride * height)
