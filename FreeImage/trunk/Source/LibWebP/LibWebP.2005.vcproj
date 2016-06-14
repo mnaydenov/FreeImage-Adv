@@ -639,10 +639,6 @@
 					RelativePath=".\src\dsp\yuv.h"
 					>
 				</File>
-				<File
-					RelativePath=".\src\dsp\yuv_tables_sse2.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="enc"

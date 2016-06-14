@@ -69,7 +69,7 @@ static void CollectHistogram(const uint8_t* ref, const uint8_t* pred,
 
     // Convert coefficients to bin.
     for (k = 0; k < 16; ++k) {
-      const int v = abs(out[k]) >> 3;  // TODO(skal): add rounding?
+      const int v = abs(out[k]) >> 3;
       const int clipped_value = clip_max(v, MAX_COEFF_THRESH);
       ++distribution[clipped_value];
     }
@@ -637,7 +637,7 @@ static int QuantizeBlock(int16_t in[16], int16_t out[16],
       int level = QUANTDIV(coeff, iQ, B);
       if (level > MAX_LEVEL) level = MAX_LEVEL;
       if (sign) level = -level;
-      in[j] = level * Q;
+      in[j] = level * (int)Q;
       out[n] = level;
       if (level) last = n;
     } else {
@@ -671,7 +671,7 @@ static int QuantizeBlockWHT(int16_t in[16], int16_t out[16],
       int level = QUANTDIV(coeff, iQ, B);
       if (level > MAX_LEVEL) level = MAX_LEVEL;
       if (sign) level = -level;
-      in[j] = level * Q;
+      in[j] = level * (int)Q;
       out[n] = level;
       if (level) last = n;
     } else {
