@@ -11,6 +11,7 @@ Month day, 2016 - 3.18.0
 ! FreeImage now uses LibPNG 1.6.21
 ! FreeImage now uses LibTIFF 4.0.6
 ! FreeImage now uses LibJPEG 9b
+! DDS plugin now convert 16-bit uncompressed RGB (RGB444, RGB555, RGB565) to 24-bit RGB on loading
 + [Garrick Meeker] added saving support to the PSD plugin
 + [Tom Whittock] FreeImage_ConvertToRawBits now deals with palletized images containing transparency during conversion
 + [Mihail Naydenov] added saving support for 32-bit CMYK in JPEG plugin
@@ -26,6 +27,7 @@ Month day, 2016 - 3.18.0
 * [Mihail Naydenov] fixed FreeImage_IsTransparent and FreeImage_GetColorType returned value for RGBA[16,F] images flagged as CMYK
 * [Mihail Naydenov] fixed a bug in FreeImage_Clone when working with wrapped buffer (obtained from FreeImage_ConvertFromRawBitsEx)
 * [Mihail Naydenov] fixed a bug in PluginBMP:Save when saving a dib created with FreeImage_CreateView
+* [John Wordsworth] fixed loading of uncompressed DDS files when width / height are not a multiple of 4
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
