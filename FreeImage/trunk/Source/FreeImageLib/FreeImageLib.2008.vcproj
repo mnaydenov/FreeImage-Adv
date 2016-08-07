@@ -30,6 +30,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST Dist\x32 mkdir Dist\x32"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -93,7 +94,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy Debug\FreeImaged.lib ..\..\Dist&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist&#x0D;&#x0A;"
+				CommandLine="copy Debug\FreeImaged.lib ..\..\Dist\x32\&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist\x32\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -108,6 +109,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST Dist\x64 mkdir Dist\x64"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -172,7 +174,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy Debug\FreeImaged.lib ..\..\Dist&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist&#x0D;&#x0A;"
+				CommandLine="copy Debug\FreeImaged.lib ..\..\Dist\x64\&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist\x64\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -187,6 +189,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST Dist\x32 mkdir Dist\x32"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -253,7 +256,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy Release\FreeImage.lib ..\..\Dist&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist&#x0D;&#x0A;"
+				CommandLine="copy Release\FreeImage.lib ..\..\Dist\x32\&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist\x32\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -268,6 +271,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST Dist\x64 mkdir Dist\x64"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -335,7 +339,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy Release\FreeImage.lib ..\..\Dist&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist&#x0D;&#x0A;"
+				CommandLine="copy Release\FreeImage.lib ..\..\Dist\x64\&#x0D;&#x0A;copy ..\FreeImage.h ..\..\Dist\x64\&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
