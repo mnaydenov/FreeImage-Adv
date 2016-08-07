@@ -30,6 +30,7 @@ Month day, 2016 - 3.18.0
 * [John Wordsworth] fixed loading of uncompressed DDS files when width / height are not a multiple of 4
 * [Herve Drolon] fixed XPM loader against malicious images with a bad header specification
 * [Mihail Naydenov] fixed TIFF loader with Exif loading (saves and restores offset and dir when exif is loaded)
+* [Mihail Naydenov] refactored MultiPage and CacheFile mechanism
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
