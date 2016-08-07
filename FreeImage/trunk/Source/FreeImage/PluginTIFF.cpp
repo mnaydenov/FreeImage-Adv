@@ -103,8 +103,8 @@ static void WriteCompression(TIFF *tiff, uint16 bitspersample, uint16 samplesper
 
 static BOOL tiff_read_iptc_profile(TIFF *tiff, FIBITMAP *dib);
 static BOOL tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib);
-static BOOL tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib);
-static void ReadMetadata(TIFF *tiff, FIBITMAP *dib);
+static BOOL tiff_read_exif_profile(FreeImageIO *io, fi_handle handle, TIFF *tiff, FIBITMAP *dib);
+static void ReadMetadata(FreeImageIO *io, fi_handle handle, TIFF *tiff, FIBITMAP *dib);
 
 static BOOL tiff_write_iptc_profile(TIFF *tiff, FIBITMAP *dib);
 static BOOL tiff_write_xmp_profile(TIFF *tiff, FIBITMAP *dib);
@@ -809,9 +809,9 @@ tiff_read_xmp_profile(TIFF *tiff, FIBITMAP *dib) {
 	@return Returns TRUE if successful, FALSE otherwise
 */
 static BOOL 
-tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
+tiff_read_exif_profile(FreeImageIO *io, fi_handle handle, TIFF *tiff, FIBITMAP *dib) {
 	BOOL bResult = FALSE;
-    toff_t exif_offset = 0;
+	toff_t exif_offset = 0;
 
 	// read EXIF-TIFF tags
 	bResult = tiff_read_exif_tags(tiff, TagLib::EXIF_MAIN, dib);
@@ -819,13 +819,17 @@ tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
 	// get the IFD offset
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
 
+		const long tell_pos = io->tell_proc(handle);
+		const uint16 cur_dir = TIFFCurrentDirectory(tiff);
+
 		// read EXIF tags
-		if(!TIFFReadEXIFDirectory(tiff, exif_offset)) {
-			return FALSE;
+		if (TIFFReadEXIFDirectory(tiff, exif_offset)) {
+			// read all known exif tags
+			bResult = tiff_read_exif_tags(tiff, TagLib::EXIF_EXIF, dib);
 		}
 
-		// read all known exif tags
-		bResult = tiff_read_exif_tags(tiff, TagLib::EXIF_EXIF, dib);
+		io->seek_proc(handle, tell_pos, SEEK_SET);
+		TIFFSetDirectory(tiff, cur_dir);
 	}
 
 	return bResult;
@@ -835,7 +839,7 @@ tiff_read_exif_profile(TIFF *tiff, FIBITMAP *dib) {
 Read TIFF special profiles
 */
 static void 
-ReadMetadata(TIFF *tiff, FIBITMAP *dib) {
+ReadMetadata(FreeImageIO *io, fi_handle handle, TIFF *tiff, FIBITMAP *dib) {
 
 	// IPTC/NAA
 	tiff_read_iptc_profile(tiff, dib);
@@ -847,7 +851,7 @@ ReadMetadata(TIFF *tiff, FIBITMAP *dib) {
 	tiff_read_geotiff_profile(tiff, dib);
 
 	// Exif-TIFF
-	tiff_read_exif_profile(tiff, dib);
+	tiff_read_exif_profile(io, handle, tiff, dib);
 }
 
 // ----------------------------------------------------------
@@ -1225,50 +1229,54 @@ Read embedded thumbnail
 static void 
 ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMAP *dib) {
 	FIBITMAP* thumbnail = NULL;
-
+	
 	// read exif thumbnail (IFD 1) ...
-
-	uint32 exif_offset = 0;
+	
+	toff_t exif_offset = 0;
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
-
-		if(TIFFLastDirectory(tiff) != 0) {
+		
+		if(!TIFFLastDirectory(tiff)) {
 			// save current position
-			long tell_pos = io->tell_proc(handle);
-			uint16 cur_dir = TIFFCurrentDirectory(tiff);
-
+			const long tell_pos = io->tell_proc(handle);
+			const uint16 cur_dir = TIFFCurrentDirectory(tiff);
+			
 			// load the thumbnail
-			int page = 1; 
+			int page = 1;
 			int flags = TIFF_DEFAULT;
 			thumbnail = Load(io, handle, page, flags, data);
-			// store the thumbnail (remember to release it later ...)
+			// store the thumbnail (remember to release it before return)
 			FreeImage_SetThumbnail(dib, thumbnail);
-
+			
 			// restore current position
 			io->seek_proc(handle, tell_pos, SEEK_SET);
 			TIFFSetDirectory(tiff, cur_dir);
 		}
 	}
-
+	
 	// ... or read the first subIFD
-
+	
 	if(!thumbnail) {
 		uint16 subIFD_count = 0;
-		uint64* subIFD_offsets = NULL;
-		// ### Theoretically this should also read the first subIFD from a Photoshop-created file with "pyramid".
-		// It does not however - the tag is there (using Tag Viewer app) but libtiff refuses to read it
+		toff_t* subIFD_offsets = NULL;
+		
+		// This will also read the first (and only) subIFD from a Photoshop-created "pyramid" file.
+		// Subsequent, smaller images are 'nextIFD' in that subIFD. Currently we only load the first one. 
+		
 		if(TIFFGetField(tiff, TIFFTAG_SUBIFD, &subIFD_count, &subIFD_offsets)) {
 			if(subIFD_count > 0) {
 				// save current position
-				long tell_pos = io->tell_proc(handle);
-				uint16 cur_dir = TIFFCurrentDirectory(tiff);
+				const long tell_pos = io->tell_proc(handle);
+				const uint16 cur_dir = TIFFCurrentDirectory(tiff);
+				
 				if(TIFFSetSubDirectory(tiff, subIFD_offsets[0])) {
 					// load the thumbnail
 					int page = -1; 
 					int flags = TIFF_DEFAULT;
 					thumbnail = Load(io, handle, page, flags, data);
-					// store the thumbnail (remember to release it later ...)
+					// store the thumbnail (remember to release it before return)
 					FreeImage_SetThumbnail(dib, thumbnail);
 				}
+				
 				// restore current position
 				io->seek_proc(handle, tell_pos, SEEK_SET);
 				TIFFSetDirectory(tiff, cur_dir);
@@ -1277,17 +1285,17 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 	}
 	
 	// ... or read Photoshop thumbnail
-
+	
 	if(!thumbnail) {
 		uint32 ps_size = 0;
 		void *ps_data = NULL;
-
+		
 		if(TIFFGetField(tiff, TIFFTAG_PHOTOSHOP, &ps_size, &ps_data)) {
 			FIMEMORY *handle = FreeImage_OpenMemory((BYTE*)ps_data, ps_size);
-
+			
 			FreeImageIO io;
 			SetMemoryIO(&io);
-		
+			
 			psdParser parser;
 			parser.ReadImageResources(&io, handle, ps_size);
 
@@ -1295,9 +1303,8 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 			
 			FreeImage_CloseMemory(handle);
 		}
-		
 	}
-
+	
 	// release thumbnail
 	FreeImage_Unload(thumbnail);
 }
@@ -2210,7 +2217,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		
 		// copy TIFF metadata (must be done after FreeImage_Allocate)
 
-		ReadMetadata(tif, dib);
+		ReadMetadata(io, handle, tif, dib);
 
 		// copy ICC profile data (must be done after FreeImage_Allocate)
 		
