@@ -30,6 +30,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST dist\x32 mkdir dist\x32"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -86,7 +87,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../Dist/FreeImage.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="../../Dist/x32/FreeImage.lib"
 				OutputFile=".\Release/FreeImagePlus.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -116,7 +117,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy         Release\FreeImagePlus.lib         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         Release\FreeImagePlus.dll         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         FreeImagePlus.h         dist\&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="copy Release\FreeImagePlus.lib dist\x32\&#x0D;&#x0A;copy Release\FreeImagePlus.dll dist\x32\&#x0D;&#x0A;copy FreeImagePlus.h dist\x32\&#x0D;&#x0A;&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -131,6 +132,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST dist\x64 mkdir dist\x64"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -186,7 +188,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../Dist/FreeImage.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="../../Dist/x64/FreeImage.lib"
 				OutputFile=".\Release/FreeImagePlus.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -216,7 +218,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy         Release\FreeImagePlus.lib         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         Release\FreeImagePlus.dll         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         FreeImagePlus.h         dist\&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="copy Release\FreeImagePlus.lib dist\x64\&#x0D;&#x0A;copy Release\FreeImagePlus.dll dist\x64\&#x0D;&#x0A;copy FreeImagePlus.h dist\x64\&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -231,6 +233,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST dist\x32 mkdir dist\x32"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -282,7 +285,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../Dist/FreeImaged.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="../../Dist/x32/FreeImaged.lib"
 				OutputFile="Debug/FreeImagePlusd.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -313,7 +316,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy         Debug\FreeImagePlusd.lib         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         Debug\FreeImagePlusd.dll         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         FreeImagePlus.h         dist\&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="copy Debug\FreeImagePlusd.lib dist\x32\&#x0D;&#x0A;copy Debug\FreeImagePlusd.dll dist\x32\&#x0D;&#x0A;copy FreeImagePlus.h dist\x32\&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -328,6 +331,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="IF NOT EXIST dist\x64 mkdir dist\x64"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -379,7 +383,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../Dist/FreeImaged.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="../../Dist/x64/FreeImaged.lib"
 				OutputFile="Debug/FreeImagePlusd.dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
@@ -410,7 +414,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy         Debug\FreeImagePlusd.lib         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         Debug\FreeImagePlusd.dll         dist\&#x0D;&#x0A;&#x0D;&#x0A;copy         FreeImagePlus.h         dist\&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="copy Debug\FreeImagePlusd.lib dist\x64\&#x0D;&#x0A;copy Debug\FreeImagePlusd.dll dist\x64\&#x0D;&#x0A;copy FreeImagePlus.h dist\x64\&#x0D;&#x0A;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
