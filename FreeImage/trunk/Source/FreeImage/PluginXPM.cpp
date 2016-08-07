@@ -198,7 +198,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			FILE_RGBA rgba;
 
 			str = ReadString(io, handle);
-			if(!str || (strlen(str) < cpp))
+			if(!str || (strlen(str) < (size_t)cpp))
 				throw "Error reading color strings";
 
 			std::string chrs(str,cpp); //create a string for the color chars using the first cpp chars
