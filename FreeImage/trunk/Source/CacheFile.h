@@ -61,11 +61,12 @@ class CacheFile {
 	typedef std::map<int, PageCacheIt>::iterator PageMapIt;
 
 public :
-	CacheFile(const std::string filename, BOOL keep_in_memory);
+	CacheFile();
 	~CacheFile();
-
-	BOOL open();
+	
+	BOOL open(const std::string& filename = "", BOOL keep_in_memory = TRUE);
 	void close();
+
 	BOOL readFile(BYTE *data, int nr, int size);
 	int writeFile(BYTE *data, int size);
 	void deleteFile(int nr);
