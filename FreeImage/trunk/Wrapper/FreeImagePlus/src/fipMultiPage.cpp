@@ -36,8 +36,15 @@ BOOL fipMultiPage::isValid() const {
 }
 
 BOOL fipMultiPage::open(const char* lpszPathName, BOOL create_new, BOOL read_only, int flags) {
-	// get the file type
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(lpszPathName);
+	FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;	// fif is used to get the file type
+
+	// check if lpszPathName is a new file or an already existing file (here, we trust the 'create_new' flag)
+	if (create_new) {
+		fif = FreeImage_GetFIFFromFilename(lpszPathName);
+	}
+	else {
+		fif = FreeImage_GetFileType(lpszPathName);
+	}
 
 	if (fif != FIF_UNKNOWN) {
 		// open the stream
