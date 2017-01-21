@@ -32,6 +32,7 @@ Month day, 2016 - 3.18.0
 * [Mihail Naydenov] fixed TIFF loader with Exif loading (saves and restores offset and dir when exif is loaded)
 * [Mihail Naydenov] refactored MultiPage and CacheFile mechanism
 * [Jojakim Stahl] fixed PCX file conversion crash on special files
+* [dartraiden] fixed FreeImage_FillBackground when using blending with an alpha-transparent foreground color over an opaque background
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
