@@ -447,6 +447,22 @@ BOOL fipImage::loadFromMemory(fipMemoryIO& memIO, int flag) {
 	return FALSE;
 }
 
+BOOL fipImage::loadFromMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flag) {
+	if (fif != FIF_UNKNOWN) {
+		// Free the previous dib
+		if (_dib) {
+			FreeImage_Unload(_dib);
+		}
+		// Load the file
+		_dib = memIO.load(fif, flag);
+		_fif = fif;
+		_bHasChanged = TRUE;
+
+		return (_dib == NULL) ? FALSE : TRUE;
+	}
+	return FALSE;
+}
+
 BOOL  fipImage::save(FREE_IMAGE_FORMAT fif, const char* lpszPathName, int flag) {
 	BOOL bSuccess = FreeImage_Save(fif, _dib, lpszPathName, flag);
 	_fif = fif;
