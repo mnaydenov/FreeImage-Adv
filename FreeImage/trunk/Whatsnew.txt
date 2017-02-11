@@ -5,11 +5,12 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2016 - 3.18.0
-! FreeImage now uses LibRaw 0.18.0 (GIT patch 2015-11-24)
-! FreeImage now uses LibWebP 0.5.1 (GIT patch 2016-05-18)
-! FreeImage now uses LibPNG 1.6.23
-! FreeImage now uses LibTIFF 4.0.6
+Month day, 2017 - 3.18.0
+! FreeImage now uses ZLib 1.2.11
+! FreeImage now uses LibRaw 0.18.0 (GIT patch 2017-01-22)
+! FreeImage now uses LibWebP 0.6.0 (GIT patch 2017-02-08)
+! FreeImage now uses LibPNG 1.6.28
+! FreeImage now uses LibTIFF 4.0.7 (CVS patch 2017-01-31)
 ! FreeImage now uses LibJPEG 9b
 ! DDS plugin now convert 16-bit uncompressed RGB (RGB444, RGB555, RGB565) to 24-bit RGB on loading
 + [Garrick Meeker] added saving support to the PSD plugin
