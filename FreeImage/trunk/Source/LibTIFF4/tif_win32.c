@@ -1,4 +1,4 @@
-/* $Id: tif_win32.c,v 1.12 2015-10-09 21:36:11 drolon Exp $ */
+/* $Id: tif_win32.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -358,6 +358,14 @@ _TIFFmalloc(tmsize_t s)
                 return ((void *) NULL);
 
 	return (malloc((size_t) s));
+}
+
+void* _TIFFcalloc(tmsize_t nmemb, tmsize_t siz)
+{
+    if( nmemb == 0 || siz == 0 )
+        return ((void *) NULL);
+
+    return calloc((size_t) nmemb, (size_t)siz);
 }
 
 void

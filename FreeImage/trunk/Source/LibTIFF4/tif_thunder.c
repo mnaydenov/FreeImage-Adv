@@ -1,4 +1,4 @@
-/* $Id: tif_thunder.c,v 1.12 2015-10-09 21:36:11 drolon Exp $ */
+/* $Id: tif_thunder.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -100,7 +100,8 @@ ThunderDecode(TIFF* tif, uint8* op, tmsize_t maxpixels)
 	while (cc > 0 && npixels < maxpixels) {
 		int n, delta;
 
-		n = *bp++, cc--;
+		n = *bp++;
+		cc--;
 		switch (n & THUNDER_CODE) {
 		case THUNDER_RUN:		/* pixel run */
 			/*

@@ -1,4 +1,4 @@
-/* $Id: tif_compress.c,v 1.12 2015-10-09 21:36:11 drolon Exp $ */
+/* $Id: tif_compress.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -82,10 +82,10 @@ TIFFNoDecode(TIFF* tif, const char* method)
 		TIFFErrorExt(tif->tif_clientdata, tif->tif_name,
 			     "Compression scheme %u %s decoding is not implemented",
 			     tif->tif_dir.td_compression, method);
-	return (-1);
+	return (0);
 }
 
-int
+static int
 _TIFFNoFixupTags(TIFF* tif)
 {
 	(void) tif;
@@ -227,7 +227,7 @@ TIFFUnRegisterCODEC(TIFFCodec* c)
 	codec_t* cd;
 	codec_t** pcd;
 
-	for (pcd = &registeredCODECS; (cd = *pcd); pcd = &cd->next)
+	for (pcd = &registeredCODECS; (cd = *pcd) != NULL; pcd = &cd->next)
 		if (cd->info == c) {
 			*pcd = cd->next;
 			_TIFFfree(cd);

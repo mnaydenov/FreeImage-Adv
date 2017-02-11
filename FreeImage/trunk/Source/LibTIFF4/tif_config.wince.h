@@ -1,4 +1,4 @@
-/* $Id: tif_config.wince.h,v 1.12 2015-10-09 21:36:11 drolon Exp $ */
+/* $Id: tif_config.wince.h,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
 
 /*
  * TIFF library configuration header for Windows CE platform.
