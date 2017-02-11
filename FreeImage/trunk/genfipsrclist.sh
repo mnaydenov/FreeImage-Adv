@@ -8,9 +8,9 @@ echo "VER_MINOR = 18.0" >> fipMakefile.srcs
 
 echo -n "SRCS = " >> fipMakefile.srcs
 for DIR in $DIRLIST; do
-	VCPRJS=`echo $DIR/*.2008.vcproj`
-	if [ "$VCPRJS" != "$DIR/*.2008.vcproj" ]; then
-		egrep 'RelativePath=.*\.(c|cpp)' $DIR/*.2008.vcproj | cut -d'"' -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> fipMakefile.srcs
+	VCPRJS=`echo $DIR/*.2013.vcxproj`
+	if [ "$VCPRJS" != "$DIR/*.2013.vcxproj" ]; then
+		egrep 'ClCompile Include=.*\.(c|cpp)' $DIR/*.2013.vcxproj | cut -d'"' -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> fipMakefile.srcs
 	fi
 done
 echo >> fipMakefile.srcs
