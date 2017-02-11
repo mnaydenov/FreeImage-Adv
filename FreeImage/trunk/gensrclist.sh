@@ -7,9 +7,9 @@ echo "VER_MINOR = 18.0" >> Makefile.srcs
 
 echo -n "SRCS = " >> Makefile.srcs
 for DIR in $DIRLIST; do
-	VCPRJS=`echo $DIR/*.2008.vcproj`
-	if [ "$VCPRJS" != "$DIR/*.2008.vcproj" ]; then
-		egrep 'RelativePath=.*\.(c|cpp)' $DIR/*.2008.vcproj | cut -d'"' -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> Makefile.srcs
+	VCPRJS=`echo $DIR/*.2013.vcxproj`
+	if [ "$VCPRJS" != "$DIR/*.2013.vcxproj" ]; then
+		egrep 'ClCompile Include=.*\.(c|cpp)' $DIR/*.2013.vcxproj | cut -d'"' -f2 | tr '\\' '/' | awk '{print "'$DIR'/"$0}' | tr '\r\n' '  ' | tr -s ' ' >> Makefile.srcs
 	fi
 done
 echo >> Makefile.srcs
