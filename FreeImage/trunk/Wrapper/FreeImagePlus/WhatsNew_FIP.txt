@@ -11,6 +11,7 @@ Month day, 2017
 + [Herve Drolon] added fipImage::clearMetadata
 + [Herve Drolon] added fipImage::createView
 + [Herve Drolon] added new fipImage::load / fipImage::loadU / fipImage::save / fipImage::saveU functions
++ [Herve Drolon] added fipImage::loadFromMemory(FREE_IMAGE_FORMAT fif, ...)
 * [Herve Drolon] fixed a bug in fipWinImage::copyFromHandle
 * [Herve Drolon] minor refactoring
 * [Ghislain Vaillant] fixed Doxygen files against hardcoded Windows paths

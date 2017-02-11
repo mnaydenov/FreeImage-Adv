@@ -309,6 +309,16 @@ public:
 	BOOL loadFromMemory(fipMemoryIO& memIO, int flag = 0);
 
 	/**
+	@brief Loads an image using the specified fif and memory stream and an optional flag.
+	@param fif Expected format identifier (FreeImage format)
+	@param memIO FreeImage memory stream
+	@param flag The signification of this flag depends on the image to be read.
+	@return Returns TRUE if successful, FALSE otherwise.
+	@see FreeImage_LoadFromMemory, FreeImage documentation
+	*/
+	BOOL loadFromMemory(FREE_IMAGE_FORMAT fif, fipMemoryIO& memIO, int flag = 0);
+
+	/**
 	Saves an image to disk, given its file name and an optional flag.
 	The function will use FreeImage_GetFIFFromFilename to get the right FREE_IMAGE_FORMAT.
 	@param lpszPathName Path and file name of the image to save.
