@@ -876,12 +876,18 @@ DLL_API void DLL_CALLCONV FreeImage_UnlockPage(FIMULTIBITMAP *bitmap, FIBITMAP *
 DLL_API BOOL DLL_CALLCONV FreeImage_MovePage(FIMULTIBITMAP *bitmap, int target, int source);
 DLL_API BOOL DLL_CALLCONV FreeImage_GetLockedPageNumbers(FIMULTIBITMAP *bitmap, int *pages, int *count);
 
-// Filetype request routines ------------------------------------------------
+// File type request routines ------------------------------------------------
 
 DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFileType(const char *filename, int size FI_DEFAULT(0));
 DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFileTypeU(const wchar_t *filename, int size FI_DEFAULT(0));
 DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFileTypeFromHandle(FreeImageIO *io, fi_handle handle, int size FI_DEFAULT(0));
 DLL_API FREE_IMAGE_FORMAT DLL_CALLCONV FreeImage_GetFileTypeFromMemory(FIMEMORY *stream, int size FI_DEFAULT(0));
+
+DLL_API BOOL DLL_CALLCONV FreeImage_Validate(FREE_IMAGE_FORMAT fif, const char *filename);
+DLL_API BOOL DLL_CALLCONV FreeImage_ValidateU(FREE_IMAGE_FORMAT fif, const wchar_t *filename);
+DLL_API BOOL DLL_CALLCONV FreeImage_ValidateFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle);
+DLL_API BOOL DLL_CALLCONV FreeImage_ValidateFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream);
+
 
 // Image type request routine -----------------------------------------------
 
