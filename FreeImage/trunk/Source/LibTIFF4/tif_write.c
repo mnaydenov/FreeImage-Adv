@@ -1,4 +1,4 @@
-/* $Id: tif_write.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
+/* $Id: tif_write.c,v 1.46 2016-12-03 21:57:44 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

@@ -1,4 +1,4 @@
-/* $Header: /home/cvs/f/fr/freeimage/FreeImage/Source/LibTIFF4/tif_version.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
+/* $Header: /cvs/maptools/cvsroot/libtiff/libtiff/tif_version.c,v 1.3 2010-03-10 18:56:49 bfriesen Exp $ */
 /*
  * Copyright (c) 1992-1997 Sam Leffler
  * Copyright (c) 1992-1997 Silicon Graphics, Inc.

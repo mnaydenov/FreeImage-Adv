@@ -1,4 +1,4 @@
-/* $Id: tif_open.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
+/* $Id: tif_open.c,v 1.48 2016-11-20 22:29:47 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
