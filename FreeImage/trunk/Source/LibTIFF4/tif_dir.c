@@ -1,4 +1,4 @@
-/* $Id: tif_dir.c,v 1.14 2017-02-11 03:27:30 drolon Exp $ */
+/* $Id: tif_dir.c,v 1.131 2017-07-11 21:38:04 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler
@@ -686,7 +686,7 @@ _TIFFVSetField(TIFF* tif, uint32 tag, va_list ap)
 				case TIFF_SRATIONAL:
 				case TIFF_FLOAT:
 					{
-						float v2 = (float)va_arg(ap, double);
+						float v2 = TIFFClampDoubleToFloat(va_arg(ap, double));
 						_TIFFmemcpy(val, &v2, tv_size);
 					}
 					break;
@@ -872,6 +872,8 @@ _TIFFVGetField(TIFF* tif, uint32 tag, va_list ap)
                 TIFFTagValue *tv = td->td_customValues + i;
                 if (tv->info->field_tag != tag)
                     continue;
+                if( tv->value == NULL )
+                    return 0;
                 val = *(uint16 *)tv->value;
                 /* Truncate to SamplesPerPixel, since the */
                 /* setting code for INKNAMES assume that there are SamplesPerPixel */

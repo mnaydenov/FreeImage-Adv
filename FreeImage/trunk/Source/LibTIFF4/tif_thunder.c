@@ -1,4 +1,4 @@
-/* $Id: tif_thunder.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
+/* $Id: tif_thunder.c,v 1.13 2016-09-04 21:32:56 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

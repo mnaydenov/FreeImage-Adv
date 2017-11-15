@@ -19,6 +19,7 @@ del *.sdf /s /q
 del *.sql /s /q
 del *.suo /s /q /a:h
 del *.user /s /q
+del *.opensdf /s /q /a:h
 del TestAPI\*.tif
 del TestAPI\blob.png
 del TestAPI\buffer.png

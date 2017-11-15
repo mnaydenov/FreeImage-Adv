@@ -29,8 +29,8 @@
 // ==========================================================
 // CVS
 // $Revision: 1.1 $
-// $Date: 2007-11-28 15:33:38 $
-// $Id: FREE_IMAGE_JPEG_OPERATION.cs,v 1.1 2007-11-28 15:33:38 cklein05 Exp $
+// $Date: 2007/11/28 15:33:38 $
+// $Id: FREE_IMAGE_JPEG_OPERATION.cs,v 1.1 2007/11/28 15:33:38 cklein05 Exp $
 // ==========================================================
 
 namespace FreeImageAPI

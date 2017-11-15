@@ -21,7 +21,7 @@
    homepage qualifies as "full source code".
 
    $Revision: 1.48 $
-   $Date: 2017-02-11 03:19:58 $
+   $Date: 2017/02/11 03:19:58 $
  */
 /*@out DEFINES
 #ifndef USE_JPEG

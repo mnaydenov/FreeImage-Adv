@@ -1,4 +1,4 @@
-/* $Id: tif_vms.c,v 1.13 2017-02-11 03:27:30 drolon Exp $ */
+/* $Id: tif_vms.c,v 1.14 2017-01-11 19:02:49 erouault Exp $ */
 
 /*
  * Copyright (c) 1988-1997 Sam Leffler

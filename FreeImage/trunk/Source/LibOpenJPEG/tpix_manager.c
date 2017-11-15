@@ -1,5 +1,5 @@
 /*
- * $Id: tpix_manager.c,v 1.4 2014-03-16 12:29:52 drolon Exp $
+ * $Id: tpix_manager.c,v 1.4 2014/03/16 12:29:52 drolon Exp $
  *
  * Copyright (c) 2002-2011, Communications and Remote Sensing Laboratory, Universite catholique de Louvain (UCL), Belgium
  * Copyright (c) 2002-2011, Professor Benoit Macq
