@@ -1,5 +1,5 @@
 /* 
-  Copyright 2008-2016 LibRaw LLC (info@libraw.org)
+  Copyright 2008-2018 LibRaw LLC (info@libraw.org)
 
 LibRaw is free software; you can redistribute it and/or modify
 it under the terms of the one of two licenses as you choose:
@@ -26,7 +26,7 @@ it under the terms of the one of two licenses as you choose:
 #include "internal/defines.h"
 #include "internal/var_defines.h"
 /*
-   Seach from the current directory up to the root looking for
+   Search from the current directory up to the root looking for
    a ".badpixels" file, and fix those pixels now.
  */
 void CLASS bad_pixels(const char *cfname)

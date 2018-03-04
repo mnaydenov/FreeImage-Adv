@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: var_defines.h
- * Copyright 2008-2016 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2018 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8, 2008
  *
  * LibRaw redefinitions of dcraw internal variables
@@ -170,6 +170,7 @@ it under the terms of the one of two licenses as you choose:
 //libraw_internal_data.identify_data
 #define exif_cfa        (libraw_internal_data.identify_data.olympus_exif_cfa)
 #define unique_id       (libraw_internal_data.identify_data.unique_id)
+#define OlyID           (libraw_internal_data.identify_data.OlyID)
 #define tiff_nifds      (libraw_internal_data.identify_data.tiff_nifds)
 #define tiff_flip       (libraw_internal_data.identify_data.tiff_flip)
 

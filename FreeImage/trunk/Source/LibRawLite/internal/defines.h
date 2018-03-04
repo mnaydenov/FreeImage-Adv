@@ -1,5 +1,5 @@
 /* 
-  Copyright 2008-2016 LibRaw LLC (info@libraw.org)
+  Copyright 2008-2018 LibRaw LLC (info@libraw.org)
 
 LibRaw is free software; you can redistribute it and/or modify
 it under the terms of the one of two licenses as you choose:
@@ -56,28 +56,9 @@ it under the terms of the one of two licenses as you choose:
 #include <unistd.h>
 #include <utime.h>
 #include <netinet/in.h>
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
-
-#if defined(_WIN32)
-#if defined _MSC_VER
-typedef signed __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef signed __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef signed __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef signed __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#else
-#include <stdint.h>
-#endif // _MSC_VER
-#include <sys/types.h>
-#else
-#include <inttypes.h>
-#endif // _WIN32
 
 #ifdef NODEPS
 #define NO_JASPER
@@ -124,6 +105,7 @@ typedef unsigned __int64 uint64_t;
 #define LIM(x, min, max) MAX(min, MIN(x, max))
 #define ULIM(x, y, z) ((y) < (z) ? LIM(x, y, z) : LIM(x, z, y))
 #define CLIP(x) LIM((int)(x), 0, 65535)
+#define CLIP15(x) LIM((int)(x), 0, 32767)
 #define SWAP(a, b)                                                                                                     \
   {                                                                                                                    \
     a = a + b;                                                                                                         \

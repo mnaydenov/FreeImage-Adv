@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_internal.h
- * Copyright 2008-2016 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2018 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
  * LibRaw internal data structures (not visible outside)
@@ -97,7 +97,7 @@ typedef struct
   char *meta_data;
   INT64 profile_offset;
   INT64 toffset;
-  unsigned pana_black[4];
+  unsigned pana_black[3];
 
 } internal_data_t;
 
@@ -112,6 +112,7 @@ typedef struct
 {
   unsigned olympus_exif_cfa;
   unsigned unique_id;
+  unsigned long long OlyID;
   unsigned tiff_nifds;
   int tiff_flip;
 } identify_data_t;
@@ -136,7 +137,8 @@ typedef struct
   int hasselblad_parser_flag;
   long long posRAFData;
   unsigned lenRAFData;
-  int fuji_total_lines, fuji_total_blocks, fuji_block_width, fuji_bits;
+  int fuji_total_lines, fuji_total_blocks, fuji_block_width, fuji_bits, fuji_raw_type;
+ int pana_encoding, pana_bpp;
 } unpacker_data_t;
 
 typedef struct
@@ -176,7 +178,7 @@ struct jhead
   ushort quant[64], idct[64], *huff[20], *free[20], *row;
 };
 
-struct tiff_tag
+struct libraw_tiff_tag
 {
   ushort tag, type;
   int count;
@@ -192,12 +194,12 @@ struct tiff_hdr
   ushort t_order, magic;
   int ifd;
   ushort pad, ntag;
-  struct tiff_tag tag[23];
+  struct libraw_tiff_tag tag[23];
   int nextifd;
   ushort pad2, nexif;
-  struct tiff_tag exif[4];
+  struct libraw_tiff_tag exif[4];
   ushort pad3, ngps;
-  struct tiff_tag gpst[10];
+  struct libraw_tiff_tag gpst[10];
   short bps[4];
   int rat[10];
   unsigned gps[26];
