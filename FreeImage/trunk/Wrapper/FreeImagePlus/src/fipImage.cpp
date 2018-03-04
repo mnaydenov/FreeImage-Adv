@@ -25,10 +25,12 @@
 // Protected functions
 
 BOOL fipImage::replace(FIBITMAP *new_dib) {
-	if(new_dib == NULL) 
+	if (new_dib == NULL) {
 		return FALSE;
-	if(_dib)
+	}
+	if (_dib) {
 		FreeImage_Unload(_dib);
+	}
 	_dib = new_dib;
 	_bHasChanged = TRUE;
 	return TRUE;
@@ -95,9 +97,9 @@ void fipImage::clear() {
 
 fipImage::fipImage(const fipImage& Image) {
 	_dib = NULL;
-	_fif = FIF_UNKNOWN;
 	FIBITMAP *clone = FreeImage_Clone((FIBITMAP*)Image._dib);
 	replace(clone);
+	_fif = Image._fif;
 }
 
 fipImage& fipImage::operator=(const fipImage& Image) {
