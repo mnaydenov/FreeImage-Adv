@@ -86,7 +86,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>./src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);./</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_LIB;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -113,7 +113,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>./src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);./</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_LIB;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>false</StringPooling>
       <MinimalRebuild>false</MinimalRebuild>
@@ -150,6 +150,7 @@
       <CompileAs>CompileAsC</CompileAs>
       <UseUnicodeForAssemblerListing>false</UseUnicodeForAssemblerListing>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);./</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib />
   </ItemDefinitionGroup>
@@ -173,6 +174,7 @@
       <CompileAs>CompileAsC</CompileAs>
       <UseUnicodeForAssemblerListing>false</UseUnicodeForAssemblerListing>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);./</AdditionalIncludeDirectories>
     </ClCompile>
     <Lib />
   </ItemDefinitionGroup>
@@ -184,6 +186,7 @@
     <ClInclude Include="src\dec\vp8_dec.h" />
     <ClInclude Include="src\dec\webpi_dec.h" />
     <ClInclude Include="src\dsp\common_sse2.h" />
+    <ClInclude Include="src\dsp\common_sse41.h" />
     <ClInclude Include="src\dsp\dsp.h" />
     <ClInclude Include="src\dsp\lossless.h" />
     <ClInclude Include="src\dsp\lossless_common.h" />
@@ -239,9 +242,6 @@
     <ClCompile Include="src\dsp\alpha_processing_neon.c" />
     <ClCompile Include="src\dsp\alpha_processing_sse2.c" />
     <ClCompile Include="src\dsp\alpha_processing_sse41.c" />
-    <ClCompile Include="src\dsp\argb.c" />
-    <ClCompile Include="src\dsp\argb_mips_dsp_r2.c" />
-    <ClCompile Include="src\dsp\argb_sse2.c" />
     <ClCompile Include="src\dsp\cost.c" />
     <ClCompile Include="src\dsp\cost_mips32.c" />
     <ClCompile Include="src\dsp\cost_mips_dsp_r2.c" />
@@ -286,21 +286,26 @@
     <ClCompile Include="src\dsp\rescaler_msa.c" />
     <ClCompile Include="src\dsp\rescaler_neon.c" />
     <ClCompile Include="src\dsp\rescaler_sse2.c" />
+    <ClCompile Include="src\dsp\ssim.c" />
+    <ClCompile Include="src\dsp\ssim_sse2.c" />
     <ClCompile Include="src\dsp\upsampling.c" />
     <ClCompile Include="src\dsp\upsampling_mips_dsp_r2.c" />
     <ClCompile Include="src\dsp\upsampling_msa.c" />
     <ClCompile Include="src\dsp\upsampling_neon.c" />
     <ClCompile Include="src\dsp\upsampling_sse2.c" />
+    <ClCompile Include="src\dsp\upsampling_sse41.c" />
     <ClCompile Include="src\dsp\yuv.c" />
     <ClCompile Include="src\dsp\yuv_mips32.c" />
     <ClCompile Include="src\dsp\yuv_mips_dsp_r2.c" />
+    <ClCompile Include="src\dsp\yuv_neon.c" />
     <ClCompile Include="src\dsp\yuv_sse2.c" />
+    <ClCompile Include="src\dsp\yuv_sse41.c" />
     <ClCompile Include="src\enc\alpha_enc.c" />
     <ClCompile Include="src\enc\analysis_enc.c" />
+    <ClCompile Include="src\enc\backward_references_cost_enc.c" />
     <ClCompile Include="src\enc\backward_references_enc.c" />
     <ClCompile Include="src\enc\config_enc.c" />
     <ClCompile Include="src\enc\cost_enc.c" />
-    <ClCompile Include="src\enc\delta_palettization_enc.c" />
     <ClCompile Include="src\enc\filter_enc.c" />
     <ClCompile Include="src\enc\frame_enc.c" />
     <ClCompile Include="src\enc\histogram_enc.c" />
