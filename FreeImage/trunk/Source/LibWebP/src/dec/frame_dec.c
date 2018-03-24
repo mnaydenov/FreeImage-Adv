@@ -12,13 +12,13 @@
 // Author: Skal (pascal.massimino@gmail.com)
 
 #include <stdlib.h>
-#include "./vp8i_dec.h"
-#include "../utils/utils.h"
+#include "src/dec/vp8i_dec.h"
+#include "src/utils/utils.h"
 
 //------------------------------------------------------------------------------
 // Main reconstruction function.
 
-static const int kScan[16] = {
+static const uint16_t kScan[16] = {
   0 +  0 * BPS,  4 +  0 * BPS, 8 +  0 * BPS, 12 +  0 * BPS,
   0 +  4 * BPS,  4 +  4 * BPS, 8 +  4 * BPS, 12 +  4 * BPS,
   0 +  8 * BPS,  4 +  8 * BPS, 8 +  8 * BPS, 12 +  8 * BPS,
@@ -320,7 +320,7 @@ static void PrecomputeFilterStrengths(VP8Decoder* const dec) {
 #define MIN_DITHER_AMP 4
 
 #define DITHER_AMP_TAB_SIZE 12
-static const int kQuantToDitherAmp[DITHER_AMP_TAB_SIZE] = {
+static const uint8_t kQuantToDitherAmp[DITHER_AMP_TAB_SIZE] = {
   // roughly, it's dqm->uv_mat_[1]
   8, 7, 6, 4, 4, 2, 2, 2, 1, 1, 1, 1
 };
@@ -448,10 +448,9 @@ static int FinishRow(VP8Decoder* const dec, VP8Io* const io) {
     if (y_end > io->crop_bottom) {
       y_end = io->crop_bottom;    // make sure we don't overflow on last row.
     }
+    // If dec->alpha_data_ is not NULL, we have some alpha plane present.
     io->a = NULL;
     if (dec->alpha_data_ != NULL && y_start < y_end) {
-      // TODO(skal): testing presence of alpha with dec->alpha_data_ is not a
-      // good idea.
       io->a = VP8DecompressAlphaRows(dec, io, y_start, y_end - y_start);
       if (io->a == NULL) {
         return VP8SetError(dec, VP8_STATUS_BITSTREAM_ERROR,
@@ -558,7 +557,6 @@ VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io) {
   if (io->bypass_filtering) {
     dec->filter_type_ = 0;
   }
-  // TODO(skal): filter type / strength / sharpness forcing
 
   // Define the area where we can skip in-loop filtering, in case of cropping.
   //
@@ -569,8 +567,6 @@ VP8StatusCode VP8EnterCritical(VP8Decoder* const dec, VP8Io* const io) {
   // Means: there's a dependency chain that goes all the way up to the
   // top-left corner of the picture (MB #0). We must filter all the previous
   // macroblocks.
-  // TODO(skal): add an 'approximate_decoding' option, that won't produce
-  // a 1:1 bit-exactness for complex filtering?
   {
     const int extra_pixels = kFilterExtraRows[dec->filter_type_];
     if (dec->filter_type_ == 2) {
@@ -728,7 +724,7 @@ static int AllocateMemory(VP8Decoder* const dec) {
   }
 
   mem = (uint8_t*)dec->mem_;
-  dec->intra_t_ = (uint8_t*)mem;
+  dec->intra_t_ = mem;
   mem += intra_pred_mode_size;
 
   dec->yuv_t_ = (VP8TopSamples*)mem;
@@ -750,7 +746,7 @@ static int AllocateMemory(VP8Decoder* const dec) {
 
   mem = (uint8_t*)WEBP_ALIGN(mem);
   assert((yuv_size & WEBP_ALIGN_CST) == 0);
-  dec->yuv_b_ = (uint8_t*)mem;
+  dec->yuv_b_ = mem;
   mem += yuv_size;
 
   dec->mb_data_ = (VP8MBData*)mem;
@@ -766,7 +762,7 @@ static int AllocateMemory(VP8Decoder* const dec) {
     const int extra_rows = kFilterExtraRows[dec->filter_type_];
     const int extra_y = extra_rows * dec->cache_y_stride_;
     const int extra_uv = (extra_rows / 2) * dec->cache_uv_stride_;
-    dec->cache_y_ = ((uint8_t*)mem) + extra_y;
+    dec->cache_y_ = mem + extra_y;
     dec->cache_u_ = dec->cache_y_
                   + 16 * num_caches * dec->cache_y_stride_ + extra_uv;
     dec->cache_v_ = dec->cache_u_
@@ -776,7 +772,7 @@ static int AllocateMemory(VP8Decoder* const dec) {
   mem += cache_size;
 
   // alpha plane
-  dec->alpha_plane_ = alpha_size ? (uint8_t*)mem : NULL;
+  dec->alpha_plane_ = alpha_size ? mem : NULL;
   mem += alpha_size;
   assert(mem <= (uint8_t*)dec->mem_ + dec->mem_size_);
 
