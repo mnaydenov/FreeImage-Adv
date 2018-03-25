@@ -28,7 +28,6 @@
 #include "Utilities.h"
 #include "FreeImageIO.h"
 #include "Plugin.h"
-#include "../DeprecationManager/DeprecationMgr.h"
 
 // =====================================================================
 // Generic stream file type access
