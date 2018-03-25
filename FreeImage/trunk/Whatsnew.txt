@@ -11,10 +11,12 @@ Month day, 2018 - 3.18.0
 ! FreeImage now uses LibWebP 0.6.1 (GIT patch 2018-03-23)
 ! FreeImage now uses LibPNG 1.6.34
 ! FreeImage now uses LibTIFF 4.0.9 (GIT patch 2018-03-17)
-! FreeImage now uses LibJPEG 9b
+! FreeImage now uses OpenEXR 2.2.1
++ [Herve Drolon] added VS 2017 project files
 - [Herve Drolon] removed VS 2005 project files : this IDE is no longer supported because of its outdated C++ compiler
 - [Herve Drolon] removed VS 2008 project files : this IDE is no longer supported because of its outdated C++ compiler
-+ [Herve Drolon] added VS 2017 project files
+- [Herve Drolon] removed FreeImage_RotateClassic (deprecated function)
+- [Herve Drolon] removed internal Deprecation Manager (class DeprecationMgr)
 ! [Herve Drolon] DDS plugin now convert 16-bit uncompressed RGB (RGB444, RGB555, RGB565) to 24-bit RGB on loading
 + [Garrick Meeker] added saving support to the PSD plugin
 + [Tom Whittock] FreeImage_ConvertToRawBits now deals with palletized images containing transparency during conversion
