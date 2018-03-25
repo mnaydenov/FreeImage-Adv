@@ -86,11 +86,12 @@ extern "C"
 #include "libraw_version.h"
 
 #ifdef WIN32
-  typedef __int64 INT64;
-  typedef unsigned __int64 UINT64;
+	typedef __int64 INT64;
+	typedef unsigned __int64 UINT64;
 #else
-typedef long long INT64;
-typedef unsigned long long UINT64;
+#include <stdint.h>
+	typedef int64_t INT64;
+	typedef uint64_t UINT64;
 #endif
 
   typedef unsigned char uchar;
