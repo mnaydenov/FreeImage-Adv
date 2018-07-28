@@ -56,9 +56,8 @@ it under the terms of the one of two licenses as you choose:
 #include <unistd.h>
 #include <utime.h>
 #include <netinet/in.h>
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
 #ifdef NODEPS
@@ -162,6 +161,7 @@ static float fMAX(float a, float b) { return MAX(a, b); }
         3 G R G R G R	3 B G B G B G	3 R G R G R G	3 G B G B G B
  */
 
+#define RAWINDEX(row, col) ((row)*raw_width + (col))
 #define RAW(row, col) raw_image[(row)*raw_width + (col)]
 #define BAYER(row, col) image[((row) >> shrink) * iwidth + ((col) >> shrink)][FC(row, col)]
 

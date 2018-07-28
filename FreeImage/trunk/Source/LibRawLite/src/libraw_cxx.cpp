@@ -1707,6 +1707,7 @@ void LibRaw::sony_arq_load_raw()
 {
   int row, col;
   read_shorts(imgdata.rawdata.raw_image, imgdata.sizes.raw_width * imgdata.sizes.raw_height * 4);
+  libraw_internal_data.internal_data.input->seek(-2,SEEK_CUR); // avoid wrong eof error
   for (row = 0; row < imgdata.sizes.raw_height; row++)
   {
     unsigned short(*rowp)[4] = (unsigned short(*)[4]) & imgdata.rawdata.raw_image[row * imgdata.sizes.raw_width * 4];
@@ -2008,14 +2009,13 @@ int LibRaw::open_datastream(LibRaw_abstract_datastream *stream)
     if(callbacks.post_identify_cb)
 	(callbacks.post_identify_cb)(this);
 
-#if 0
-    if(!strcasecmp(imgdata.idata.make, "Sony")
-       && imgdata.color.maximum > 0
-       && imgdata.color.linear_max[0] > imgdata.color.maximum*3
+
+	// Linear max from 14-bit camera, but on 12-bit data?
+    if(( !strcasecmp(imgdata.idata.make, "Sony") /* || !strcasecmp(imgdata.idata.make, "Nikon") */)
+       && imgdata.color.maximum > 0   && imgdata.color.linear_max[0] > imgdata.color.maximum
        && imgdata.color.linear_max[0] <= imgdata.color.maximum*4)
          for(int c = 0; c<4; c++)
-	   imgdata.color.linear_max[c] /= 4;
-#endif
+			imgdata.color.linear_max[c] /= 4;
 
     if (!strcasecmp(imgdata.idata.make, "Canon") && (load_raw == &LibRaw::canon_sraw_load_raw) &&
         imgdata.sizes.raw_width > 0)
@@ -4369,7 +4369,7 @@ int LibRaw::unpack_thumb(void)
         int i_length = T.twidth * T.theight * t_colors * 2;
         if (!T.tlength)
           T.tlength = o_length;
-        ushort *t_thumb = (ushort *)calloc(o_length, 1);
+        ushort *t_thumb = (ushort *)calloc(i_length, 1);
         ID.input->read(t_thumb, 1, i_length);
         if ((libraw_internal_data.unpacker_data.order == 0x4949) == (ntohs(0x1234) == 0x1234))
           swab((char *)t_thumb, (char *)t_thumb, i_length);
@@ -4785,11 +4785,6 @@ int LibRaw::dcraw_process(void)
   int quality, i;
 
   int iterations = -1, dcb_enhance = 1, noiserd = 0;
-  int eeci_refine_fl = 0, es_med_passes_fl = 0;
-  float cared = 0, cablue = 0;
-  float linenoise = 0;
-  float lclean = 0, cclean = 0;
-  float thresh = 0;
   float preser = 0;
   float expos = 1.0;
 
@@ -4955,16 +4950,10 @@ int LibRaw::dcraw_process(void)
 
     if(callbacks.post_interpolate_cb)
 	(callbacks.post_interpolate_cb)(this);
-
-    if (!P1.is_foveon)
+    else if (!P1.is_foveon && P1.colors == 3 && O.med_passes > 0)
     {
-      if (P1.colors == 3)
-      {
-
-        /* median filter callback, if not set use own */
         median_filter();
         SET_PROC_FLAG(LIBRAW_PROGRESS_MEDIAN_FILTER);
-      }
     }
 
     if (O.highlight == 2)
@@ -5210,6 +5199,7 @@ static const char *static_camera_list[] = {
 	"Casio EX-FH20",
 	"Casio EX-FH25",
 	"Casio EX-FH100",
+	"Casio EX-P600",
 	"Casio EX-S20",
 	"Casio EX-S100",
 	"Casio EX-Z4",
@@ -6108,18 +6098,19 @@ const char *LibRaw::strprogress(enum LibRaw_progress p)
 
 void x3f_clear(void *p) { x3f_delete((x3f_t *)p); }
 
-static char *utf2char(utf16_t *str, char *buffer)
+static void utf2char(utf16_t *str, char *buffer, unsigned bufsz)
 {
+ if(bufsz<1) return;
+ buffer[bufsz-1] = 0;
   char *b = buffer;
 
-  while (*str != 0x00)
+  while (*str != 0x00 && --bufsz>0)
   {
     char *chr = (char *)str;
     *b++ = *chr;
     str++;
   }
   *b = 0;
-  return buffer;
 }
 
 static void *lr_memmem(const void *l, size_t l_len, const void *s, size_t s_len)
@@ -6170,12 +6161,15 @@ void LibRaw::parse_x3f()
   imgdata.sizes.raw_width = ID->columns;
   imgdata.sizes.raw_height = ID->rows;
   // Parse other params from property section
+
   DE = x3f_get_prop(x3f);
   if ((x3f_load_data(x3f, DE) == X3F_OK))
   {
     // Parse property list
     DEH = &DE->header;
     x3f_property_list_t *PL = &DEH->data_subsection.property_list;
+    utf16_t *datap = (utf16_t*) PL->data;
+    uint32_t maxitems = PL->data_size/sizeof(utf16_t);
     if (PL->property_table.size != 0)
     {
       int i;
@@ -6183,8 +6177,14 @@ void LibRaw::parse_x3f()
       for (i = 0; i < PL->num_properties; i++)
       {
         char name[100], value[100];
-        utf2char(P[i].name, name);
-        utf2char(P[i].value, value);
+        int noffset = (P[i].name - datap);
+        int voffset = (P[i].value - datap);
+        if(noffset < 0 || noffset>maxitems || voffset<0 || voffset>maxitems)
+           throw LIBRAW_EXCEPTION_IO_CORRUPT;
+        int maxnsize = maxitems - (P[i].name - datap);
+        int maxvsize = maxitems - (P[i].value - datap);
+        utf2char(P[i].name, name,MIN(maxnsize,sizeof(name)));
+        utf2char(P[i].value, value,MIN(maxvsize,sizeof(value)));
         if (!strcmp(name, "ISO"))
           imgdata.other.iso_speed = atoi(value);
         if (!strcmp(name, "CAMMANUF"))
