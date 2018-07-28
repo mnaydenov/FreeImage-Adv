@@ -7,11 +7,12 @@ What's New for FreeImage
 
 Month day, 2018 - 3.18.0
 ! FreeImage now uses ZLib 1.2.11
-! FreeImage now uses LibRaw 0.19-Beta2
-! FreeImage now uses LibWebP 0.6.1 (GIT patch 2018-03-23)
-! FreeImage now uses LibPNG 1.6.34
-! FreeImage now uses LibTIFF 4.0.9 (GIT patch 2018-03-17)
+! FreeImage now uses LibRaw 0.19
+! FreeImage now uses LibWebP 1.0.0 (GIT patch 2018-07-24)
+! FreeImage now uses LibPNG 1.6.35
+! FreeImage now uses LibTIFF 4.0.9 (GIT patch 2018-07-02)
 ! FreeImage now uses OpenEXR 2.2.1
+! FreeImage now uses LibJPEG 9c
 + [Herve Drolon] added VS 2017 project files
 - [Herve Drolon] removed VS 2005 project files : this IDE is no longer supported because of its outdated C++ compiler
 - [Herve Drolon] removed VS 2008 project files : this IDE is no longer supported because of its outdated C++ compiler
@@ -45,6 +46,10 @@ Month day, 2018 - 3.18.0
 * [Jojakim Stahl] fixed PCX file conversion crash on special files
 * [dartraiden] fixed FreeImage_FillBackground when using blending with an alpha-transparent foreground color over an opaque background
 * [Herve Drolon] fixed 64-bit conversion of parameters in sprintf calls (required with C++ 11)
+* [Peter Levine] fixed static cast to boolean in PluginJPEG
+* [Sergey Shambir] improved error handling in PluginPNG
+* [Joachim Reichel] fixed wrong exposure in exported HDR files
+* [Percy Schott] fixed PluginTIFF:ReadThumbnail behavior when reading TIF with Exif metadata
 
 March 15th, 2015 - 3.17.0
 ! FreeImage now uses LibPNG 1.6.16
