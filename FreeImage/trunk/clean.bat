@@ -95,3 +95,5 @@ rd Release /s /q
 del Dist\FreeImage.h
 rd Dist\x32 /s /q
 rd Dist\x64 /s /q
+rd .vs /s /q
+
