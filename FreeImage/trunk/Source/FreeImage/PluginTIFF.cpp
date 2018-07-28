@@ -1240,6 +1240,10 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 	
 	// read exif thumbnail (IFD 1) ...
 	
+	/*
+	// this code can cause unwanted recursion causing an overflow, it is thus disabled until we have a better solution
+	// do we really need to read a thumbnail from the Exif segment ? knowing that TIFF store the thumbnail in the subIFD ...
+	// 
 	toff_t exif_offset = 0;
 	if(TIFFGetField(tiff, TIFFTAG_EXIFIFD, &exif_offset)) {
 		
@@ -1260,6 +1264,7 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 			TIFFSetDirectory(tiff, cur_dir);
 		}
 	}
+	*/
 	
 	// ... or read the first subIFD
 	
@@ -2261,6 +2266,19 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 // --------------------------------------------------------------------------
 
+/**
+Save a single image into a TIF
+
+@param io FreeImage IO
+@param dib The dib to be saved
+@param handle FreeImage handle
+@param page Page number
+@param flags FreeImage TIFF save flag
+@param data TIFF plugin context
+@param ifd TIFF Image File Directory (0 means save image, > 0 && (page == -1) means save thumbnail)
+@param ifdCount 1 if no thumbnail to save, 2 if image + thumbnail to save
+@return Returns TRUE if successful, returns FALSE otherwise
+*/
 static BOOL 
 SaveOneTIFF(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data, unsigned ifd, unsigned ifdCount) {
 	if (!dib || !handle || !data) {
