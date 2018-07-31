@@ -41,12 +41,12 @@
 /**
 The list of possible 16-bit formats
 */
-typedef enum DDSFormat16 {
+typedef enum {
 	RGB_UNKNOWN = -1,
 	RGB444 = 1,
 	RGB555 = 2,
 	RGB565 = 3
-};
+} DDSFormat16;
 
 /**
 Get the 16-bit format of an image
