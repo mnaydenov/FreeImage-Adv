@@ -5,7 +5,7 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
-Month day, 2017
+July 31st, 2018
 ! [Herve Drolon] fipMultiPage::open now use FreeImage_GetFileType
 + [Herve Drolon] added fipImage._fif handling
 + [Herve Drolon] added fipImage::clearMetadata
