@@ -5,6 +5,9 @@ What's New for FreeImage
 ! : changed
 + : added
 
+Month day, 2018 - 3.18.1
+* [Martin Strunz] fixed uninitialized variable in tmoReinhard05.cpp
+
 July 31st, 2018 - 3.18.0
 ! FreeImage now uses ZLib 1.2.11
 ! FreeImage now uses LibRaw 0.19
