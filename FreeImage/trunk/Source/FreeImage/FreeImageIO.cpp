@@ -61,39 +61,37 @@ SetDefaultIO(FreeImageIO *io) {
 // Memory IO functions
 // =====================================================================
 
-unsigned DLL_CALLCONV 
+unsigned DLL_CALLCONV
 _MemoryReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
-	unsigned x;
-
 	FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(((FIMEMORY*)handle)->data);
 
-	for(x = 0; x < count; x++) {
-		long remaining_bytes = mem_header->file_length - mem_header->current_position;
-		//if there isn't size bytes left to read, set pos to eof and return a short count
-		if( remaining_bytes < (long)size ) {
-			if(remaining_bytes > 0) {
-				memcpy( buffer, (char *)mem_header->data + mem_header->current_position, remaining_bytes );
-			}
-			mem_header->current_position = mem_header->file_length;
-			break;
-		}
-		//copy size bytes count times
-		memcpy( buffer, (char *)mem_header->data + mem_header->current_position, size );
-		mem_header->current_position += size;
-		buffer = (char *)buffer + size;
+	const long required_bytes = (long)(size * count);
+	const long remaining_bytes = mem_header->file_length - mem_header->current_position;
+
+	if (required_bytes <= remaining_bytes) {
+		// copy size bytes count times
+		memcpy(buffer, (char*)mem_header->data + mem_header->current_position, required_bytes);
+		mem_header->current_position += required_bytes;
+		return (unsigned)(required_bytes / size);
 	}
-	return x;
+	else {
+		// if there isn't required_bytes bytes left to read, set pos to eof and return a short count
+		memcpy(buffer, (char*)mem_header->data + mem_header->current_position, remaining_bytes);
+		mem_header->current_position = mem_header->file_length;
+		return (unsigned)(remaining_bytes / size);
+	}
 }
 
 unsigned DLL_CALLCONV 
 _MemoryWriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
-	void *newdata;
 	long newdatalen;
 
 	FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(((FIMEMORY*)handle)->data);
 
+	const long required_bytes = (long)(size * count);
+
 	//double the data block size if we need to
-	while( (mem_header->current_position + (long)(size * count)) >= mem_header->data_length ) {
+	while( (mem_header->current_position + required_bytes) >= mem_header->data_length ) {
 		//if we are at or above 1G, we cant double without going negative
 		if( mem_header->data_length & 0x40000000 ) {
 			//max 2G
@@ -108,18 +106,21 @@ _MemoryWriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle) 
 			//double size
 			newdatalen = mem_header->data_length << 1;
 		}
-		newdata = realloc( mem_header->data, newdatalen );
-		if( !newdata ) {
+		void *newdata = realloc(mem_header->data, newdatalen);
+		if(!newdata) {
 			return 0;
 		}
 		mem_header->data = newdata;
 		mem_header->data_length = newdatalen;
 	}
-	memcpy( (char *)mem_header->data + mem_header->current_position, buffer, size * count );
-	mem_header->current_position += size * count;
+
+	memcpy((char *)mem_header->data + mem_header->current_position, buffer, required_bytes);
+	mem_header->current_position += required_bytes;
+
 	if( mem_header->current_position > mem_header->file_length ) {
 		mem_header->file_length = mem_header->current_position;
 	}
+
 	return count;
 }
 
@@ -133,21 +134,21 @@ _MemorySeekProc(fi_handle handle, long offset, int origin) {
 	switch(origin) { //0 to filelen-1 are 'inside' the file
 		default:
 		case SEEK_SET: //can fseek() to 0-7FFFFFFF always
-			if( offset >= 0 ) {
+			if(offset >= 0) {
 				mem_header->current_position = offset;
 				return 0;
 			}
 			break;
 
 		case SEEK_CUR:
-			if( mem_header->current_position + offset >= 0 ) {
+			if((mem_header->current_position + offset) >= 0) {
 				mem_header->current_position += offset;
 				return 0;
 			}
 			break;
 
 		case SEEK_END:
-			if( mem_header->file_length + offset >= 0 ) {
+			if((mem_header->file_length + offset) >= 0) {
 				mem_header->current_position = mem_header->file_length + offset;
 				return 0;
 			}
