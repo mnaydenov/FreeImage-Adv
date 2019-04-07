@@ -5,8 +5,10 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2018 - 3.18.1
+Month day, 2019 - 3.18.1
 * [Martin Strunz] fixed uninitialized variable in tmoReinhard05.cpp
+* [realdolos] improved performance of _MemoryReadProc function (see FreeImageIO.cpp)
+* [Herve Drolon] fixed PluginBMP, PluginDDS for compilation under Big Endian OS (see FREEIMAGE_BIGENDIAN)
 
 July 31st, 2018 - 3.18.0
 ! FreeImage now uses ZLib 1.2.11
