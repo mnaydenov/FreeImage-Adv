@@ -589,7 +589,9 @@ jpeg_read_exif_dir(FIBITMAP *dib, const BYTE *tiffp, DWORD dwOffsetIfd0, DWORD d
 			
 			// create a tag
 			FITAG *tag = FreeImage_CreateTag();
-			if(!tag) return FALSE;
+			if (!tag) {
+				return FALSE;
+			}
 
 			// point to the directory entry
 			pde = (char*) DIR_ENTRY_ADDR(ifdp, de);

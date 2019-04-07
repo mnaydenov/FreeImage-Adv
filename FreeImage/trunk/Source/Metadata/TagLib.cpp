@@ -170,7 +170,9 @@ static TagInfo
 	{  0x9C9D, (char *) "XPAuthor", (char *) "Author tag used by Windows, encoded in UCS2"},
 	{  0x9C9E, (char *) "XPKeywords", (char *) "Keywords tag used by Windows, encoded in UCS2"},
 	{  0x9C9F, (char *) "XPSubject", (char *) "Subject tag used by Windows, encoded in UCS2"},
-    {  0x0000, (char *) NULL, (char *) NULL}
+	{  0x0152, (char *) "ExtraSamples", (char *) "Description of extra components"},
+
+	{  0x0000, (char *) NULL, (char *) NULL}
   };
 
 // --------------------------------------------------------------------------
