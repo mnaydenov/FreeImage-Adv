@@ -6,6 +6,10 @@ What's New for FreeImage
 + : added
 
 Month day, 2019 - 3.18.1
+! FreeImage now uses LibPNG 1.6.37
+! FreeImage now uses LibTIFF 4.1.0 (GIT patch 2019-11-04)
+! FreeImage now uses LibWebP 1.0.3 (GIT patch 2019-11-06)
+! FreeImage now uses LibRaw 0.19.5
 * [Martin Strunz] fixed uninitialized variable in tmoReinhard05.cpp
 * [realdolos] improved performance of _MemoryReadProc function (see FreeImageIO.cpp)
 * [Herve Drolon] fixed PluginBMP, PluginDDS for compilation under Big Endian OS (see FREEIMAGE_BIGENDIAN)
