@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_const.h
- * Copyright 2008-2018 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2019 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  * LibRaw error codes
 LibRaw is free software; you can redistribute it and/or modify
@@ -24,6 +24,12 @@ it under the terms of the one of two licenses as you choose:
 #define LIBRAW_MAX_ALLOC_MB 2048L
 #endif
 
+/* Change to non-zero to allow (broken) CRW (and other) files metadata 
+   loop prevention */
+#ifndef LIBRAW_METADATA_LOOP_PREVENTION
+#define LIBRAW_METADATA_LOOP_PREVENTION 0
+#endif
+
 /* Check if enough file space exists before tag read */
 #ifndef LIBRAW_NO_IOSPACE_CHECK
 #define LIBRAW_IOSPACE_CHECK
@@ -38,6 +44,7 @@ LIBRAW_MEMPOOL_CHECK define will result in error on pool overflow */
 #endif
 
 #define LIBRAW_IFD_MAXCOUNT 10
+#define LIBRAW_MAX_METADATA_BLOCKS 1024
 
 enum LibRaw_openbayer_patterns
 {
@@ -103,7 +110,7 @@ enum LibRaw_whitebalance_code
   LIBRAW_WBI_Auto4 = 88,
   LIBRAW_WBI_Custom1 = 90,
   LIBRAW_WBI_Custom2 = 91,
-  LIBRAW_WBI_Custom3 = 93,
+  LIBRAW_WBI_Custom3 = 92,
   LIBRAW_WBI_Custom4 = 93,
   LIBRAW_WBI_Custom5 = 94,
   LIBRAW_WBI_Custom6 = 95,
@@ -222,6 +229,7 @@ enum LibRaw_decoder_flags
   LIBRAW_DECODER_ADOBECOPYPIXEL = 1 << 9,
   LIBRAW_DECODER_LEGACY_WITH_MARGINS = 1 << 10,
   LIBRAW_DECODER_3CHANNEL = 1 << 11,
+  LIBRAW_DECODER_SINAR4SHOT = 1 << 11,
   LIBRAW_DECODER_NOTSET = 1 << 15
 };
 
@@ -266,7 +274,8 @@ enum LibRaw_exceptions
   LIBRAW_EXCEPTION_BAD_CROP = 7,
   LIBRAW_EXCEPTION_IO_BADFILE = 8,
   LIBRAW_EXCEPTION_DECODE_JPEG2000 = 9,
-  LIBRAW_EXCEPTION_TOOBIG = 10
+  LIBRAW_EXCEPTION_TOOBIG = 10,
+  LIBRAW_EXCEPTION_MEMPOOL = 11
 };
 
 enum LibRaw_progress
@@ -325,7 +334,8 @@ enum LibRaw_errors
   LIBRAW_IO_ERROR = -100009,
   LIBRAW_CANCELLED_BY_CALLBACK = -100010,
   LIBRAW_BAD_CROP = -100011,
-  LIBRAW_TOO_BIG = -100012
+  LIBRAW_TOO_BIG = -100012,
+  LIBRAW_MEMPOOL_OVERFLOW = -100013
 };
 
 #define LIBRAW_FATAL_ERROR(ec) ((ec) < -100000)

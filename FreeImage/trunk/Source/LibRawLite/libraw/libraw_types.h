@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw_types.h
- * Copyright 2008-2018 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2019 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8 , 2008
  *
  * LibRaw C data structures
@@ -86,12 +86,11 @@ extern "C"
 #include "libraw_version.h"
 
 #ifdef WIN32
-	typedef __int64 INT64;
-	typedef unsigned __int64 UINT64;
+  typedef __int64 INT64;
+  typedef unsigned __int64 UINT64;
 #else
-#include <stdint.h>
-	typedef int64_t INT64;
-	typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
   typedef unsigned char uchar;
