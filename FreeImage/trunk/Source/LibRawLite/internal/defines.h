@@ -1,5 +1,5 @@
 /* 
-  Copyright 2008-2018 LibRaw LLC (info@libraw.org)
+  Copyright 2008-2019 LibRaw LLC (info@libraw.org)
 
 LibRaw is free software; you can redistribute it and/or modify
 it under the terms of the one of two licenses as you choose:
@@ -56,9 +56,8 @@ it under the terms of the one of two licenses as you choose:
 #include <unistd.h>
 #include <utime.h>
 #include <netinet/in.h>
-#include <stdint.h>
-typedef int64_t INT64;
-typedef uint64_t UINT64;
+typedef long long INT64;
+typedef unsigned long long UINT64;
 #endif
 
 #ifdef NODEPS
