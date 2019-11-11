@@ -14,6 +14,7 @@ Month day, 2019 - 3.18.1
 * [realdolos] improved performance of _MemoryReadProc function (see FreeImageIO.cpp)
 * [Herve Drolon] fixed PluginBMP, PluginDDS for compilation under Big Endian OS (see FREEIMAGE_BIGENDIAN)
 * [Herve Drolon] improved TIFF validation against Canon CR2 files (CR2 files are no longer recognized as TIFF)
+* [Herve Drolon] improved TIFF plugin when working with malicious images
 + [ovnz] added the 'ExtraSamples' tag key to the FIMD_EXIF_MAIN & FIMD_EXIF_EXIF metadata models
 
 July 31st, 2018 - 3.18.0
