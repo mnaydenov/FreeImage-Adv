@@ -1,3 +1,9 @@
+: go the the directory of this script
+: drive letter
+%~d0
+: directory
+cd %~dp0
+
 del dist\*.dll /s /q
 del dist\*.lib /s /q
 del dist\*.h /s /q

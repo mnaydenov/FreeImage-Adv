@@ -1,3 +1,9 @@
+: go the the directory of this script
+: drive letter
+%~d0
+: directory
+cd %~dp0
+
 del *.aps /s /q
 del *.bak /s /q
 del *.bsc /s /q
