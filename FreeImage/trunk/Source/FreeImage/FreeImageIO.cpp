@@ -63,6 +63,10 @@ SetDefaultIO(FreeImageIO *io) {
 
 unsigned DLL_CALLCONV
 _MemoryReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
+	if (!handle || !buffer) {
+		return 0;
+	}
+
 	FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(((FIMEMORY*)handle)->data);
 
 	const long required_bytes = (long)(size * count);
@@ -83,31 +87,36 @@ _MemoryReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
 		}
 	}
 	
+	// if size or count is 0, _MemoryReadProc returns 0 and the buffer contents are unchanged.
 	return 0;
 }
 
 unsigned DLL_CALLCONV 
 _MemoryWriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
-	long newdatalen;
+	if (!handle || !buffer) {
+		return 0;
+	}
 
 	FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(((FIMEMORY*)handle)->data);
 
 	const long required_bytes = (long)(size * count);
 
-	//double the data block size if we need to
+	// double the data block size if we need to
 	while( (mem_header->current_position + required_bytes) >= mem_header->data_length ) {
-		//if we are at or above 1G, we cant double without going negative
+		long newdatalen = 0;
+
+		// if we are at or above 1G, we cant double without going negative
 		if( mem_header->data_length & 0x40000000 ) {
-			//max 2G
+			// max 2G
 			if( mem_header->data_length == 0x7FFFFFFF ) {
 				return 0;
 			}
 			newdatalen = 0x7FFFFFFF;
 		} else if( mem_header->data_length == 0 ) {
-			//default to 4K if nothing yet
+			// default to 4K if nothing yet
 			newdatalen = 4096;
 		} else {
-			//double size
+			// double size
 			newdatalen = mem_header->data_length << 1;
 		}
 		void *newdata = realloc(mem_header->data, newdatalen);
@@ -130,6 +139,10 @@ _MemoryWriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle) 
 
 int DLL_CALLCONV 
 _MemorySeekProc(fi_handle handle, long offset, int origin) {
+	if (!handle) {
+		return -1;
+	}
+
 	FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(((FIMEMORY*)handle)->data);
 
 	// you can use _MemorySeekProc to reposition the pointer anywhere in a file
@@ -164,8 +177,10 @@ _MemorySeekProc(fi_handle handle, long offset, int origin) {
 
 long DLL_CALLCONV 
 _MemoryTellProc(fi_handle handle) {
+	if (!handle) {
+		return -1;
+	}
 	FIMEMORYHEADER *mem_header = (FIMEMORYHEADER*)(((FIMEMORY*)handle)->data);
-
 	return mem_header->current_position;
 }
 
