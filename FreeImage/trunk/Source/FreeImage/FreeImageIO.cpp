@@ -68,18 +68,22 @@ _MemoryReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle) {
 	const long required_bytes = (long)(size * count);
 	const long remaining_bytes = mem_header->file_length - mem_header->current_position;
 
-	if (required_bytes <= remaining_bytes) {
-		// copy size bytes count times
-		memcpy(buffer, (char*)mem_header->data + mem_header->current_position, required_bytes);
-		mem_header->current_position += required_bytes;
-		return (unsigned)(required_bytes / size);
+	if ((required_bytes > 0) && (remaining_bytes > 0)) {
+		if (required_bytes <= remaining_bytes) {
+			// copy size bytes count times
+			memcpy(buffer, (char*)mem_header->data + mem_header->current_position, required_bytes);
+			mem_header->current_position += required_bytes;
+			return (unsigned)(required_bytes / size);
+		}
+		else {
+			// if there isn't required_bytes bytes left to read, set pos to eof and return a short count
+			memcpy(buffer, (char*)mem_header->data + mem_header->current_position, remaining_bytes);
+			mem_header->current_position = mem_header->file_length;
+			return (unsigned)(remaining_bytes / size);
+		}
 	}
-	else {
-		// if there isn't required_bytes bytes left to read, set pos to eof and return a short count
-		memcpy(buffer, (char*)mem_header->data + mem_header->current_position, remaining_bytes);
-		mem_header->current_position = mem_header->file_length;
-		return (unsigned)(remaining_bytes / size);
-	}
+	
+	return 0;
 }
 
 unsigned DLL_CALLCONV 
