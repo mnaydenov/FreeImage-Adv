@@ -136,6 +136,12 @@ If your big endian system isn't being detected, add an OS specific check
 /* Support Microsoft Document Imaging format */
 #undef MDI_SUPPORT
 
+/* Support ZSTD compression */
+#undef ZSTD_SUPPORT
+
+/* Support WEBP compression */
+#undef WEBP_SUPPORT
+
 /* Support strip chopping (whether or not to convert single-strip uncompressed
    images to mutiple strips of ~8Kb to reduce memory usage) */
 #define STRIPCHOP_DEFAULT TIFF_STRIPCHOP

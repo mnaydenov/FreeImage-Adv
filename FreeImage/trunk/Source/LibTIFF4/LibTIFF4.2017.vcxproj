@@ -215,7 +215,6 @@
     <ClCompile Include="tif_getimage.c" />
     <ClCompile Include="tif_jpeg.c" />
     <ClCompile Include="tif_luv.c" />
-    <ClCompile Include="tif_lzma.c" />
     <ClCompile Include="tif_lzw.c" />
     <ClCompile Include="tif_next.c" />
     <ClCompile Include="tif_ojpeg.c" />
