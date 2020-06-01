@@ -47,7 +47,7 @@ it under the terms of the one of two licenses as you choose:
 #ifdef __CYGWIN__
 #include <io.h>
 #endif
-#if defined WIN32 || defined(__MINGW32__)
+#if defined LIBRAW_WIN32_CALLS
 #include <sys/utime.h>
 #ifndef LIBRAW_NO_WINSOCK2
 #include <winsock2.h>
