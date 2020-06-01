@@ -20,6 +20,8 @@ Month day, 2020 - 3.19.0
 * [Herve Drolon] improved TIFF plugin when working with malicious images
 * [Herve Drolon] improved BMP plugin when working with malicious images
 * [Herve Drolon] improved FreeImage_LoadFromMemory robustness when working with malicious images
+* [Herve Drolon] fixed JXR plugin when working under a Linux OS
+* [Herve Drolon] improved PFM plugin against malicious images
 
 July 31st, 2018 - 3.18.0
 ! FreeImage now uses ZLib 1.2.11
