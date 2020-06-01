@@ -42,10 +42,10 @@
 #define TIFF_UINT32_FORMAT "%u"
 
 /* Signed 64-bit type formatter */
-#define TIFF_INT64_FORMAT "%ld"
+#define TIFF_INT64_FORMAT "%I64d"
 
 /* Unsigned 64-bit type formatter */
-#define TIFF_UINT64_FORMAT "%lu"
+#define TIFF_UINT64_FORMAT "%I64u"
 
 /* Pointer difference type formatter */
 #define TIFF_PTRDIFF_FORMAT "%ld"
