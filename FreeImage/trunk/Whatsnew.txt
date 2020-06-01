@@ -5,12 +5,13 @@ What's New for FreeImage
 ! : changed
 + : added
 
-Month day, 2020 - 3.18.1
+Month day, 2020 - 3.19.0
 ! FreeImage now uses LibPNG 1.6.37
 ! FreeImage now uses LibTIFF 4.1.0 (GIT patch 2020-05-31)
 ! FreeImage now uses LibWebP 1.1.0 (GIT patch 2020-05-05)
 ! FreeImage now uses LibRaw 0.20-Beta2 (GIT patch 2020-05-29)
 ! FreeImage now uses LibJPEG 9d
+- [Herve Drolon] removed VS 2013 project files : this IDE is no longer supported because of its outdated C++ compiler
 + [ovnz] added the 'ExtraSamples' tag key to the FIMD_EXIF_MAIN & FIMD_EXIF_EXIF metadata models
 * [Martin Strunz] fixed uninitialized variable in tmoReinhard05.cpp
 * [realdolos] improved performance of _MemoryReadProc function (see FreeImageIO.cpp)
