@@ -21,10 +21,6 @@
     <Filter Include="Header Files\libraw">
       <UniqueIdentifier>{0d5a6978-bac3-4f2d-80df-a148b577ec20}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="internal\dcraw_common.cpp">
