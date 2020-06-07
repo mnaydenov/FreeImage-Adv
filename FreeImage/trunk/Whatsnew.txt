@@ -11,6 +11,7 @@ Month day, 2020 - 3.19.0
 ! FreeImage now uses LibWebP 1.1.0 (GIT patch 2020-05-05)
 ! FreeImage now uses LibRaw 0.20-Beta2 (GIT patch 2020-05-29)
 ! FreeImage now uses LibJPEG 9d
+! FreeImage now uses LibJXR 1.2 (fixed FreeImage version)
 - [Herve Drolon] removed VS 2013 project files : this IDE is no longer supported because of its outdated C++ compiler
 + [ovnz] added the 'ExtraSamples' tag key to the FIMD_EXIF_MAIN & FIMD_EXIF_EXIF metadata models
 * [Martin Strunz] fixed uninitialized variable in tmoReinhard05.cpp
@@ -22,6 +23,7 @@ Month day, 2020 - 3.19.0
 * [Herve Drolon] improved FreeImage_LoadFromMemory robustness when working with malicious images
 * [Herve Drolon] fixed JXR plugin when working under a Linux OS
 * [Herve Drolon] improved PFM plugin against malicious images
+* [Herve Drolon] improved JXR plugin against malicious images
 
 July 31st, 2018 - 3.18.0
 ! FreeImage now uses ZLib 1.2.11
