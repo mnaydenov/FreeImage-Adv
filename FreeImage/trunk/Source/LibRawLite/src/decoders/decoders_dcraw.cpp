@@ -369,6 +369,8 @@ int LibRaw::ljpeg_diff(ushort *huff)
   if (len == 16 && (!dng_version || dng_version >= 0x1010000))
     return -32768;
   diff = getbits(len);
+
+
   if ((diff & (1 << (len - 1))) == 0)
     diff -= (1 << len) - 1;
   return diff;
@@ -445,7 +447,7 @@ ushort *LibRaw::ljpeg_row(int jrow, struct jhead *jh)
 
 ushort *LibRaw::ljpeg_row_unrolled(int jrow, struct jhead *jh)
 {
-  int col, c, diff, pred, spred = 0;
+  int col, c, diff, pred;
   ushort mark = 0, *row[3];
 
   if (jh->restart != 0 && jrow * jh->wide % jh->restart == 0)

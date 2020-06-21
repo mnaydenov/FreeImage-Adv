@@ -823,7 +823,7 @@ int LibRaw::parse_tiff_ifd(int base)
       FORC3 cam_mul[c] = getreal(11);
       fseek(ifp, 114, SEEK_CUR);
       flip = (get2() >> 7) * 90;
-      if (width * height * 6 == ima_len)
+      if (width * (height * 6l) == ima_len)
       {
         if (flip % 180 == 90)
           SWAP(width, height);
@@ -831,7 +831,7 @@ int LibRaw::parse_tiff_ifd(int base)
         raw_height = height;
         left_margin = top_margin = filters = flip = 0;
       }
-      c = height * width / 1000000;
+      c = unsigned(height) * unsigned(width) / 1000000;
       if (c == 32)
         c--;
       sprintf(model, "Ixpress %d-Mp", c);
@@ -984,8 +984,6 @@ int LibRaw::parse_tiff_ifd(int base)
                     fwb[0]) // 15 is offset of Tungsten WB from the first
                             // preset, Fine Weather WB
                   continue;
-// printf ("==>> in parse_tiff_ifd:\n\tmodel: =%s=\n\tRAF data version: 0x%04x\n\tWB section offset: 0x%04x bytes\n",
-//  model, imFuji.RAFDataVersion, (fi-15)*2);
                 for (int wb_ind = 0, ofst = fi - 15; wb_ind < nFuji_wb_list1;
                      wb_ind++, ofst += 3)
                 {
@@ -1011,7 +1009,6 @@ int LibRaw::parse_tiff_ifd(int base)
                         (imFuji.RAFDataVersion == 0x0261) || // X100V
                         (imFuji.RAFDataVersion == 0x0262))   // X-T4
                       fj -= 9;
-// printf ("\tCCT WB section offset: 0x%04x bytes\n", fj*2);
                     for (int iCCT = 0, ofst = fj; iCCT < 31;
                          iCCT++, ofst += 3)
                     {
@@ -1660,8 +1657,8 @@ void LibRaw::apply_tiff()
       if (max_samp > 3)
         max_samp = 3;
 
-      os = raw_width * raw_height;
-      ns = tiff_ifd[i].t_width * tiff_ifd[i].t_height;
+      os = unsigned(raw_width) * unsigned(raw_height);
+      ns = unsigned(tiff_ifd[i].t_width) * unsigned(tiff_ifd[i].t_height);
       if (tiff_bps)
       {
         os *= tiff_bps;
