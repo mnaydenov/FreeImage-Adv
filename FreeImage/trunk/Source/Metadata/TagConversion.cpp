@@ -299,18 +299,24 @@ ConvertExifTag(FITAG *tag) {
 			if(FreeImage_GetTagLength(tag) == 48) {
 				// reference black point value and reference white point value (ReferenceBlackWhite)
 				int blackR = 0, whiteR = 0, blackG = 0, whiteG = 0, blackB = 0, whiteB = 0;
-				if(pvalue[1])
+				if (pvalue[1]) {
 					blackR = (int)(pvalue[0] / pvalue[1]);
-				if(pvalue[3])
+				}
+				if (pvalue[3]) {
 					whiteR = (int)(pvalue[2] / pvalue[3]);
-				if(pvalue[5])
+				}
+				if (pvalue[5]) {
 					blackG = (int)(pvalue[4] / pvalue[5]);
-				if(pvalue[7])
+				}
+				if (pvalue[7]) {
 					whiteG = (int)(pvalue[6] / pvalue[7]);
-				if(pvalue[9])
+				}
+				if (pvalue[9]) {
 					blackB = (int)(pvalue[8] / pvalue[9]);
-				if(pvalue[11])
+				}
+				if (pvalue[11]) {
 					whiteB = (int)(pvalue[10] / pvalue[11]);
+				}
 
 				sprintf(format, "[%d,%d,%d] [%d,%d,%d]", blackR, blackG, blackB, whiteR, whiteG, whiteB);
 				buffer += format;
@@ -339,8 +345,9 @@ ConvertExifTag(FITAG *tag) {
 			BYTE *pvalue = (BYTE*)FreeImage_GetTagValue(tag);
 			for(DWORD i = 0; i < MIN((DWORD)4, FreeImage_GetTagCount(tag)); i++) {
 				int j = pvalue[i];
-				if(j > 0 && j < 7)
+				if (j > 0 && j < 7) {
 					buffer += componentStrings[j];
+				}
 			}
 			return buffer.c_str();
 		}
@@ -350,10 +357,12 @@ ConvertExifTag(FITAG *tag) {
 		{
 			FIRational r(tag);
 			buffer = r.toString();
-			if(buffer == "1")
+			if (buffer == "1") {
 				buffer += " bit/pixel";
-			else 
+			}
+			else {
 				buffer += " bits/pixel";
+			}
 			return buffer.c_str();
 		}
 		break;
@@ -1059,6 +1068,7 @@ ConvertExifGPSTag(FITAG *tag) {
 		case TAG_GPS_AREA_INFORMATION:
 		case TAG_GPS_DATE_STAMP:
 		case TAG_GPS_DIFFERENTIAL:
+		case TAG_GPS_HPOSITIONNING_ERROR:
 			break;
 	}
 
