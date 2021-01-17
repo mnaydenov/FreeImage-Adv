@@ -1,14 +1,14 @@
 //*@@@+++@@@@******************************************************************
 //
-// Copyright © Microsoft Corp.
+// Copyright ï¿½ Microsoft Corp.
 // All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 // 
-// • Redistributions of source code must retain the above copyright notice,
+// ï¿½ Redistributions of source code must retain the above copyright notice,
 //   this list of conditions and the following disclaimer.
-// • Redistributions in binary form must reproduce the above copyright notice,
+// ï¿½ Redistributions in binary form must reproduce the above copyright notice,
 //   this list of conditions and the following disclaimer in the documentation
 //   and/or other materials provided with the distribution.
 // 
@@ -43,7 +43,7 @@
 
 //================================================================
 #ifdef ENABLE_OPTIMIZATIONS
-#if defined(WIN32) && !defined(_WIN64)
+#if defined(_MSC_VER) && !defined(_WIN64)
 #define WMP_OPT_SSE2
 
 #define WMP_OPT_CC_ENC
@@ -60,7 +60,7 @@
 
 //================================================================
 //#ifdef WIN32
-#if defined(WIN32) && !defined(UNDER_CE)   // WIN32 seems to be defined always in VS2005 for ARM platform
+#if defined(_MSC_VER) && !defined(UNDER_CE)   // WIN32 seems to be defined always in VS2005 for ARM platform
 #define PLATFORM_X86
 #include "../x86/x86.h"
 #endif
@@ -453,7 +453,7 @@ typedef struct CWMImageStrCodec {
 
     struct WMPStream ** ppWStream;
 
-#ifdef WIN32
+#ifdef _MSC_VER
     TCHAR **ppTempFile;
 #else
     char **ppTempFile;
