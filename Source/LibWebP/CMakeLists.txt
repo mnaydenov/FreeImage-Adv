@@ -404,7 +404,7 @@ if(WEBP_BUILD_CWEBP)
   install(TARGETS cwebp RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
-if(WEBP_BUILD_GIF2WEBP OR WEBP_BUILD_IMG2WEBP)
+if(WEBP_BUILD_GIF2WEBP OR WEBP_BUILD_IMG2WEBP OR WEBP_BUILD_LIBWEBPMUX)
   parse_makefile_am(${CMAKE_CURRENT_SOURCE_DIR}/src/mux "WEBP_MUX_SRCS" "")
   add_library(libwebpmux ${WEBP_MUX_SRCS})
   target_link_libraries(libwebpmux webp)
