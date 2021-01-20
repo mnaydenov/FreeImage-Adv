@@ -6,7 +6,7 @@
 // - Rui Lopes (ruiglopes@yahoo.com)
 // - Detlev Vendt (detlev.vendt@brillit.de)
 // - Petr Pytelka (pyta@lightcomp.com)
-// - Hervé Drolon (drolon@infonie.fr)
+// - Hervï¿½ Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -28,6 +28,7 @@
 #endif
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN      //< fixup for mingw-w64
 #include <windows.h>
 #include <io.h>
 #else

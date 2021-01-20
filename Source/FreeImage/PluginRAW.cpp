@@ -2,7 +2,7 @@
 // RAW camera image loader
 //
 // Design and implementation by 
-// - Hervé Drolon (drolon@infonie.fr)
+// - Hervï¿½ Drolon (drolon@infonie.fr)
 //
 // This file is part of FreeImage 3
 //
@@ -18,8 +18,8 @@
 //
 // Use at your own risk!
 // ==========================================================
-
-#include "../LibRawLite/libraw/libraw.h"
+#define WIN32_LEAN_AND_MEAN               //< fixup for mingw-w64
+#include "../LibRawLite/libraw/libraw.h"  //< include windows.h via winsock2.h
 
 #include "FreeImage.h"
 #include "Utilities.h"
