@@ -1,3 +1,8 @@
+## What is changed ?
+
+Added CMake support for the base library and its dependencies, located in the Source folder.
+ 
+-----------------------------------------------------------------------------
 What is FreeImage ?
 -----------------------------------------------------------------------------
 FreeImage is an Open Source library project for developers who would like to support popular graphics image formats like PNG, BMP, JPEG, TIFF and others as needed by today's multimedia applications.
