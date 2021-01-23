@@ -47,8 +47,8 @@ set(ZLIB_LIBRARIES    ${ZLIB_LIBRARY})
 set(ZLIB_INCLUDE_DIR ${zlib_SOURCE_DIR} CACHE PATH "")      # CACHE needed
 set(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR} ${zlib_BINARY_DIR})
 
-target_include_directories(zlib INTERFACE ${ZLIB_INCLUDE_DIRS})  #< zlib only sets this, upon installation. 
-                                                                 # (MSVC:fails, Ninja:OK) 
+target_include_directories(zlib INTERFACE ${ZLIB_INCLUDE_DIRS})   #< zlib only sets this, upon installation. 
+                                                                  # (MSVC:fails, Ninja:OK) 
 
 message(
   "
@@ -364,5 +364,19 @@ target_include_directories(freeimage PRIVATE
   ${ilmbase_BINARY_DIR}/config # ### PRIVATE in OpenEXR, yet "ImathNamespace.h" includes "IlmBaseConfig.h" ?!?
 )
 
+# ### Make sure we have zconf.h in zlib sources as FreeImage regular build system depends on that
+
+if((NOT EXISTS ZLib/zconf.h.old) AND EXISTS ZLib/zconf.h.included)   #< zlib renames existing zconf.h to zconf.h.included,
+  file(RENAME ZLib/zconf.h.included ZLib/zconf.h.old)                # preserve the very first zconf.h
+endif()
+
+if((NOT EXISTS ZLib/zconf.h) AND EXISTS ${zlib_BINARY_DIR}/zconf.h)                    #< if zlib is already build, 
+  file(COPY ${zlib_BINARY_DIR}/zconf.h DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ZLib)   # we have the new zconf.h already
+endif()
+
+add_custom_command(TARGET freeimage                               #< # Sadly, we can't assign to zlib
+                  POST_BUILD
+                  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${zlib_BINARY_DIR}/zconf.h ${CMAKE_CURRENT_SOURCE_DIR}/ZLib
+                  )
 
 message("------------------------------------------------")
