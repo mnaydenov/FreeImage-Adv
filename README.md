@@ -1,11 +1,11 @@
 ## What is changed ?
 
- - Added CMake support for the base library and its dependencies, located in the Source folder.
+ - Added CMake support for the base library and its dependencies.
  - Fixed build issues, discovered using **mingw-w64** under Windows.
 
-## How to use it ?
-
 >Please note that for now, only the core library is supported (the `Source` directory).
+
+## How to use it ?
 
 The project can be configured, using the standard CMake procedures. 
 
@@ -47,6 +47,7 @@ Some modifications are made, though. These are minor fixups, as well as adding w
 Very limited code gen is still present. Specifically, Zlib and LibPNG configuration steps alter the pre-existing config files. Nevertheless, an effort is made to not break the normal, non-CMake builds while using a CMake configuration.
  
 -----------------------------------------------------------------------------
+# FreeImage 
 What is FreeImage ?
 -----------------------------------------------------------------------------
 FreeImage is an Open Source library project for developers who would like to support popular graphics image formats like PNG, BMP, JPEG, TIFF and others as needed by today's multimedia applications.
