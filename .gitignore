@@ -1,3 +1,4 @@
+build*
 Source/build*
 Source/*/build*
 .vs
