@@ -1,0 +1,71 @@
+# yue.nicholas@gmail.com
+if(NOT SKIP_CODEGEN)
+  ADD_EXECUTABLE ( eLut eLut.cpp )
+  
+  ADD_CUSTOM_COMMAND (
+    TARGET eLut POST_BUILD
+    COMMAND eLut > ${CMAKE_CURRENT_BINARY_DIR}/eLut.h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
+  ADD_EXECUTABLE ( toFloat toFloat.cpp )
+  
+  ADD_CUSTOM_COMMAND (
+    TARGET toFloat POST_BUILD
+    COMMAND toFloat > ${CMAKE_CURRENT_BINARY_DIR}/toFloat.h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+else()
+  file(COPY ./eLut.h ./toFloat.h DESTINATION .)
+endif()
+
+SET_SOURCE_FILES_PROPERTIES(
+  ${CMAKE_CURRENT_BINARY_DIR}/eLut.h
+  PROPERTIES HEADER_FILE_ONLY TRUE
+  )
+    
+SET_SOURCE_FILES_PROPERTIES(
+  ${CMAKE_CURRENT_BINARY_DIR}/toFloat.h
+  PROPERTIES HEADER_FILE_ONLY TRUE
+  )
+  
+SET_SOURCE_FILES_PROPERTIES(
+  half.cpp
+  PROPERTIES
+  OBJECT_DEPENDS
+  ${CMAKE_CURRENT_BINARY_DIR}/eLut.h
+  OBJECT_DEPENDS
+  ${CMAKE_CURRENT_BINARY_DIR}/toFloat.h
+  )
+  
+IF(BUILD_SHARED_LIBS)
+  ADD_DEFINITIONS(-DHALF_EXPORTS)
+ENDIF()
+  
+ADD_LIBRARY ( Half ${LIB_TYPE}
+  half.cpp
+  )
+
+target_include_directories(Half PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+if(NOT SKIP_CODEGEN)
+  ADD_DEPENDENCIES ( Half toFloat eLut )
+endif()
+
+if(NOT SKIP_INSTALL_ALL)
+  INSTALL ( TARGETS
+    Half
+    DESTINATION
+    lib
+  )
+
+  INSTALL ( FILES 
+    half.h
+    halfFunction.h
+    halfExport.h
+    halfLimits.h
+    DESTINATION
+    include/OpenEXR
+  )
+endif()
+

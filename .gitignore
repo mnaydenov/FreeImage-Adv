@@ -1,0 +1,8 @@
+Source/build*
+Source/*/build*
+.vs
+.vscode
+.git
+
+*.user
+*.included
