@@ -11,9 +11,8 @@
  - Added CMake support for the base library and its dependencies.
  - Fixed build issues, discovered using **mingw-w64** under Windows.
 
->Please note that for now, only the core library is supported (the `Source` directory).
-
 ## How to use it ?
+>Please note that for now, only the core library is supported (the `Source` directory).
 
 The project can be configured, using the standard CMake procedures. 
 
@@ -51,8 +50,12 @@ Please consult the CMake manual for additional information.
 
 ## Implementation Notes
 Whenever possible, the CMakeLists.txt files for the depend libraries are the ones from the original project repositories, for the currently used version.  
-Some modifications are made, though. These are minor fixups, as well as adding ways to skip configuring install, tests and examples, but also skipping extensive code gen, as FreeImage already comes with all required configurations files.  
-Very limited code gen is still present. Specifically, Zlib and LibPNG configuration steps alter the pre-existing config files. Nevertheless, an effort is made to not break the normal, non-CMake builds while using a CMake configuration.
+Some modifications are made, though. These are minor fixups, as well as adding ways to skip configuring install, tests and examples, but also skipping extensive code gen.  
+
+>NOTE: After CMake runs the following original source files will be renamed:  
+>`ZLib/zconf.h => ZLib/zconf.h.included` 
+>`LibPNG/pnglibconf.h => LibPNG/pnglibconf.h.old`  
+>If you want to compile the original Visual Studio solution after that, remember to restore them back.
  
 -----------------------------------------------------------------------------
 # FreeImage 

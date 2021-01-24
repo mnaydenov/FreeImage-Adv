@@ -1,3 +1,12 @@
+# Initial Implementation: Mihail Naydenov
+
+# NOTE: After CMake runs the following original source files will be renamed
+#
+# ZLib/zconf.h => ZLib/zconf.h.included 
+# LibPNG/pnglibconf.h => LibPNG/pnglibconf.h.old
+#
+# If you want to compile the original Visual Studio solution after that, remember to restore them back.
+
 cmake_minimum_required(VERSION 3.12)    #< Highest, used by sub-projects (LibJXR, LibRaw)
 
 project(FreeImage VERSION 3.18.1)
@@ -84,6 +93,12 @@ option_enable(PNG_BUILD_ZLIB)
 option_disable(PNG_SHARED)
 option_enable(PNG_STATIC)
 option_disable(PNG_TESTS)
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/LibPNG/pnglibconf.h)
+  message(STATUS "Renaming pnglibconf.h => pnglibconf.h.old")
+  message(STATUS "         pnglibconf.h will be generated in the LibPNG build directory")
+  file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/LibPNG/pnglibconf.h ${CMAKE_CURRENT_SOURCE_DIR}/LibPNG/pnglibconf.h.old)
+endif()
 
 add_subdirectory(LibPNG)
 
@@ -363,20 +378,5 @@ target_include_directories(freeimage PRIVATE
   ${libpng_BINARY_DIR}
   ${ilmbase_BINARY_DIR}/config # ### PRIVATE in OpenEXR, yet "ImathNamespace.h" includes "IlmBaseConfig.h" ?!?
 )
-
-# ### Make sure we have zconf.h in zlib sources as FreeImage regular build system depends on that
-
-if((NOT EXISTS ZLib/zconf.h.old) AND EXISTS ZLib/zconf.h.included)   #< zlib renames existing zconf.h to zconf.h.included,
-  file(RENAME ZLib/zconf.h.included ZLib/zconf.h.old)                # preserve the very first zconf.h
-endif()
-
-if((NOT EXISTS ZLib/zconf.h) AND EXISTS ${zlib_BINARY_DIR}/zconf.h)                    #< if zlib is already build, 
-  file(COPY ${zlib_BINARY_DIR}/zconf.h DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/ZLib)   # we have the new zconf.h already
-endif()
-
-add_custom_command(TARGET freeimage                               #< # Sadly, we can't assign to zlib
-                  POST_BUILD
-                  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${zlib_BINARY_DIR}/zconf.h ${CMAKE_CURRENT_SOURCE_DIR}/ZLib
-                  )
 
 message("------------------------------------------------")
