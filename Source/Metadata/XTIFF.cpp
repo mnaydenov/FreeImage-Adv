@@ -521,8 +521,8 @@ tiff_read_exif_tag(TIFF *tif, uint32 tag_id, FIBITMAP *dib, TagLib::MDMODEL md_m
 				// ... try to avoid this by using an explicit calculation for 'length'
 				length = strlen((char*)raw_data) + 1;
 			}
-			else {
-				// remember that raw_data = _TIFFmalloc(value_size * value_count);
+			else if(mem_alloc) {
+				// raw_data allocated by us as _TIFFmalloc(value_size * value_count);
 				const int value_size = TIFFDataWidth( TIFFFieldDataType(fip) );
 				length = value_size * value_count;
 			}
