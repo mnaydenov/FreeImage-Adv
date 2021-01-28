@@ -617,7 +617,7 @@ LoadRGB(const DDSURFACEDESC2 *desc, FreeImageIO *io, fi_handle handle) {
 	// read the file
 	// -------------------------------------------------------------------------
 
-	const int line = CalculateLine(width, bpp);
+	const int line = CalculateLine(width, FreeImage_GetBPP(dib));
 	const int filePitch = ((desc->dwFlags & DDSD_PITCH) == DDSD_PITCH) ? (int)desc->dwPitchOrLinearSize : line;
 	const long delta = (long)filePitch - (long)line;
 
