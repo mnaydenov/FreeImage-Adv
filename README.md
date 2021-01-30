@@ -1,6 +1,6 @@
 ## Branches of interest
 
- - `master` - Currently functionally the same as `master-sourceforge-cmake`.
+ - `master` - Currently functionally the same as `master-sourceforge-cmake` + ASAN fixes for issues, reported on SF.
  - `master-sourceforge-cmake` - Same as `master-sourceforge`, but with CMake support.
  - `master-sourceforge` - clone of https://sourceforge.net/projects/freeimage/ (trunk Jan. 2021)
 
