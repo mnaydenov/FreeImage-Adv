@@ -1579,9 +1579,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// ---------------------------------------------------------------------------------
 			// 8-bit + 8-bit alpha layer loading
 			// ---------------------------------------------------------------------------------
+			const uint16 dst_spp = 2;
 
 			// create a new 8-bit DIB
-			dib = CreateImageType(header_only, image_type, width, height, bitspersample, MIN<uint16>(2, samplesperpixel));
+			dib = CreateImageType(header_only, image_type, width, height, bitspersample, MIN(dst_spp, samplesperpixel));
 			if (dib == NULL) {
 				throw FI_MSG_ERROR_MEMORY;
 			}
@@ -1615,13 +1616,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if(planar_config == PLANARCONFIG_CONTIG && !header_only) {
 
-				BYTE *buf = (BYTE*)malloc(TIFFStripSize(tif) * sizeof(BYTE));
+				const tmsize_t bufsz = TIFFStripSize(tif) * sizeof(BYTE);
+				BYTE *buf = (BYTE*)malloc(bufsz);
 				if(buf == NULL) {
 					throw FI_MSG_ERROR_MEMORY;
 				}
 
+				const uint32 src_width = src_line / samplesperpixel;
 				for (uint32 y = 0; y < height; y += rowsperstrip) {
-					int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
+					const int32 nrow = (y + rowsperstrip > height ? height - y : rowsperstrip);
+
+					if (nrow * src_width * dst_spp * sizeof(BYTE) > bufsz) {
+						free(buf);
+						throw "Image is corrupted";
+					}
 
 					if (TIFFReadEncodedStrip(tif, TIFFComputeStrip(tif, y, 0), buf, nrow * src_line) == -1) {
 						free(buf);
@@ -1629,17 +1637,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 					for (int l = 0; l < nrow; l++) {
 						BYTE *p = bits;
-						BYTE *b = buf + l * src_line;
+						const BYTE *b = buf + l * src_line;
 
-						for(uint32 x = 0; x < (uint32)(src_line / samplesperpixel); x++) {
+						for(uint32 x = 0; x < src_width; x++) {
 							// copy the 8-bit layer
 							*p = b[0];
 							// convert the 8-bit alpha layer to a trns table
 							trns[ b[0] ] = b[1];
 
 							p++;
-							b += samplesperpixel;
-						}
+							b += dst_spp;
+						} 
 						bits -= dst_pitch;
 					}
 				}
