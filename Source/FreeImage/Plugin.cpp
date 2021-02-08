@@ -375,16 +375,26 @@ FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data)
 // Plugin System Load/Save Functions
 // =====================================================================
 
+static const FreeImageLoadArgs default_args;
+
 FIBITMAP * DLL_CALLCONV
-FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
+FreeImage_LoadFromHandleAdv(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, const FreeImageLoadArgs* args) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 		
 		if (node != NULL) {
-			if(node->m_plugin->load_proc != NULL) {
+			if(node->m_plugin->loadAdv_proc != NULL) {
+				void *data = FreeImage_Open(node, io, handle, TRUE);
+
+				FIBITMAP *bitmap = node->m_plugin->loadAdv_proc(io, handle, -1, args ? args : &default_args, data);
+					
+				FreeImage_Close(node, io, handle, data);
+					
+				return bitmap;
+			} else if(node->m_plugin->load_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, TRUE);
 					
-				FIBITMAP *bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
+				FIBITMAP *bitmap = node->m_plugin->load_proc(io, handle, -1, args ? args->flags : 0, data);
 					
 				FreeImage_Close(node, io, handle, data);
 					
@@ -397,43 +407,70 @@ FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handl
 }
 
 FIBITMAP * DLL_CALLCONV
-FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags) {
+FreeImage_LoadAdv(FREE_IMAGE_FORMAT fif, const char *filename, const FreeImageLoadArgs* args) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
 	
 	FILE *handle = fopen(filename, "rb");
 
 	if (handle) {
-		FIBITMAP *bitmap = FreeImage_LoadFromHandle(fif, &io, (fi_handle)handle, flags);
+		FIBITMAP *bitmap = FreeImage_LoadFromHandleAdv(fif, &io, (fi_handle)handle, args);
 
 		fclose(handle);
 
 		return bitmap;
 	} else {
-		FreeImage_OutputMessageProc((int)fif, "FreeImage_Load: failed to open file %s", filename);
+		FreeImage_OutputMessageProcCB(args ? args->cb : NULL, (int)fif, "FreeImage_Load: failed to open file %s", filename);
 	}
 
 	return NULL;
 }
 
 FIBITMAP * DLL_CALLCONV
-FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
+FreeImage_LoadAdvU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, const FreeImageLoadArgs* args) {
 	FreeImageIO io;
 	SetDefaultIO(&io);
 #ifdef _WIN32	
 	FILE *handle = _wfopen(filename, L"rb");
 
 	if (handle) {
-		FIBITMAP *bitmap = FreeImage_LoadFromHandle(fif, &io, (fi_handle)handle, flags);
+		FIBITMAP *bitmap = FreeImage_LoadFromHandleAdv(fif, &io, (fi_handle)handle, args);
 
 		fclose(handle);
 
 		return bitmap;
 	} else {
-		FreeImage_OutputMessageProc((int)fif, "FreeImage_LoadU: failed to open input file");
+		FreeImage_OutputMessageProcCB(args ? args->cb : NULL, (int)fif, "FreeImage_LoadU: failed to open input file");
 	}
 #endif
 	return NULL;
+}
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
+	FreeImageLoadArgs args;
+	memset(&args, 0, sizeof(FreeImageLoadArgs));
+	args.flags = flags;
+
+	return FreeImage_LoadFromHandleAdv(fif, io, handle, &args);
+}
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags) {
+	FreeImageLoadArgs args;
+	memset(&args, 0, sizeof(FreeImageLoadArgs));
+	args.flags = flags;
+
+	return FreeImage_LoadAdv(fif, filename, &args);
+}
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
+	FreeImageLoadArgs args;
+	memset(&args, 0, sizeof(FreeImageLoadArgs));
+	args.flags = flags;
+
+	return FreeImage_LoadAdvU(fif, filename, &args);
 }
 
 BOOL DLL_CALLCONV

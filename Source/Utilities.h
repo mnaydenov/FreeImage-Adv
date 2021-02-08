@@ -655,6 +655,142 @@ public:
 	{}
 };
 
+inline
+int uncaught_exceptions() {
+#ifdef __cpp_lib_uncaught_exceptions
+	return std::uncaught_exceptions();
+#else
+	return std::uncaught_exception() ? 1 : 0;
+#endif
+}
+
+typedef UINT64 fi_progress_t;
+
+const fi_progress_t FI_MAX_PROGRESS = fi_progress_t(1) << 53; //< max int value, representable as double
+
+struct FreeImageCBWrapper
+{
+	FreeImageCBWrapper(FreeImageCB* cb) 
+		: shouldContinue(true)
+		, _cb(cb)
+	{}
+
+	bool onStarted(FREE_IMAGE_OPERATION op, unsigned which) {
+		if (!_cb || !_cb->onStarted) {
+			return shouldContinue;
+		}
+
+		return shouldContinue = _cb->onStarted(_cb->user, op, which, NULL);
+	}
+	
+	bool onProgress(double val) { 
+		if (!_cb || !_cb->onProgress) {
+			return shouldContinue;
+		}
+		
+		return shouldContinue = _cb->onProgress(_cb->user, val, NULL);
+	}
+	
+	void onFinished(const BOOL* isSuccessful) {
+		if (!_cb || !_cb->onFinished) {
+			return;
+		}
+
+		return _cb->onFinished(_cb->user, isSuccessful, NULL);
+	}
+
+	operator FreeImageCB* () { return _cb; }
+
+	bool shouldContinue;
+  FreeImageCB* _cb;
+};
+
+struct FIProgress {
+
+	struct Step
+	{
+		Step(FreeImageCBWrapper* cb, fi_progress_t* progress, fi_progress_t sdelta, fi_progress_t pdelta)
+			: _step(0)
+			, _sdelta(sdelta)
+			, _pdelta(pdelta)
+			, _progress(progress)
+			, _cb(cb)
+		{}
+
+		bool progress()
+		{
+			_step++;
+			if (_sdelta == _step) {
+				_step = 0;
+				*_progress += _pdelta;
+				
+				return _cb->onProgress(double(*_progress) / FI_MAX_PROGRESS);
+			}
+
+			return true;
+		}
+
+	private:
+		fi_progress_t _step;
+		fi_progress_t _sdelta;
+		fi_progress_t _pdelta;
+		fi_progress_t* _progress;
+		FreeImageCBWrapper* _cb;
+	};
+
+	explicit FIProgress(unsigned cbOption, FreeImageCB* cb, FREE_IMAGE_OPERATION op, unsigned which, bool errorsViaExceptions = true)
+		: _progress(0)
+		, _steps(cbOption ? (cbOption & 0xF) : 20)
+		, _cb(cb)
+		, _initialExceptions(uncaught_exceptions())
+	{
+#ifdef __cpp_lib_uncaught_exceptions
+#else
+		if (errorsViaExceptions && _initialExceptions && cb) {
+			FreeImage_OutputMessageProcCB(cb, which, "Warning: FIProgress created while in stack unwind. Un-Successful finish will incorrectly be reported as Successful.")
+	  }
+#endif
+	  _cb.onStarted(op, which);
+	}
+
+	~FIProgress() {
+		const BOOL isSuccessful = (uncaught_exceptions() == _initialExceptions);
+		_cb.onFinished(isCanceled() ? NULL : &isSuccessful);
+	}
+
+	bool isCanceled() const { return ! _cb.shouldContinue; }
+
+	Step getStepProgress(fi_progress_t stepsTotal, double endProgress) {
+		assert(! (endProgress < 0) && ! (endProgress > 1.0));
+
+		const fi_progress_t sdelta = stepsTotal / _steps;
+
+		const fi_progress_t endProgress_ = fi_progress_t(FI_MAX_PROGRESS * endProgress);
+
+		assert(! (_progress > endProgress_));
+
+		const fi_progress_t range = endProgress_ - _progress;
+		const fi_progress_t pdelta = range / _steps;
+
+		return Step(&_cb, &_progress, sdelta, pdelta);
+	}
+
+	bool reportProgress(double progress) {
+		assert(! (progress < 0) && ! (progress > 1.0));
+
+		_progress = fi_progress_t(FI_MAX_PROGRESS * progress);
+
+		return _cb.onProgress(progress);
+	}
+
+private:
+	fi_progress_t _progress;
+	short _steps;
+	FreeImageCBWrapper _cb;
+
+	int _initialExceptions;
+};
+
 #endif // __cplusplus
 
 #endif // FREEIMAGE_UTILITIES_H

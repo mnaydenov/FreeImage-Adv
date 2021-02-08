@@ -620,6 +620,15 @@ FI_STRUCT (FIMEMORY) { void *data; };
 
 // Plugin routines ----------------------------------------------------------
 
+FI_STRUCT(FreeImageLoadArgs) {
+	int flags;
+
+	unsigned cbOption;   //< lower 8 bits: number of times onProgress should be called while loading; the rest: RESERVED
+	struct FreeImageCB* cb;
+
+	void* more;
+};
+
 #ifndef PLUGINS
 #define PLUGINS
 
@@ -632,6 +641,7 @@ typedef void (DLL_CALLCONV *FI_CloseProc)(FreeImageIO *io, fi_handle handle, voi
 typedef int (DLL_CALLCONV *FI_PageCountProc)(FreeImageIO *io, fi_handle handle, void *data);
 typedef int (DLL_CALLCONV *FI_PageCapabilityProc)(FreeImageIO *io, fi_handle handle, void *data);
 typedef FIBITMAP *(DLL_CALLCONV *FI_LoadProc)(FreeImageIO *io, fi_handle handle, int page, int flags, void *data);
+typedef FIBITMAP *(DLL_CALLCONV *FI_LoadProcAdv)(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs*, void* data);
 typedef BOOL (DLL_CALLCONV *FI_SaveProc)(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data);
 typedef BOOL (DLL_CALLCONV *FI_ValidateProc)(FreeImageIO *io, fi_handle handle);
 typedef const char *(DLL_CALLCONV *FI_MimeProc)(void);
@@ -650,6 +660,7 @@ FI_STRUCT (Plugin) {
 	FI_PageCountProc pagecount_proc;
 	FI_PageCapabilityProc pagecapability_proc;
 	FI_LoadProc load_proc;
+	FI_LoadProcAdv loadAdv_proc;
 	FI_SaveProc save_proc;
 	FI_ValidateProc validate_proc;
 	FI_MimeProc mime_proc;
@@ -795,6 +806,34 @@ DLL_API void DLL_CALLCONV FreeImage_DeInitialise(void);
 DLL_API const char *DLL_CALLCONV FreeImage_GetVersion(void);
 DLL_API const char *DLL_CALLCONV FreeImage_GetCopyrightMessage(void);
 
+// Callback routines
+
+FI_ENUM (FREE_IMAGE_OPERATION) {
+	FI_OP_LOAD,
+	FI_OP_SAVE,
+	FI_OP_ROTATE,
+	FI_OP_RESCALE,
+	FI_OP_CONVERT,
+	FI_OP_TONEMAP,
+	FI_OP_JPEG_TRANSFORM,
+
+	FI_OP_USER = 255
+};
+
+typedef BOOL(DLL_CALLCONV* FI_OnStartedProc)(void* user, FREE_IMAGE_OPERATION operation, unsigned which, void* more);
+typedef BOOL(DLL_CALLCONV* FI_OnProgressProc)(void* user, double progress, void* more);
+typedef void (DLL_CALLCONV* FI_OnFinishedProc)(void* user, const BOOL* success, void* more);
+typedef void (DLL_CALLCONV* FI_OnMessageProc)(void* user, const char* msg, void* more);
+
+FI_STRUCT(FreeImageCB) {
+	void* user;
+	FI_OnStartedProc onStarted;
+	FI_OnProgressProc onProgress;
+	FI_OnFinishedProc onFinished;
+	FI_OnMessageProc onMessage;
+};
+
+
 // Message output functions -------------------------------------------------
 
 typedef void (*FreeImage_OutputMessageFunction)(FREE_IMAGE_FORMAT fif, const char *msg);
@@ -803,6 +842,7 @@ typedef void (DLL_CALLCONV *FreeImage_OutputMessageFunctionStdCall)(FREE_IMAGE_F
 DLL_API void DLL_CALLCONV FreeImage_SetOutputMessageStdCall(FreeImage_OutputMessageFunctionStdCall omf); 
 DLL_API void DLL_CALLCONV FreeImage_SetOutputMessage(FreeImage_OutputMessageFunction omf);
 DLL_API void DLL_CALLCONV FreeImage_OutputMessageProc(int fif, const char *fmt, ...);
+DLL_API void DLL_CALLCONV FreeImage_OutputMessageProcCB(const FreeImageCB* cb, int fif, const char *fmt, ...);
 
 // Allocate / Clone / Unload routines ---------------------------------------
 
@@ -817,8 +857,11 @@ DLL_API BOOL DLL_CALLCONV FreeImage_HasPixels(FIBITMAP *dib);
 // Load / Save routines -----------------------------------------------------
 
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags FI_DEFAULT(0));
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_LoadAdv(FREE_IMAGE_FORMAT fif, const char *filename, const FreeImageLoadArgs* args FI_DEFAULT(0));
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags FI_DEFAULT(0));
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_LoadAdvU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, const FreeImageLoadArgs* args FI_DEFAULT(0));
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags FI_DEFAULT(0));
+DLL_API FIBITMAP* DLL_CALLCONV FreeImage_LoadFromHandleAdv(FREE_IMAGE_FORMAT fif, FreeImageIO* io, fi_handle handle, const FreeImageLoadArgs* args FI_DEFAULT(0));
 DLL_API BOOL DLL_CALLCONV FreeImage_Save(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const char *filename, int flags FI_DEFAULT(0));
 DLL_API BOOL DLL_CALLCONV FreeImage_SaveU(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, const wchar_t *filename, int flags FI_DEFAULT(0));
 DLL_API BOOL DLL_CALLCONV FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FreeImageIO *io, fi_handle handle, int flags FI_DEFAULT(0));

@@ -117,24 +117,13 @@ FreeImage_SetOutputMessageStdCall(FreeImage_OutputMessageFunctionStdCall omf) {
 	freeimage_outputmessagestdcall_proc = omf;
 }
 
-void DLL_CALLCONV
-FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
-	const int MSG_SIZE = 512; // 512 bytes should be more than enough for a short message
+static 
+void vbuildMessage(char* message, size_t MSG_SIZE, const char* fmt, va_list arg) {
+	// check the length of the format string
 
-	if ((fmt != NULL) && ((freeimage_outputmessage_proc != NULL) || (freeimage_outputmessagestdcall_proc != NULL))) {
-		char message[MSG_SIZE];
-		memset(message, 0, MSG_SIZE);
+	int str_length = (int)( (strlen(fmt) > MSG_SIZE) ? MSG_SIZE : strlen(fmt) );
 
-		// initialize the optional parameter list
-
-		va_list arg;
-		va_start(arg, fmt);
-
-		// check the length of the format string
-
-		int str_length = (int)( (strlen(fmt) > MSG_SIZE) ? MSG_SIZE : strlen(fmt) );
-
-		// parse the format string and put the result in 'message'
+	// parse the format string and put the result in 'message'
 
 		for (int i = 0, j = 0; i < str_length; ++i) {
 			if (fmt[i] == '%') {
@@ -210,6 +199,55 @@ FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
 				message[j++] = fmt[i];
 			};
 		}
+}
+
+void DLL_CALLCONV
+FreeImage_OutputMessageProcCB(const FreeImageCB* cb, int fif, const char *fmt, ...) {
+	const int MSG_SIZE = 512; // 512 bytes should be more than enough for a short message
+
+	if ((fmt != NULL) && ((freeimage_outputmessage_proc != NULL) || (freeimage_outputmessagestdcall_proc != NULL) || (cb != NULL && cb->onMessage != NULL))) {
+		char message[MSG_SIZE];
+		memset(message, 0, MSG_SIZE);
+
+		// initialize the optional parameter list
+
+		va_list arg;
+		va_start(arg, fmt);
+
+		vbuildMessage(message, MSG_SIZE, fmt, arg);
+
+		// deinitialize the optional parameter list
+
+		va_end(arg);
+
+		// output the message to the user program
+
+		if (freeimage_outputmessage_proc != NULL)
+			freeimage_outputmessage_proc((FREE_IMAGE_FORMAT)fif, message);
+
+		if (freeimage_outputmessagestdcall_proc != NULL)
+			freeimage_outputmessagestdcall_proc((FREE_IMAGE_FORMAT)fif, message); 
+
+		if (cb != NULL && cb->onMessage != NULL) {
+			cb->onMessage(cb->user, message, NULL);
+		}
+	}
+}
+
+void DLL_CALLCONV
+FreeImage_OutputMessageProc(int fif, const char *fmt, ...) {
+	const int MSG_SIZE = 512; // 512 bytes should be more than enough for a short message
+
+	if ((fmt != NULL) && ((freeimage_outputmessage_proc != NULL) || (freeimage_outputmessagestdcall_proc != NULL))) {
+		char message[MSG_SIZE];
+		memset(message, 0, MSG_SIZE);
+
+		// initialize the optional parameter list
+
+		va_list arg;
+		va_start(arg, fmt);
+
+		vbuildMessage(message, MSG_SIZE, fmt, arg);
 
 		// deinitialize the optional parameter list
 
