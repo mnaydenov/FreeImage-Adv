@@ -1387,11 +1387,16 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 // --------------------------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	if (!handle || !data ) {
 		return NULL;
 	}
-
+	const int flags = args->flags;
+	FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+	if (progress.isCanceled()) {
+		return NULL;
+	}
+	
 	TIFF   *tif = NULL;
 	uint32 height = 0; 
 	uint32 width = 0; 
@@ -1453,7 +1458,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// ---------------------------------------------------------------------------------
 
 		if(IsValidBitsPerSample(photometric, bitspersample, samplesperpixel) == FALSE) {
-			FreeImage_OutputMessageProc(s_format_id, 
+			FreeImage_OutputMessageProcCB(args->cb, s_format_id, 
 				"Unable to handle this format: bitspersample = %d, samplesperpixel = %d, photometric = %d", 
 				(int)bitspersample, (int)samplesperpixel, (int)photometric);
 			throw (char*)NULL;
@@ -1505,7 +1510,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// any additional alpha channel on RGB(AA..) is lost on conversion to RGB(A)
 
 			if(samplesperpixel > 4) { // TODO Write to Extra Channels
-				FreeImage_OutputMessageProc(s_format_id, "Warning: %d additional alpha channel(s) ignored", samplesperpixel-4);
+				FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Warning: %d additional alpha channel(s) ignored", samplesperpixel-4);
 				samplesperpixel = 4;
 			}
 
@@ -1533,6 +1538,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// We use macros for extracting components from the packed ABGR 
 				// form returned by TIFFReadRGBAImage.
 
+				FIProgress::Step step = progress.getStepProgress(height, .9);
+
 				uint32 *row = &raster[0];
 
 				if (samplesperpixel == 4) {
@@ -1553,6 +1560,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						}
 						row += width;
 
+						if (! step.progress()) {
+							return NULL;
+						}
+
 					}
 				} else {
 					// 24-bit RGB
@@ -1567,6 +1578,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						}
 						row += width;
 
+						if (! step.progress()) {
+							return NULL;
+						}
 					}
 				}
 			}
@@ -1578,6 +1592,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// ---------------------------------------------------------------------------------
 			// 8-bit + 8-bit alpha layer loading
 			// ---------------------------------------------------------------------------------
+
+			FIProgress::Step step = progress.getStepProgress(height, .9);
 
 			// create a new 8-bit DIB
 			dib_storage.reset(CreateImageType(header_only, image_type, width, height, bitspersample, MIN<uint16>(2, samplesperpixel)));
@@ -1642,6 +1658,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						}
 						bits -= dst_pitch;
 
+						if (! step.progress()) {
+							return NULL;
+						}
 					}
 				}
 			}
@@ -1682,6 +1701,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						}
 						bits -= dst_pitch;
 
+						if (! step.progress()) {
+							return NULL;
+						}
 					}
 				}
 			}
@@ -1717,7 +1739,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					alpha = FreeImage_Allocate(width, height, 8);
 				}
 				if(!alpha) {
-					FreeImage_OutputMessageProc(s_format_id, "Failed to allocate temporary alpha channel");
+					FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Failed to allocate temporary alpha channel");
 				} else {
 					alpha_storage.reset(alpha);
 
@@ -1768,6 +1790,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				if(planar_config == PLANARCONFIG_CONTIG) {
 					
+					FIProgress::Step step = progress.getStepProgress(height, !asCMYK ? .8 : .9);
+
 					// - loop for strip blocks -
 					
 					for (uint32 y = 0; y < height; y += rowsperstrip) {
@@ -1801,6 +1825,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									bits -= dib_pitch;
 									alpha_bits -= alpha_pitch;
 
+									if (! step.progress()) {
+										return NULL;
+									}
 								}
 							}
 							else {
@@ -1811,6 +1838,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									}
 									bits -= dib_pitch;
 
+									if (!step.progress()) {
+										return NULL;
+									}
 								}
 							}
 						}
@@ -1821,6 +1851,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								memcpy(bits, b, src_line);
 								bits -= dib_pitch;
 
+								if (!step.progress()) {
+									return NULL;
+								}
 							}
 						}
 
@@ -1828,6 +1861,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				
 				}
 				else if(planar_config == PLANARCONFIG_SEPARATE) {
+
+					FIProgress::Step step = progress.getStepProgress(height * (chCount + (alpha ? 1 : 0)), !asCMYK ? .8 : .9);
 
 					BYTE *dib_strip = bits;
 					BYTE *al_strip = alpha_bits;
@@ -1881,6 +1916,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									AssignPixel(dst_bits + channelOffset, src_bits, Bpc);									
 								} // line
 								
+								if (!step.progress()) {
+									return NULL;
+								}
 							} // strips
 															
 						} // channels
@@ -1895,6 +1933,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			
 				if(!asCMYK) {
 					ConvertCMYKtoRGBA(dib);
+					
+					if (!progress.reportProgress(.85)) {
+						return NULL;
+					}
 
 					// The ICC Profile is invalid, clear it
 					iccSize = 0;
@@ -1913,10 +1955,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							dib = t;
 						}
 						else {
-							FreeImage_OutputMessageProc(s_format_id, "Cannot allocate memory for buffer. CMYK image converted to RGB + pending Alpha");
+							FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Cannot allocate memory for buffer. CMYK image converted to RGB + pending Alpha");
 						}
 					}
 
+					if (!progress.reportProgress(.9)) {
+						return NULL;
+					}
 				}
 				
 			} // !header_only
@@ -1925,6 +1970,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// ---------------------------------------------------------------------------------
 			// Generic loading
 			// ---------------------------------------------------------------------------------
+
+			FIProgress::Step step = progress.getStepProgress(height, .9);
 
 			// create a new DIB
 			const uint16 chCount = MIN<uint16>(samplesperpixel, 4);
@@ -1986,6 +2033,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								memcpy(bits, buf + l * src_line, src_line);
 								bits -= dst_pitch;
 
+								if (!step.progress()) {
+									return NULL;
+								}
 							}
 						}
 						else {
@@ -1995,6 +2045,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								}
 								bits -= dst_pitch;
 
+								if (!step.progress()) {
+									return NULL;
+								}
 							}
 						}
 					}
@@ -2039,6 +2092,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 									AssignPixel(dst_bits + channelOffset, src_bits, Bpc); 
 								} // line
 
+								if (!step.progress()) {
+									return NULL;
+								}
 							} // strips
 
 						} // channels
@@ -2051,7 +2107,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 				
 				if(bThrowMessage) {
-					FreeImage_OutputMessageProc( s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
+					FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Warning: parsing error. Image may be incomplete or contain invalid data !");
 				}
 				
 #if FREEIMAGE_COLORORDER == FREEIMAGE_COLORORDER_BGR
@@ -2091,6 +2147,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// read the tiff lines and save them in the DIB
 
 			if(planar_config == PLANARCONFIG_CONTIG && !header_only) {
+
+				FIProgress::Step step = progress.getStepProgress(height * (width / tileWidth), .9);
 				
 				// get the maximum number of bytes required to contain a tile
 				tmsize_t tileSize = TIFFTileSize(tif);
@@ -2136,6 +2194,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							src_bits += tileRowSize;
 							dst_bits -= dst_pitch;
 
+							if (!step.progress()) {
+								return NULL;
+							}
 						}
 					}
 
@@ -2174,6 +2235,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if(planar_config == PLANARCONFIG_CONTIG && !header_only) {
 
+				FIProgress::Step step = progress.getStepProgress(height, .9);
+
 				// calculate the line + pitch (separate for scr & dest)
 
 				tmsize_t src_line = TIFFScanlineSize(tif);
@@ -2203,6 +2266,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						tiff_ConvertLineXYZToRGB(bits, buf + l * src_line, stonits, width);
 						bits -= dst_pitch;
 
+						if (!step.progress()) {
+							return NULL;
+						}
 					}
 				}
 			}
@@ -2228,6 +2294,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			ReadResolution(tif, dib);
 
 			if(!header_only) {
+
+				FIProgress::Step step = progress.getStepProgress(height, .9);
 
 				// calculate the line + pitch (separate for scr & dest)
 
@@ -2271,6 +2339,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 							bits -= dst_pitch;
 
+							if (!step.progress()) {
+								return NULL;
+							}
 						}
 					}
 
@@ -2308,6 +2379,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 		}
 
+		if (!progress.reportProgress(.95)) {
+			return NULL;
+		}
+
 		// copy TIFF thumbnail (must be done after FreeImage_Allocate)
 		
 		ReadThumbnail(io, handle, data, tif, dib);
@@ -2316,11 +2391,20 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 	} catch (const char *message) {			
 		if(message) {
-			FreeImage_OutputMessageProc(s_format_id, message);
+			FreeImage_OutputMessageProcCB(args->cb, s_format_id, message);
 		}
 		return NULL;
 	}
   
+}
+
+static FIBITMAP * DLL_CALLCONV
+Load(FreeImageIO* io, fi_handle handle, int page, int flags, void* data) {
+	FreeImageLoadArgs args;
+	memset(&args, 0, sizeof(FreeImageLoadArgs));
+	args.flags = flags;
+
+	return LoadAdv(io, handle, page, &args, data);
 }
 
 // --------------------------------------------------------------------------
@@ -2723,7 +2807,8 @@ InitTIFF(Plugin *plugin, int format_id) {
 	plugin->close_proc = Close;
 	plugin->pagecount_proc = PageCount;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
