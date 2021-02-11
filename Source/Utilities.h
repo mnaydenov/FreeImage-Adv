@@ -534,4 +534,81 @@ static const char *FI_MSG_ERROR_INVALID_FORMAT = "Invalid file format";
 static const char *FI_MSG_ERROR_UNSUPPORTED_COMPRESSION = "Unsupported compression type";
 static const char *FI_MSG_WARNING_INVALID_THUMBNAIL = "Warning: attached thumbnail cannot be written to output file (invalid format) - Thumbnail saving aborted";
 
+#ifdef __cplusplus
+
+#if __cplusplus < 201100
+
+// # This is bare-bone, duh.
+template<class T, class Deleter> 
+class unique_ptr
+{
+public:
+	typedef T* pointer;
+	explicit unique_ptr(pointer p=NULL, const Deleter d=Deleter())
+		: _p(p)
+		, _d(d)
+	{}
+
+	~unique_ptr() { 
+		if (_p) { 
+			_d(_p); 
+		}
+	}
+
+	pointer release() {
+		pointer ret = NULL;
+
+		std::swap(ret, _p);
+
+		return ret;
+	}
+
+	void reset(pointer p=pointer()) {
+		pointer t = _p;
+		_p = p;
+		if (t) { 
+			_d(t); 
+		}
+	}
+
+	operator bool() const {
+		return _p != NULL;
+	}
+
+	pointer get() {
+		return _p;
+	}
+
+private:
+	unique_ptr(const unique_ptr&);
+	unique_ptr& operator=(const unique_ptr&);
+
+private:
+	pointer _p;
+	Deleter _d;
+};
+
+#else
+
+template<class T, class Deleter = std::default_delete<T>> 
+using unique_ptr = std::unique_ptr<T, Deleter>;
+
+#endif
+
+class unique_mem : public unique_ptr<void, void(*)(void*)>
+{
+public:
+	explicit unique_mem(pointer p=pointer()) : unique_ptr<void, void(*)(void*)>(p, &std::free)
+	{}
+};
+
+class unique_dib : public unique_ptr<FIBITMAP, void(DLL_CALLCONV*)(FIBITMAP*)>
+{
+public:
+	explicit unique_dib(pointer p=pointer()) : unique_ptr<FIBITMAP, void(DLL_CALLCONV*)(FIBITMAP*)>(p, &FreeImage_Unload)
+	{}
+};
+
+#endif // __cplusplus
+
 #endif // FREEIMAGE_UTILITIES_H
