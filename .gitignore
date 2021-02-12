@@ -1,6 +1,7 @@
 **/Win32/**
 Dist/**
 build*
+obj/
 Source/build*
 Source/*/build*
 .vs
