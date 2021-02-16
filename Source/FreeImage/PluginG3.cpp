@@ -99,6 +99,13 @@ G3ReadFile(FreeImageIO *io, fi_handle handle, uint8 *tif_rawdata, tmsize_t tif_r
 // Internal functions
 // ==========================================================
 
+static void free_rawdata(tidata_t* val) {
+	if (*val) {
+		_TIFFfree(*val);
+		*val = NULL;
+	}
+}
+
 static int 
 copyFaxFile(FreeImageIO *io, fi_handle handle, TIFF* tifin, uint32 xsize, int stretch, FIMEMORY *memory) {
 	BYTE *rowbuf = NULL;
@@ -117,12 +124,16 @@ copyFaxFile(FreeImageIO *io, fi_handle handle, TIFF* tifin, uint32 xsize, int st
 		if (rowbuf == NULL || refbuf == NULL) {
 			throw FI_MSG_ERROR_MEMORY;
 		}
+		// NOTE _TIFFmalloc is just malloc, we can use free instead of _TIFFfree
+		unique_mem rowbuf_storage(rowbuf);
+		unique_mem refbuf_storage(refbuf);
 
 		tifin->tif_rawdatasize = G3GetFileSize(io, handle);
 		tifin->tif_rawdata = (tidata_t) _TIFFmalloc(tifin->tif_rawdatasize);
 		if (tifin->tif_rawdata == NULL) {
 			throw FI_MSG_ERROR_MEMORY;
 		}
+		unique_ptr<tidata_t, void(*)(tidata_t* val)> tif_rawdata_storage(&tifin->tif_rawdata, &free_rawdata);
 			
 		if(!G3ReadFile(io, handle, tifin->tif_rawdata, tifin->tif_rawdatasize)) {
 			throw "Read error at scanline 0";
@@ -164,11 +175,6 @@ copyFaxFile(FreeImageIO *io, fi_handle handle, TIFF* tifin, uint32 xsize, int st
 		if (badrun > badfaxrun)
 			badfaxrun = badrun;
 
-		_TIFFfree(tifin->tif_rawdata);
-		tifin->tif_rawdata = NULL;
-
-		_TIFFfree(rowbuf);
-		_TIFFfree(refbuf);
 
 		/*
 		if (verbose) {
@@ -179,12 +185,7 @@ copyFaxFile(FreeImageIO *io, fi_handle handle, TIFF* tifin, uint32 xsize, int st
 		*/
 
 	} catch(const char *message) {
-		if(rowbuf) _TIFFfree(rowbuf);
-		if(refbuf) _TIFFfree(refbuf);
-		if(tifin->tif_rawdata) {
-			_TIFFfree(tifin->tif_rawdata);
-			tifin->tif_rawdata = NULL;
-		}
+
 		FreeImage_OutputMessageProc(s_format_id, message);
 
 		return -1;
@@ -232,7 +233,6 @@ SupportsExportDepth(int depth) {
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	TIFF *faxTIFF = NULL;
 	FIBITMAP *dib = NULL;
 	FIMEMORY *memory = NULL;
 
@@ -320,9 +320,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// open a temporary memory buffer to save decoded scanlines
 		memory = FreeImage_OpenMemory();
 		if(!memory) throw FI_MSG_ERROR_MEMORY;
+
+		unique_fimem memory_storage(memory);
 		
 		// wrap the raw fax file
-		faxTIFF = TIFFClientOpen("(FakeInput)", "w",
+		TIFF* faxTIFF = TIFFClientOpen("(FakeInput)", "w",
 			// TIFFClientOpen() fails if we don't set existing value here 
 			NULL,
 			_g3ReadProc, _g3WriteProc,
@@ -330,9 +332,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			_g3SizeProc, _g3MapProc,
 			_g3UnmapProc);
 
-		if (faxTIFF == NULL) {
-			throw "Can not create fake input file";
-		}
+		if (faxTIFF == NULL) 	throw "Can not create fake input file";
+
+		unique_ptr<TIFF, void(*)(TIFF* tif)> faxTIFF_storage(faxTIFF, &TIFFClose);
+
 		TIFFSetMode(faxTIFF, O_RDONLY);
 		TIFFSetField(faxTIFF, TIFFTAG_IMAGEWIDTH, xsize);
 		TIFFSetField(faxTIFF, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -364,6 +367,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		// allocate the output dib
 		dib = FreeImage_Allocate(xsize, rows, 1);
+		if (! dib) throw FI_MSG_ERROR_DIB_MEMORY;
+
 		unsigned pitch = FreeImage_GetPitch(dib);
 		uint32 linesize = TIFFhowmany8(xsize);
 
@@ -389,15 +394,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			bits -= pitch;
 		}
 
-		// free the TIFF wrapper
-		TIFFClose(faxTIFF);
-
-		// free the memory buffer
-		FreeImage_CloseMemory(memory);
-
 	} catch(const char *message) {
-		if(memory) FreeImage_CloseMemory(memory);
-		if(faxTIFF) TIFFClose(faxTIFF);
 		if(dib) FreeImage_Unload(dib);
 		FreeImage_OutputMessageProc(s_format_id, message);
 		return NULL;

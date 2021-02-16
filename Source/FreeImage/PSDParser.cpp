@@ -362,22 +362,16 @@ bool psdHeaderInfo::Write(FreeImageIO *io, fi_handle handle) {
 psdColourModeData::psdColourModeData() : _Length(-1), _plColourData(NULL) {
 }
 
-psdColourModeData::~psdColourModeData() {
-	SAFE_DELETE_ARRAY(_plColourData);
-}
 
 bool psdColourModeData::Read(FreeImageIO *io, fi_handle handle) {
-	if (0 < _Length) {
-		SAFE_DELETE_ARRAY(_plColourData);
-	}
 
 	BYTE Length[4];
 	io->read_proc(Length, sizeof(Length), 1, handle);
 
 	_Length = psdGetValue( Length, sizeof(_Length) );
 	if (0 < _Length) {
-		_plColourData = new BYTE[_Length];
-		io->read_proc(_plColourData, _Length, 1, handle);
+		_plColourData.reset(new BYTE[_Length]);
+		io->read_proc(_plColourData.get(), _Length, 1, handle);
 	}
 
 	return true;
@@ -388,7 +382,7 @@ bool psdColourModeData::Write(FreeImageIO *io, fi_handle handle) {
 		return false;
 	}
 	if(0 < _Length) {
-		if(io->write_proc(_plColourData, _Length, 1, handle) != 1) {
+		if(io->write_proc(_plColourData.get(), _Length, 1, handle) != 1) {
 			return false;
 		}
 	}
@@ -414,15 +408,11 @@ psdImageResource::psdImageResource() : _plName (0) {
 	Reset();
 }
 
-psdImageResource::~psdImageResource() {
-	SAFE_DELETE_ARRAY(_plName);
-}
-
 void psdImageResource::Reset() {
 	_Length = -1;
 	memset( _OSType, '\0', sizeof(_OSType) );
 	_ID = -1;
-	SAFE_DELETE_ARRAY(_plName);
+	_plName.reset();
 	_Size = -1;
 }
 
@@ -1130,8 +1120,8 @@ bool psdParser::ReadImageResources(FreeImageIO *io, fi_handle handle, LONG lengt
 
 			int nSizeOfName = psdGetValue( &SizeOfName, sizeof(SizeOfName) );
 			if ( 0 < nSizeOfName ) {
-				oResource._plName = new BYTE[nSizeOfName];
-				n = (int)io->read_proc(oResource._plName, nSizeOfName, 1, handle);
+				oResource._plName.reset(new BYTE[nSizeOfName]);
+				n = (int)io->read_proc(oResource._plName.get(), nSizeOfName, 1, handle);
 				nBytes += n * nSizeOfName;
 			}
 
@@ -1455,6 +1445,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 		return bitmap;
 	}
 
+	unique_dib bitmap_storage(bitmap);
+
 	// Load pixels data
 
 	const unsigned dstChannels = dstCh;
@@ -1464,6 +1456,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 	BYTE* const dst_first_line = FreeImage_GetScanLine(bitmap, nHeight - 1);//<*** flipped
 
 	BYTE* line_start = new BYTE[lineSize]; //< fileline cache
+	unique_arr<BYTE> line_start_storage(line_start);
 
 	switch ( nCompression ) {
 		case PSDP_COMPRESSION_NONE: // raw data
@@ -1483,8 +1476,6 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 				} //< h
 			}//< ch
 
-			SAFE_DELETE_ARRAY(line_start);
-
 		}
 		break;
 
@@ -1496,20 +1487,13 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 			// Version 2 has 4-byte line sizes.
 
 			// later use this array as DWORD rleLineSizeList[nChannels][nHeight];
-			DWORD *rleLineSizeList = new (std::nothrow) DWORD[nChannels*nHeight];
+			DWORD *rleLineSizeList = new DWORD[nChannels*nHeight];
+			unique_arr<DWORD> rleLineSizeList_storage(rleLineSizeList);
 
-			if(!rleLineSizeList) {
-				FreeImage_Unload(bitmap);
-				SAFE_DELETE_ARRAY(line_start);
-				throw std::bad_alloc();
-			}
 			if(_headerInfo._Version == 1) {
-				WORD *rleLineSizeList2 = new (std::nothrow) WORD[nChannels*nHeight];
-				if(!rleLineSizeList2) {
-					FreeImage_Unload(bitmap);
-					SAFE_DELETE_ARRAY(line_start);
-					throw std::bad_alloc();
-				}
+				WORD *rleLineSizeList2 = new WORD[nChannels*nHeight];
+				unique_arr<WORD> rleLineSizeList2_storage(rleLineSizeList2);
+
 				io->read_proc(rleLineSizeList2, 2, nChannels * nHeight, handle);
 				for(unsigned index = 0; index < nChannels * nHeight; ++index) {
 #ifndef FREEIMAGE_BIGENDIAN
@@ -1517,7 +1501,6 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 #endif
 					rleLineSizeList[index] = rleLineSizeList2[index];
 				}
-				SAFE_DELETE_ARRAY(rleLineSizeList2);
 			} else {
 				io->read_proc(rleLineSizeList, 4, nChannels * nHeight, handle);
 #ifndef FREEIMAGE_BIGENDIAN
@@ -1538,13 +1521,8 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 				}
 			}
 
-			BYTE* rle_line_start = new (std::nothrow) BYTE[largestRLELine];
-			if(!rle_line_start) {
-				FreeImage_Unload(bitmap);
-				SAFE_DELETE_ARRAY(line_start);
-				SAFE_DELETE_ARRAY(rleLineSizeList);
-				throw std::bad_alloc();
-			}
+			BYTE* rle_line_start = new BYTE[largestRLELine];
+			unique_arr<BYTE> rle_line_start_storage(rle_line_start);
 
 			// Read the RLE data
 			for (unsigned ch = 0; ch < nChannels; ch++) {
@@ -1572,10 +1550,6 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 					ReadImageLine(dst_line_start, line_start, lineSize, dstBpp, bytes);
 				}//< h
 			}//< ch
-
-			SAFE_DELETE_ARRAY(line_start);
-			SAFE_DELETE_ARRAY(rleLineSizeList);
-			SAFE_DELETE_ARRAY(rle_line_start);
 		}
 		break;
 
@@ -1639,8 +1613,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 			if(nChannels == 4 || nChannels == 3 ) {
 				FIBITMAP* t = RemoveAlphaChannel(bitmap);
 				if(t) {
-					FreeImage_Unload(bitmap);
-					bitmap = t;
+					bitmap_storage.reset(t);
 				} // else: silently fail
 			}
 		}
@@ -2101,11 +2074,11 @@ bool psdParser::Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page,
 	if(!_headerInfo.Write(io, handle)) return false;
 
 	_colourModeData._Length = 0;
-	_colourModeData._plColourData = NULL;
+
 	if (FreeImage_GetPalette(dib) != NULL) {
 		RGBQUAD *pal = FreeImage_GetPalette(dib);
 		_colourModeData._Length = FreeImage_GetColorsUsed(dib) * 3;
-		_colourModeData._plColourData = new BYTE[_colourModeData._Length];
+		_colourModeData._plColourData.reset(new BYTE[_colourModeData._Length]);
 		for(unsigned i = 0; i < FreeImage_GetColorsUsed(dib); i++ ) {
 			_colourModeData._plColourData[i + 0*256] = pal[i].rgbRed;
 			_colourModeData._plColourData[i + 1*256] = pal[i].rgbGreen;

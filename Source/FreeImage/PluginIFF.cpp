@@ -336,6 +336,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					unsigned plane_size = n_width/8;
 					unsigned src_size = plane_size * planes;
 					BYTE *src = (BYTE*)malloc(src_size);
+					if(! src)
+						return NULL;
+
+					unique_mem src_storage(src);
+
 					BYTE *dest = FreeImage_GetBits(dib);
 
 					dest += FreeImage_GetPitch(dib) * height;
@@ -407,8 +412,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						}
 #endif
 					}
-
-					free(src);
 
 					return dib;
 				}

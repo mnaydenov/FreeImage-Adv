@@ -363,7 +363,7 @@ rgbe_WritePixels(FreeImageIO *io, fi_handle handle, FIRGBF *data, unsigned numpi
 
 static BOOL 
 rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanline_width, unsigned num_scanlines) {
-	BYTE rgbe[4], *scanline_buffer, *ptr, *ptr_end;
+	BYTE rgbe[4], *ptr, *ptr_end;
 	int i, count;
 	BYTE buf[2];
 	
@@ -371,22 +371,21 @@ rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanlin
 		// run length encoding is not allowed so read flat
 		return rgbe_ReadPixels(io, handle, data, scanline_width * num_scanlines);
 	}
-	scanline_buffer = NULL;
+	BYTE* scanline_buffer = NULL;
+	unique_mem scanline_buffer_storage(NULL);
+
 	// read in each successive scanline 
 	while(num_scanlines > 0) {
 		if(io->read_proc(rgbe, 1, sizeof(rgbe), handle) < 1) {
-			free(scanline_buffer);
 			return rgbe_Error(rgbe_read_error,NULL);
 		}
 		if((rgbe[0] != 2) || (rgbe[1] != 2) || (rgbe[2] & 0x80)) {
 			// this file is not run length encoded
 			rgbe_RGBEToFloat(data, rgbe);
 			data ++;
-			free(scanline_buffer);
 			return rgbe_ReadPixels(io, handle, data, scanline_width * num_scanlines - 1);
 		}
 		if((((int)rgbe[2]) << 8 | rgbe[3]) != scanline_width) {
-			free(scanline_buffer);
 			return rgbe_Error(rgbe_format_error,"wrong scanline width");
 		}
 		if(scanline_buffer == NULL) {
@@ -394,6 +393,7 @@ rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanlin
 			if(scanline_buffer == NULL) {
 				return rgbe_Error(rgbe_memory_error, "unable to allocate buffer space");
 			}
+			scanline_buffer_storage.reset(scanline_buffer);
 		}
 		
 		ptr = &scanline_buffer[0];
@@ -402,14 +402,12 @@ rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanlin
 			ptr_end = &scanline_buffer[(i+1)*scanline_width];
 			while(ptr < ptr_end) {
 				if(io->read_proc(buf, 1, 2 * sizeof(BYTE), handle) < 1) {
-					free(scanline_buffer);
 					return rgbe_Error(rgbe_read_error, NULL);
 				}
 				if(buf[0] > 128) {
 					// a run of the same value
 					count = buf[0] - 128;
 					if((count == 0) || (count > ptr_end - ptr)) {
-						free(scanline_buffer);
 						return rgbe_Error(rgbe_format_error, "bad scanline data");
 					}
 					while (count-- > 0) {
@@ -420,13 +418,11 @@ rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanlin
 					// a non-run
 					count = buf[0];
 					if((count == 0) || (count > ptr_end - ptr)) {
-						free(scanline_buffer);
 						return rgbe_Error(rgbe_format_error, "bad scanline data");
 					}
 					*ptr++ = buf[1];
 					if(--count > 0) {
 						if(io->read_proc(ptr, 1, sizeof(BYTE) * count, handle) < 1) {
-							free(scanline_buffer);
 							return rgbe_Error(rgbe_read_error, NULL);
 						}
 						ptr += count;
@@ -447,8 +443,6 @@ rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanlin
 		num_scanlines--;
 	}
 
-	free(scanline_buffer);
-	
 	return TRUE;
 }
 

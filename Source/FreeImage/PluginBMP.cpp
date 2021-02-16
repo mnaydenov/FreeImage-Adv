@@ -281,134 +281,124 @@ LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, FIBI
 	BYTE second_byte = 0;
 	int bits = 0;
 
-	BYTE *pixels = NULL;	// temporary 8-bit buffer
+	height = abs(height);
 
-	try {
-		height = abs(height);
+	BYTE *pixels = (BYTE*)malloc(width * height * sizeof(BYTE));
+	if (!pixels) {
+		throw FI_MSG_ERROR_MEMORY;
+	}
+	unique_mem pixels_storage(pixels);
 
-		pixels = (BYTE*)malloc(width * height * sizeof(BYTE));
-		if (!pixels) {
-			throw(1);
+	memset(pixels, 0, width * height * sizeof(BYTE));
+
+	BYTE *q = pixels;
+	BYTE *end = pixels + height * width;
+
+	for (int scanline = 0; scanline < height; ) {
+		if (q < pixels || q  >= end) {
+			break;
 		}
-		memset(pixels, 0, width * height * sizeof(BYTE));
+		if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
+			return FALSE;
+		}
+		if (status_byte != 0)	{
+			status_byte = (int)MIN((size_t)status_byte, (size_t)(end - q));
+			// Encoded mode
+			if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
+				return FALSE;
+			}
+			for (int i = 0; i < status_byte; i++)	{
+				*q++ = (BYTE)((i & 0x01) ? (second_byte & 0x0f) : ((second_byte >> 4) & 0x0f));
+			}
+			bits += status_byte;
+		}
+		else {
+			// Escape mode
+			if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
+				return FALSE;
+			}
+			switch (status_byte) {
+				case RLE_ENDOFLINE:
+				{
+					// End of line
+					bits = 0;
+					scanline++;
+					q = pixels + scanline * width;
+				}
+				break;
 
-		BYTE *q = pixels;
-		BYTE *end = pixels + height * width;
+				case RLE_ENDOFBITMAP:
+					// End of bitmap
+					q = end;
+					break;
 
-		for (int scanline = 0; scanline < height; ) {
-			if (q < pixels || q  >= end) {
+				case RLE_DELTA:
+				{
+					// read the delta values
+					BYTE delta_x = 0;
+					BYTE delta_y = 0;
+
+					if(io->read_proc(&delta_x, sizeof(BYTE), 1, handle) != 1) {
+						return FALSE;
+					}
+					if(io->read_proc(&delta_y, sizeof(BYTE), 1, handle) != 1) {
+						return FALSE;
+					}
+
+					// apply them
+					bits += delta_x;
+					scanline += delta_y;
+					q = pixels + scanline*width+bits;
+				}
+				break;
+
+				default:
+				{
+					// Absolute mode
+					status_byte = (int)MIN((size_t)status_byte, (size_t)(end - q));
+					for (int i = 0; i < status_byte; i++) {
+						if ((i & 0x01) == 0) {
+							if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
+								return FALSE;
+							}
+						}
+						*q++ = (BYTE)((i & 0x01) ? (second_byte & 0x0f) : ((second_byte >> 4) & 0x0f));
+					}
+					bits += status_byte;
+					// Read pad byte
+					if (((status_byte & 0x03) == 1) || ((status_byte & 0x03) == 2)) {
+						BYTE padding = 0;
+						if(io->read_proc(&padding, sizeof(BYTE), 1, handle) != 1) {
+							return FALSE;
+						}
+					}
+				}
 				break;
 			}
-			if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
-				throw(1);
-			}
-			if (status_byte != 0)	{
-				status_byte = (int)MIN((size_t)status_byte, (size_t)(end - q));
-				// Encoded mode
-				if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
-					throw(1);
-				}
-				for (int i = 0; i < status_byte; i++)	{
-					*q++ = (BYTE)((i & 0x01) ? (second_byte & 0x0f) : ((second_byte >> 4) & 0x0f));
-				}
-				bits += status_byte;
-			}
-			else {
-				// Escape mode
-				if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
-					throw(1);
-				}
-				switch (status_byte) {
-					case RLE_ENDOFLINE:
-					{
-						// End of line
-						bits = 0;
-						scanline++;
-						q = pixels + scanline * width;
-					}
-					break;
-
-					case RLE_ENDOFBITMAP:
-						// End of bitmap
-						q = end;
-						break;
-
-					case RLE_DELTA:
-					{
-						// read the delta values
-						BYTE delta_x = 0;
-						BYTE delta_y = 0;
-
-						if(io->read_proc(&delta_x, sizeof(BYTE), 1, handle) != 1) {
-							throw(1);
-						}
-						if(io->read_proc(&delta_y, sizeof(BYTE), 1, handle) != 1) {
-							throw(1);
-						}
-
-						// apply them
-						bits += delta_x;
-						scanline += delta_y;
-						q = pixels + scanline*width+bits;
-					}
-					break;
-
-					default:
-					{
-						// Absolute mode
-						status_byte = (int)MIN((size_t)status_byte, (size_t)(end - q));
-						for (int i = 0; i < status_byte; i++) {
-							if ((i & 0x01) == 0) {
-								if(io->read_proc(&second_byte, sizeof(BYTE), 1, handle) != 1) {
-									throw(1);
-								}
-							}
-							*q++ = (BYTE)((i & 0x01) ? (second_byte & 0x0f) : ((second_byte >> 4) & 0x0f));
-						}
-						bits += status_byte;
-						// Read pad byte
-						if (((status_byte & 0x03) == 1) || ((status_byte & 0x03) == 2)) {
-							BYTE padding = 0;
-							if(io->read_proc(&padding, sizeof(BYTE), 1, handle) != 1) {
-								throw(1);
-							}
-						}
-					}
-					break;
-				}
-			}
 		}
-		
-		{
-			// Convert to 4-bit
-			for(int y = 0; y < height; y++) {
-				const BYTE *src = (BYTE*)pixels + y * width;
-				BYTE *dst = FreeImage_GetScanLine(dib, y);
-
-				BOOL hinibble = TRUE;
-
-				for (int cols = 0; cols < width; cols++){
-					if (hinibble) {
-						dst[cols >> 1] = (src[cols] << 4);
-					} else {
-						dst[cols >> 1] |= src[cols];
-					}
-
-					hinibble = !hinibble;
-				}
-			}
-		}
-
-		free(pixels);
-
-		return TRUE;
-
-	} catch(int) {
-		if (pixels) {
-			free(pixels);
-		}
-		return FALSE;
 	}
+		
+	{
+		// Convert to 4-bit
+		for(int y = 0; y < height; y++) {
+			const BYTE *src = (BYTE*)pixels + y * width;
+			BYTE *dst = FreeImage_GetScanLine(dib, y);
+
+			BOOL hinibble = TRUE;
+
+			for (int cols = 0; cols < width; cols++){
+				if (hinibble) {
+					dst[cols >> 1] = (src[cols] << 4);
+				} else {
+					dst[cols >> 1] |= src[cols];
+				}
+
+				hinibble = !hinibble;
+			}
+		}
+	}
+
+	return TRUE;
 }
 
 /**

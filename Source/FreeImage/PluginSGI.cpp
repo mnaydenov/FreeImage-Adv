@@ -268,6 +268,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if(!pRowIndex) {
 				throw FI_MSG_ERROR_MEMORY;
 			}
+			unique_mem pRowIndex_storage(pRowIndex);
 			
 			if ((unsigned)index_len != io->read_proc(pRowIndex, sizeof(LONG), index_len, handle)) {
 				throw SGI_EOF_IN_RLE_INDEX;
@@ -310,6 +311,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if(!dib) {
 			throw FI_MSG_ERROR_DIB_MEMORY;
 		}
+		unique_dib dib_storage(dib);
 		
 		if (bitcount == 8) {
 			// 8-bit SGI files are grayscale images, so we'll generate
@@ -385,14 +387,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 			}
 		}
-		if(pRowIndex)
-			free(pRowIndex);
 
-		return dib;
+		return dib_storage.release();
 
 	} catch(const char *text) {
-		if(pRowIndex) free(pRowIndex);
-		if(dib) FreeImage_Unload(dib);
 		FreeImage_OutputMessageProc(s_format_id, text);
 		return NULL;
 	}

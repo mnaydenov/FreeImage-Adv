@@ -404,7 +404,7 @@ FIBITMAP* J2KImageToFIBITMAP(int format_id, const opj_image_t *image, BOOL heade
 	} catch(const char *text) {
 		if(dib) FreeImage_Unload(dib);
 		FreeImage_OutputMessageProc(format_id, text);
-		return NULL;
+		throw "Failed to import JPEG2000 image";
 	}
 
 }

@@ -542,9 +542,16 @@ static const char *FI_MSG_WARNING_INVALID_THUMBNAIL = "Warning: attached thumbna
 template<class T, class Deleter> 
 class unique_ptr
 {
+	// Safe Bool Idiom
+	typedef void (unique_ptr::* bool_type)() const;
+	void dummy() const {}
+
 public:
 	typedef T* pointer;
-	explicit unique_ptr(pointer p=NULL, const Deleter d=Deleter())
+
+  // NOTE No default arguments, so that we will not forget to supply them, because we almost always 
+	// use a separate memory management object, together with an existing pointer we want to free!
+	explicit unique_ptr(pointer p, const Deleter d)
 		: _p(p)
 		, _d(d)
 	{}
@@ -571,8 +578,8 @@ public:
 		}
 	}
 
-	operator bool() const {
-		return _p != NULL;
+	operator bool_type() const {
+		return _p != NULL ? &unique_ptr::dummy : NULL;
 	}
 
 	pointer get() {
@@ -588,24 +595,63 @@ private:
 	Deleter _d;
 };
 
+namespace detail {
+	template< class T >
+	void deleter(T* obj) { delete obj; }	
+
+	template< class T >
+	void array_deleter(T* arr) { delete[] arr; }
+}
+
+template<class T> 
+class unique_arr : public unique_ptr<T, void(*)(T*)>
+{
+public:
+	explicit unique_arr(pointer p) : unique_ptr<T, void(*)(T*)>(p, &detail::array_deleter<T>)
+	{}
+
+	T& operator[](size_t i) { return this->get()[i]; }
+};
+
+template<class T> 
+class unique_obj : public unique_ptr<T, void(*)(T*)>
+{
+public:
+	explicit unique_obj(pointer p) : unique_ptr<T, void(*)(T*)>(p, &detail::deleter<T>)
+	{}
+};
+
 #else
 
 template<class T, class Deleter = std::default_delete<T>> 
 using unique_ptr = std::unique_ptr<T, Deleter>;
+
+template<class T> 
+using unique_arr = std::unique_ptr<T[]>;
+
+template<class T> 
+using unique_obj = std::unique_ptr<T>;
 
 #endif
 
 class unique_mem : public unique_ptr<void, void(*)(void*)>
 {
 public:
-	explicit unique_mem(pointer p=pointer()) : unique_ptr<void, void(*)(void*)>(p, &std::free)
+	explicit unique_mem(pointer p) : unique_ptr<void, void(*)(void*)>(p, &std::free)
 	{}
 };
 
 class unique_dib : public unique_ptr<FIBITMAP, void(DLL_CALLCONV*)(FIBITMAP*)>
 {
 public:
-	explicit unique_dib(pointer p=pointer()) : unique_ptr<FIBITMAP, void(DLL_CALLCONV*)(FIBITMAP*)>(p, &FreeImage_Unload)
+	explicit unique_dib(pointer p) : unique_ptr<FIBITMAP, void(DLL_CALLCONV*)(FIBITMAP*)>(p, &FreeImage_Unload)
+	{}
+};
+
+class unique_fimem : public unique_ptr<FIMEMORY, void(DLL_CALLCONV*)(FIMEMORY*)>
+{
+public:
+	explicit unique_fimem(pointer p) : unique_ptr<FIMEMORY, void(DLL_CALLCONV*)(FIMEMORY*)>(p, &FreeImage_CloseMemory)
 	{}
 };
 

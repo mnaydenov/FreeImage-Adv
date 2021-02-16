@@ -210,7 +210,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	char line_buffer[PFM_MAXLINE];
 	char id_one = 0, id_two = 0;
 	FIBITMAP *dib = NULL;
-	float *lineBuffer = NULL;
 
 	if (!handle) {
 		return NULL;
@@ -272,10 +271,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		if(image_type == FIT_RGBF) {
 			const unsigned lineWidth = 3 * width;
-			lineBuffer = (float*)malloc(lineWidth * sizeof(float));
+			float *lineBuffer = (float*)malloc(lineWidth * sizeof(float));
 			if(!lineBuffer) {
 				throw FI_MSG_ERROR_MEMORY;
 			}
+			unique_mem lineBuffer_storage(lineBuffer);
 
 			for (int y = 0; y < height; y++) {	
 				FIRGBF *bits = (FIRGBF*)FreeImage_GetScanLine(dib, height - 1 - y);
@@ -300,16 +300,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 				}
 			}
-
-			free(lineBuffer);
-			lineBuffer = NULL;
-
 		} else if(image_type == FIT_FLOAT) {
 			const unsigned lineWidth = width;
-			lineBuffer = (float*)malloc(lineWidth * sizeof(float));
+			float *lineBuffer = (float*)malloc(lineWidth * sizeof(float));
 			if(!lineBuffer) {
 				throw FI_MSG_ERROR_MEMORY;
 			}
+			unique_mem lineBuffer_storage(lineBuffer);
 
 			for (int y = 0; y < height; y++) {	
 				float *bits = (float*)FreeImage_GetScanLine(dib, height - 1 - y);
@@ -330,17 +327,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 				}
 			}
-
-			free(lineBuffer);
-			lineBuffer = NULL;
 		}
 		
 		return dib;
 
 	} catch (const char *text)  {
-		if (lineBuffer) {
-			free(lineBuffer);
-		}
 		if (dib) {
 			FreeImage_Unload(dib);
 		}

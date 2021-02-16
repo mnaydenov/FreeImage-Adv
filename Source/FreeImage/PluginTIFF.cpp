@@ -1402,7 +1402,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	uint16 compression = (uint16)-1;
 	uint16 planar_config;
 
-	unique_dib dib_storage;
+	unique_dib dib_storage(NULL);
 	FIBITMAP *dib = NULL;
 	uint32 iccSize = 0;		// ICC profile length
 	void *iccBuf = NULL;	// ICC profile data		
@@ -1482,7 +1482,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// convert it to a DIB. This is using the traditional
 			// TIFFReadRGBAImage() API that we trust.
 			
-			unique_mem raster_storage;
+			unique_mem raster_storage(NULL);
 			uint32 *raster = NULL;
 
 			if(!header_only) {
@@ -1704,7 +1704,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// NOTE this is until we have Extra channels implementation.
 			// Also then it will be possible to merge LoadAsCMYK with LoadAsGenericStrip
 			
-			unique_dib alpha_storage;
+			unique_dib alpha_storage(NULL);
 			FIBITMAP *alpha = NULL;
 			unsigned alpha_pitch = 0;
 			BYTE *alpha_bits = NULL;
@@ -1712,14 +1712,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if(isCMYKA && !asCMYK && !header_only) {
 				if(bitspersample == 16) {
-					alpha_storage.reset(FreeImage_AllocateT(FIT_UINT16, width, height));
+					alpha = FreeImage_AllocateT(FIT_UINT16, width, height);
 				} else if (bitspersample == 8) {
-					alpha_storage.reset(FreeImage_Allocate(width, height, 8));
+					alpha = FreeImage_Allocate(width, height, 8);
 				}
-				alpha = alpha_storage.get();
 				if(!alpha) {
 					FreeImage_OutputMessageProc(s_format_id, "Failed to allocate temporary alpha channel");
 				} else {
+					alpha_storage.reset(alpha);
+
 					alpha_bits = FreeImage_GetScanLine(alpha, height - 1);
 					alpha_pitch = FreeImage_GetPitch(alpha);
 					alpha_Bpp = FreeImage_GetBPP(alpha) / 8;

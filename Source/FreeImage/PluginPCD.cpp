@@ -161,6 +161,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			return dib;
 		}
 
+		unique_dib dib_storage(dib);
+
 		// check if the PCD is bottom-up
 
 		if (VerticalOrientation(io, handle)) {
@@ -174,6 +176,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		BYTE *y2 = (BYTE*)malloc(width * sizeof(BYTE));
 		BYTE *cbcr = (BYTE*)malloc(width * sizeof(BYTE));
 		if(!y1 || !y2 || !cbcr) throw FI_MSG_ERROR_MEMORY;
+
+		unique_mem y1_storage(y1);
+		unique_mem y2_storage(y2);
+		unique_mem cbcr_storage(cbcr);
 
 		BYTE *yl[] = { y1, y2 };
 
@@ -206,17 +212,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 		}
 
-		free(cbcr);
-		free(y2);
-		free(y1);
-
 		return dib;
 
 	} catch(const char *text) {
-		if(dib) FreeImage_Unload(dib);
-		if(cbcr) free(cbcr);
-		if(y2) free(y2);
-		if(y1) free(y1);
 
 		FreeImage_OutputMessageProc(s_format_id, text);
 

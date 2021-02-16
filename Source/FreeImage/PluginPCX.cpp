@@ -346,8 +346,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	FIBITMAP *dib = NULL;
 	BYTE *bits;			  // Pointer to dib data
 	RGBQUAD *pal;		  // Pointer to dib palette
-	BYTE *line = NULL;	  // PCX raster line
-	BYTE *ReadBuf = NULL; // buffer;
 	BOOL bIsRLE;		  // True if the file is run-length encoded
 
 	if(!handle) {
@@ -414,6 +412,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			throw FI_MSG_ERROR_DIB_MEMORY;
 		}
 
+		unique_dib dib_storage(dib);
+
 		// metrics handling code
 
 		FreeImage_SetDotsPerMeterX(dib, (unsigned) (((float)header.hdpi) / 0.0254000 + 0.5));
@@ -458,6 +458,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					BYTE *cmap = (BYTE*)malloc(768 * sizeof(BYTE));
 
 					if(cmap) {
+						unique_mem cmap_storage(cmap);
+
 						io->read_proc(cmap, 768, 1, handle);
 
 						pal = FreeImage_GetPalette(dib);
@@ -469,8 +471,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							pal[i].rgbBlue  = pColormap[2];
 							pColormap += 3;
 						}
-
-						free(cmap);
 					}
 
 				}
@@ -494,7 +494,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		if(header_only) {
 			// header only mode
-			return dib;
+			return dib_storage.release();
 		}
 
 		// calculate the line length for the PCX and the dib
@@ -511,15 +511,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// load image data
 		// ---------------
 
-		line = (BYTE*)malloc(lineLength * sizeof(BYTE));
+		BYTE* line = (BYTE*)malloc(lineLength * sizeof(BYTE));
 		if(!line) {
 			throw FI_MSG_ERROR_MEMORY;
 		}
+		unique_mem line_storage(line);
 		
-		ReadBuf = (BYTE*)malloc(PCX_IO_BUF_SIZE * sizeof(BYTE));
+		BYTE* ReadBuf = (BYTE*)malloc(PCX_IO_BUF_SIZE * sizeof(BYTE));
 		if(!ReadBuf) {
 			throw FI_MSG_ERROR_MEMORY;
 		}
+		unique_mem ReadBuf_storage(ReadBuf);
 		
 		bits = FreeImage_GetScanLine(dib, height - 1);
 
@@ -556,6 +558,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if(!buffer) {
 				throw FI_MSG_ERROR_MEMORY;
 			}
+			unique_mem buffer_storage(buffer);
 
 			for (unsigned y = 0; y < height; y++) {
 				unsigned written = readLine(io, handle, line, lineLength, bIsRLE, ReadBuf, &ReadPos);
@@ -593,7 +596,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				bits -= pitch;
 			}
 
-			free(buffer);
 
 		} else if((header.planes == 3) && (header.bpp == 8)) {
 			BYTE *pLine;
@@ -628,23 +630,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
 		}
 
-		free(line);
-		free(ReadBuf);
-
-		return dib;
+		return dib_storage.release();
 
 	} catch (const char *text) {
-		// free allocated memory
-
-		if (dib != NULL) {
-			FreeImage_Unload(dib);
-		}
-		if (line != NULL) {
-			free(line);
-		}
-		if (ReadBuf != NULL) {
-			free(ReadBuf);
-		}
 
 		FreeImage_OutputMessageProc(s_format_id, text);
 	}

@@ -43,7 +43,6 @@ Read the whole file into memory
 */
 static BOOL
 ReadFileToWebPData(FreeImageIO *io, fi_handle handle, WebPData * const bitstream) {
-  uint8_t *raw_data = NULL;
 
   try {
 	  // Read the input file and put it in memory
@@ -51,10 +50,12 @@ ReadFileToWebPData(FreeImageIO *io, fi_handle handle, WebPData * const bitstream
 	  io->seek_proc(handle, 0, SEEK_END);
 	  size_t file_length = (size_t)(io->tell_proc(handle) - start_pos);
 	  io->seek_proc(handle, start_pos, SEEK_SET);
-	  raw_data = (uint8_t*)malloc(file_length * sizeof(uint8_t));
+	  uint8_t *raw_data = (uint8_t*)malloc(file_length * sizeof(uint8_t));
 	  if(!raw_data) {
 		  throw FI_MSG_ERROR_MEMORY;
 	  }
+		unique_mem raw_data_storage(raw_data);
+
 	  if(io->read_proc(raw_data, 1, (unsigned)file_length, handle) != file_length) {
 		  throw "Error while reading input stream";
 	  }
@@ -66,9 +67,7 @@ ReadFileToWebPData(FreeImageIO *io, fi_handle handle, WebPData * const bitstream
 	  return TRUE;
 
   } catch(const char *text) {
-	  if(raw_data) {
-		  free(raw_data);
-	  }
+
 	  memset(bitstream, 0, sizeof(WebPData));
 	  if(NULL != text) {
 		  FreeImage_OutputMessageProc(s_format_id, text);

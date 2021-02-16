@@ -502,8 +502,25 @@ ConfigureDecoder(png_structp png_ptr, png_infop info_ptr, int flags, FREE_IMAGE_
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+	struct unique_png
+	{
+		unique_png(png_structpp png_ptr_ptr, png_infopp info_ptr_ptr) 
+			: _png_ptr_ptr(png_ptr_ptr)
+			, _info_ptr_ptr(info_ptr_ptr)
+		{}
+
+		~unique_png() {
+			png_destroy_read_struct(_png_ptr_ptr, _info_ptr_ptr, NULL);
+		}
+
+	private:
+		png_structpp _png_ptr_ptr;
+		png_infopp _info_ptr_ptr;
+	};
+
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
+	unique_png png_storage(&png_ptr, &info_ptr);
 	png_uint_32 width, height;
 	int color_type;
 	int bit_depth;
@@ -543,7 +560,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		    info_ptr = png_create_info_struct(png_ptr);
 
 			if (!info_ptr) {
-				png_destroy_read_struct(&png_ptr, (png_infopp)NULL, (png_infopp)NULL);
 				return NULL;
 			}
 
@@ -723,21 +739,18 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if (header_only) {
 				// get possible metadata (it can be located both before and after the image data)
 				ReadMetadata(png_ptr, info_ptr, dib);
-				if (png_ptr) {
-					// clean up after the read, and free any memory allocated - REQUIRED
-					png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-				}
 				return dib;
 			}
 
+      unique_dib dib_storage(dib);
+
 			// set the individual row_pointers to point at the correct offsets
 
-			row_pointers = (png_bytepp)malloc(height * sizeof(png_bytep));
+			unique_mem row_pointers_storage(malloc(height * sizeof(png_bytep)));
+			row_pointers = (png_bytepp)row_pointers_storage.get();
 
 			if (!row_pointers) {
-				png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-				FreeImage_Unload(dib);
-				return NULL;
+				throw FI_MSG_ERROR_MEMORY;
 			}
 
 			// read in the bitmap bits via the pointer table
@@ -759,13 +772,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					FreeImage_SetTransparent(dib, FALSE);
 				}
 			}
-				
-			// cleanup
-
-			if (row_pointers) {
-				free(row_pointers);
-				row_pointers = NULL;
-			}
 
 			// read the rest of the file, getting any additional chunks in info_ptr
 
@@ -775,23 +781,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			ReadMetadata(png_ptr, info_ptr, dib);
 
-			if (png_ptr) {
-				// clean up after the read, and free any memory allocated - REQUIRED
-				png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-			}
-
-			return dib;
+			return dib_storage.release();
 
 		} catch (const char *text) {
-			if (png_ptr) {
-				png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
-			}
-			if (row_pointers) {
-				free(row_pointers);
-			}
-			if (dib) {
-				FreeImage_Unload(dib);
-			}
 			if (NULL != text) {
 				FreeImage_OutputMessageProc(s_format_id, text);
 			}

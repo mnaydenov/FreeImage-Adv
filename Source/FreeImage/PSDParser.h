@@ -26,6 +26,8 @@
 #ifndef FREEIMAGE_PSDPARSER_H
 #define FREEIMAGE_PSDPARSER_H
 
+#include "Utilities.h"
+
 /**
 Table 2-12: File header section. 
 The file header contains the basic properties of the image. 
@@ -87,11 +89,11 @@ the file.
 class psdColourModeData {
 public:
 	int _Length;			//! The length of the following color data
-	BYTE * _plColourData;	//! The color data
+	unique_arr<BYTE> _plColourData;	//! The color data
 
 public:
 	psdColourModeData();
-	~psdColourModeData();
+
 	/**
 	@return Returns true if successful, false otherwise
 	*/
@@ -112,12 +114,12 @@ public:
 	int     _Length;
 	char    _OSType[4];	//! Photoshop always uses its signature, 8BIM
 	short   _ID;		//! Unique identifier. Image resource IDs on page 8
-	BYTE * _plName;		//! A pascal string, padded to make size even (a null name consists of two bytes of 0)
+	unique_arr<BYTE> _plName;		//! A pascal string, padded to make size even (a null name consists of two bytes of 0)
 	int     _Size;		//! Actual size of resource data. This does not include the Type, ID, Name or Size fields.
 
 public:
 	psdImageResource();
-	~psdImageResource();
+
 	void Reset();
 	bool Write(FreeImageIO *io, fi_handle handle, int ID, int Size);
 };

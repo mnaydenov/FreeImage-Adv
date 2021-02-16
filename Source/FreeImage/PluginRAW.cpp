@@ -261,56 +261,42 @@ Get the embedded JPEG preview image from RAW picture with included Exif Data.
 static FIBITMAP * 
 libraw_LoadEmbeddedPreview(LibRaw *RawProcessor, int flags) {
 	FIBITMAP *dib = NULL;
-	libraw_processed_image_t *thumb_image = NULL;
 	
-	try {
-		// unpack data
-		if(RawProcessor->unpack_thumb() != LIBRAW_SUCCESS) {
-			// run silently "LibRaw : failed to run unpack_thumb"
-			return NULL;
-		}
 
-		// retrieve thumb image
-		int error_code = 0;
-		thumb_image = RawProcessor->dcraw_make_mem_thumb(&error_code);
-		if(thumb_image) {
-			if(thumb_image->type != LIBRAW_IMAGE_BITMAP) {
-				// attach the binary data to a memory stream
-				FIMEMORY *hmem = FreeImage_OpenMemory((BYTE*)thumb_image->data, (DWORD)thumb_image->data_size);
-				// get the file type
-				FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromMemory(hmem, 0);
-				if(fif == FIF_JPEG) {
-					// rotate according to Exif orientation
-					flags |= JPEG_EXIFROTATE;
-				}
-				// load an image from the memory stream
-				dib = FreeImage_LoadFromMemory(fif, hmem, flags);
-				// close the stream
-				FreeImage_CloseMemory(hmem);
-			} else if((flags & FIF_LOAD_NOPIXELS) != FIF_LOAD_NOPIXELS) {
-				// convert processed data to output dib
-				dib = libraw_ConvertProcessedImageToDib(thumb_image);
-			}
-		} else {
-			throw "LibRaw : failed to run dcraw_make_mem_thumb";
-		}
-
-		// clean-up and return
-		RawProcessor->dcraw_clear_mem(thumb_image);
-
-		return dib;
-
-	} catch(const char *text) {
-		// clean-up and return
-		if(thumb_image) {
-			RawProcessor->dcraw_clear_mem(thumb_image);
-		}
-		if(text != NULL) {
-			FreeImage_OutputMessageProc(s_format_id, text);
-		}
+	// unpack data
+	if(RawProcessor->unpack_thumb() != LIBRAW_SUCCESS) {
+		// run silently "LibRaw : failed to run unpack_thumb"
+		return NULL;
 	}
 
-	return NULL;
+	// retrieve thumb image
+	int error_code = 0;
+	libraw_processed_image_t* thumb_image = RawProcessor->dcraw_make_mem_thumb(&error_code);
+	if(thumb_image) {
+		unique_ptr<libraw_processed_image_t, void (*)(libraw_processed_image_t *)> thumb_image_storage(thumb_image, &LibRaw::dcraw_clear_mem);
+
+		if(thumb_image->type != LIBRAW_IMAGE_BITMAP) {
+			// attach the binary data to a memory stream
+			FIMEMORY *hmem = FreeImage_OpenMemory((BYTE*)thumb_image->data, (DWORD)thumb_image->data_size);
+			// get the file type
+			FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromMemory(hmem, 0);
+			if(fif == FIF_JPEG) {
+				// rotate according to Exif orientation
+				flags |= JPEG_EXIFROTATE;
+			}
+			// load an image from the memory stream
+			dib = FreeImage_LoadFromMemory(fif, hmem, flags);
+			// close the stream
+			FreeImage_CloseMemory(hmem);
+		} else if((flags & FIF_LOAD_NOPIXELS) != FIF_LOAD_NOPIXELS) {
+			// convert processed data to output dib
+			dib = libraw_ConvertProcessedImageToDib(thumb_image);
+		}
+	} else {
+		FreeImage_OutputMessageProc(s_format_id, "LibRaw : failed to run dcraw_make_mem_thumb");
+	}
+
+	return dib;
 }
 /**
 Load raw data and convert to FIBITMAP
@@ -682,16 +668,16 @@ SupportsNoPixels() {
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	FIBITMAP *dib = NULL;
-	LibRaw *RawProcessor = NULL;
 
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	try {
 		// do not declare RawProcessor on the stack as it may be huge (300 KB)
-		RawProcessor = new(std::nothrow) LibRaw;
+		LibRaw *RawProcessor = new(std::nothrow) LibRaw;
 		if(!RawProcessor) {
 			throw FI_MSG_ERROR_MEMORY;
 		}
+		unique_obj<LibRaw> RawProcessor_storage(RawProcessor);
 
 		// wrap the input datastream
 		LibRaw_freeimage_datastream datastream(io, handle);
@@ -753,17 +739,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 		}
 
-		// clean-up internal memory allocations
-		RawProcessor->recycle();
-		delete RawProcessor;
-
 		return dib;
 
 	} catch(const char *text) {
-		if(RawProcessor) {
-			RawProcessor->recycle();
-			delete RawProcessor;
-		}
 		if(dib) {
 			FreeImage_Unload(dib);
 		}

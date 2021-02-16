@@ -431,8 +431,10 @@ jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 	BYTE *profile = (BYTE*)dataptr;
 
 	// read the comment
+	// @todo consider ownership transfer to tag value!
 	char *value = (char*)malloc((length + 1) * sizeof(char));
 	if(value == NULL) return FALSE;
+	unique_mem value_storage(value);
 	memcpy(value, profile, length);
 	value[length] = '\0';
 
@@ -454,8 +456,6 @@ jpeg_read_comment(FIBITMAP *dib, const BYTE *dataptr, unsigned int datalen) {
 		// destroy the tag
 		FreeImage_DeleteTag(tag);
 	}
-
-	free(value);
 
 	return TRUE;
 }
@@ -1160,6 +1160,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// set up the jpeglib structures
 
 		struct jpeg_decompress_struct cinfo;
+		unique_ptr<jpeg_decompress_struct, void(*)(j_decompress_ptr)> decompress_storage(&cinfo, &jpeg_destroy_decompress);
 		ErrorManager fi_error_mgr;
 
 		try {
@@ -1174,8 +1175,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// establish the setjmp return context for jpeg_error_exit to use
 			if (setjmp(fi_error_mgr.setjmp_buffer)) {
 				// If we get here, the JPEG code has signaled an error.
-				// We need to clean up the JPEG object, close the input file, and return.
-				jpeg_destroy_decompress(&cinfo);
+				// Clean up of the JPEG object is done by decompress_storage.
 				throw (const char*)NULL;
 			}
 
@@ -1259,6 +1259,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 				}
 			}
+
+			unique_dib dib_storage(dib);
+
 			if(scale_denom != 1) {
 				// store original size info if a scaling was requested
 				store_size_info(dib, cinfo.image_width, cinfo.image_height);
@@ -1283,10 +1286,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// --- header only mode => clean-up and return
 
 			if (header_only) {
-				// release JPEG decompression object
-				jpeg_destroy_decompress(&cinfo);
+				// release JPEG decompression object is done by decompress_storage
+
 				// return header data
-				return dib;
+				return dib_storage.release();
 			}
 
 			// step 7a: while (scan lines remain to be read) jpeg_read_scanlines(...);
@@ -1371,9 +1374,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			jpeg_finish_decompress(&cinfo);
 
-			// step 9: release JPEG decompression object
-
-			jpeg_destroy_decompress(&cinfo);
+			// step 9: release of JPEG decompression object is done by dib_storage (also called when aborting, but it is safe to call multiple times)
 
 			// check for automatic Exif rotation
 			if(!header_only && ((flags & JPEG_EXIFROTATE) == JPEG_EXIFROTATE)) {
@@ -1382,13 +1383,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// everything went well. return the loaded dib
 
-			return dib;
+			return dib_storage.release();
 
 		} catch (const char *text) {
-			jpeg_destroy_decompress(&cinfo);
-			if(NULL != dib) {
-				FreeImage_Unload(dib);
-			}
+
 			if(NULL != text) {
 				FreeImage_OutputMessageProc(s_format_id, text);
 			}

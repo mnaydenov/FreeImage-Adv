@@ -321,13 +321,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		// load the bitmap data
 		const char* error = readXBMFile(io, handle, &width, &height, &buffer);
+		unique_mem buffer_storage(buffer);
 		// Microsoft doesn't implement throw between functions :(
 		if(error) throw (char*)error;
 
 
 		// allocate a new dib
 		dib = FreeImage_Allocate(width, height, 1);
-		if(!dib) throw (char*)ERR_XBM_MEMORY;
+		if(!dib) throw FI_MSG_ERROR_DIB_MEMORY;
 
 		// write the palette data
 		RGBQUAD *pal = FreeImage_GetPalette(dib);
@@ -360,11 +361,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			bP++;
 		}
 
-		free(buffer);
 		return dib;
 
 	} catch(const char *text) {
-		if(buffer)	free(buffer);
 		if(dib)		FreeImage_Unload(dib);
 		FreeImage_OutputMessageProc(s_format_id, text);
 		return NULL;

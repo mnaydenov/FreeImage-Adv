@@ -594,52 +594,48 @@ Unpack32Bits( FreeImageIO *io, fi_handle handle, FIBITMAP* dib, MacRect* bounds,
 	}
 	
 	BYTE* pLineBuf = (BYTE*)malloc( rowBytes ); // Let's allocate enough for 4 bit planes
-	if ( pLineBuf )	{
-		try	{
-			for ( int i = 0; i < height; i++ ) { 
-				// for each line do...
-				int linelen;            // length of source line in bytes.
-				if (rowBytes > 250) {
-					linelen = Read16( io, handle );
-				} else {
-					linelen = Read8( io, handle);
-				}
+	if (! pLineBuf) {
+		throw FI_MSG_ERROR_MEMORY;
+	}
+	unique_mem pLineBuf_storage(pLineBuf);
+
+	for ( int i = 0; i < height; i++ ) {
+		// for each line do...
+		int linelen;            // length of source line in bytes.
+		if (rowBytes > 250) {
+			linelen = Read16( io, handle );
+		} else {
+			linelen = Read8( io, handle);
+		}
 				
-				BYTE* pBuf = UnpackPictRow( io, handle, pLineBuf, width, rowBytes, linelen );
+		BYTE* pBuf = UnpackPictRow( io, handle, pLineBuf, width, rowBytes, linelen );
 				
-				// Convert plane-oriented data into pixel-oriented data &
-				// copy into destination bitmap.
-				BYTE* dst = (BYTE*)FreeImage_GetScanLine( dib, height - 1 - i);
+		// Convert plane-oriented data into pixel-oriented data &
+		// copy into destination bitmap.
+		BYTE* dst = (BYTE*)FreeImage_GetScanLine( dib, height - 1 - i);
 				
-				if ( numPlanes == 3 ) {
-					for ( int j = 0; j < width; j++ ) { 
-						// For each pixel in line...
-						dst[ FI_RGBA_BLUE ] = (*(pBuf+width*2));     // Blue
-						dst[ FI_RGBA_GREEN ] = (*(pBuf+width));       // Green
-						dst[ FI_RGBA_RED ] = (*pBuf);             // Red
-						dst[ FI_RGBA_ALPHA ] = (0xFF);
-						dst += 4;
-						pBuf++;
-					}
-				} else {
-					for ( int j = 0; j < width; j++ ) { 
-						// For each pixel in line...
-						dst[ FI_RGBA_BLUE ] = (*(pBuf+width*3));     // Blue
-						dst[ FI_RGBA_GREEN ] = (*(pBuf+width*2));     // Green
-						dst[ FI_RGBA_RED ] = (*(pBuf+width));       // Red
-						dst[ FI_RGBA_ALPHA ] = (*pBuf);
-						dst += 4;
-						pBuf++;
-					}
-				}
+		if ( numPlanes == 3 ) {
+			for ( int j = 0; j < width; j++ ) { 
+				// For each pixel in line...
+				dst[ FI_RGBA_BLUE ] = (*(pBuf+width*2));     // Blue
+				dst[ FI_RGBA_GREEN ] = (*(pBuf+width));       // Green
+				dst[ FI_RGBA_RED ] = (*pBuf);             // Red
+				dst[ FI_RGBA_ALPHA ] = (0xFF);
+				dst += 4;
+				pBuf++;
+			}
+		} else {
+			for ( int j = 0; j < width; j++ ) { 
+				// For each pixel in line...
+				dst[ FI_RGBA_BLUE ] = (*(pBuf+width*3));     // Blue
+				dst[ FI_RGBA_GREEN ] = (*(pBuf+width*2));     // Green
+				dst[ FI_RGBA_RED ] = (*(pBuf+width));       // Red
+				dst[ FI_RGBA_ALPHA ] = (*pBuf);
+				dst += 4;
+				pBuf++;
 			}
 		}
-		catch( ... ) {
-			free( pLineBuf );
-			throw;
-		}
 	}
-	free( pLineBuf );
 }
 
 /**

@@ -60,21 +60,21 @@ FindChar(FreeImageIO *io, fi_handle handle, BYTE look_for) {
 }
 
 // find start of string, read data until ending quote found, allocate memory and return a string
-static char *
-ReadString(FreeImageIO *io, fi_handle handle) {
+static bool
+ReadString(FreeImageIO *io, fi_handle handle, std::string* s) {
+	assert(s);
 	if( !FindChar(io, handle,'"') )
-		return NULL;
+		return false;
 	BYTE c;
-	std::string s;
+	s->clear();
 	io->read_proc(&c, sizeof(BYTE), 1, handle);
 	while(c != '"') {
-		s += c;
+		*s += c;
 		if( io->read_proc(&c, sizeof(BYTE), 1, handle) != 1 )
-			return NULL;
+			return false;
 	}
-	char *cstr = (char *)malloc(s.length()+1);
-	strcpy(cstr,s.c_str());
-	return cstr;
+
+	return true;
 }
 
 static char *
@@ -160,8 +160,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
     if (!handle) return NULL;
 
-    try {
-		char *str;
+  try {
 		
 		BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 		
@@ -170,39 +169,45 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			throw "Could not find starting brace";
 
 		//read info string
-		str = ReadString(io, handle);
-		if(!str)
+		std::string str;
+		if(!ReadString(io, handle, &str))
 			throw "Error reading info string";
 
 		int width, height, colors, cpp;
-		if( sscanf(str, "%d %d %d %d", &width, &height, &colors, &cpp) != 4 ) {
-			free(str);
+		if( sscanf(str.c_str(), "%d %d %d %d", &width, &height, &colors, &cpp) != 4 ) {
 			throw "Improperly formed info string";
 		}
-		free(str);
 
 		// check info string
 		if((width <= 0) || (height <= 0) || (colors <= 0) || (cpp <= 0)) {
 			throw "Improperly formed info string";
 		}
 
-        if (colors > 256) {
+		if(colors > 256) {
 			dib = FreeImage_AllocateHeader(header_only, width, height, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 		} else {
 			dib = FreeImage_AllocateHeader(header_only, width, height, 8);
 		}
 
+		if(! dib) {
+			throw FI_MSG_ERROR_DIB_MEMORY;
+		}
+
+		unique_dib dib_storage(dib);
+
+		//@todo Using map is suboptimal
 		//build a map of color chars to rgb values
 		std::map<std::string,FILE_RGBA> rawpal; //will store index in Alpha if 8bpp
 		for(int i = 0; i < colors; i++ ) {
 			FILE_RGBA rgba;
 
-			str = ReadString(io, handle);
-			if(!str || (strlen(str) < (size_t)cpp))
+			bool res = ReadString(io, handle, &str);
+			if(!res || (str.size() < (size_t)cpp))
 				throw "Error reading color strings";
 
-			std::string chrs(str,cpp); //create a string for the color chars using the first cpp chars
-			char *keys = str + cpp; //the color keys for these chars start after the first cpp chars
+			// @todo use string_view and/or is_transparent key
+			std::string chrs(str.c_str(),cpp); //create a string for the color chars using the first cpp chars
+			char *keys = &str[0] + cpp; //the color keys for these chars start after the first cpp chars
 
 			//translate all the tabs to spaces
 			char *tmp = keys;
@@ -245,7 +250,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 							break;
 					}
 					if( n != 3 ) {
-						free(str);
 						throw "Improperly formed hex color value";
 					}
 					rgba.r = (BYTE)red;
@@ -279,12 +283,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					if (!FreeImage_LookupX11Color(clr,  &rgba.r, &rgba.g, &rgba.b)) {
 						sprintf(msg, "Unknown color name '%s'", str);
-						free(str);
 						throw msg;
 					}
 				}
 			} else {
-				free(str);
 				throw "Only color visuals are supported";
 			}
 
@@ -299,26 +301,25 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				pal[i].rgbGreen = rgba.g;
 				pal[i].rgbRed = rgba.r;
 			}
+		} //< for
 
-			free(str);
-		}
 		//done parsing color map
 
 		if(header_only) {
 			// header only mode
-			return dib;
+			return dib_storage.release();
 		}
 
 		//read in pixel data
 		for(int y = 0; y < height; y++ ) {
 			BYTE *line = FreeImage_GetScanLine(dib, height - y - 1);
-			str = ReadString(io, handle);
-			if(!str)
+			if(!ReadString(io, handle, &str))
 				throw "Error reading pixel strings";
-			char *pixel_ptr = str;
+			const char *pixel_ptr = str.c_str();
 
 			for(int x = 0; x < width; x++ ) {
 				//locate the chars in the color map
+				// @todo use string_view and/or is_transparent key
 				std::string chrs(pixel_ptr,cpp);
 				FILE_RGBA rgba = rawpal[chrs];
 
@@ -334,20 +335,17 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 				pixel_ptr += cpp;
 			}
+		} //< for
 
-			free(str);
-		}
 		//done reading pixel data
 
-		return dib;
+		return dib_storage.release();
 	} catch(const char *text) {
-       FreeImage_OutputMessageProc(s_format_id, text);
-
-       if( dib != NULL )
-           FreeImage_Unload(dib);
-
-       return NULL;
-    }
+		FreeImage_OutputMessageProc(s_format_id, text);
+	} catch(const std::exception& e) {
+		FreeImage_OutputMessageProc(s_format_id, e.what());
+	}
+	return NULL;
 }
 
 static BOOL DLL_CALLCONV

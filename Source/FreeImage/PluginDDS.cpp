@@ -624,6 +624,7 @@ LoadRGB(const DDSURFACEDESC2 *desc, FreeImageIO *io, fi_handle handle) {
 	if (bpp == 16) {
 		BYTE *pixels = (BYTE*)malloc(line * sizeof(BYTE));
 		if (pixels) {
+			unique_mem pixels_storage(pixels);
 			for (int y = 0; y < height; y++) {
 				BYTE *dst_bits = FreeImage_GetScanLine(dib, height - y - 1);
 				// get the 16-bit RGB pixels
@@ -633,7 +634,6 @@ LoadRGB(const DDSURFACEDESC2 *desc, FreeImageIO *io, fi_handle handle) {
 				ConvertLine16To24(dst_bits, (const WORD*)pixels, format16, width);
 			}
 		}
-		free(pixels);
 	}
 	else {
 		for (int y = 0; y < height; y++) {

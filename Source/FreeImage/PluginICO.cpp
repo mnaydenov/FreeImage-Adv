@@ -355,11 +355,13 @@ LoadStandardIcon(FreeImageIO *io, fi_handle handle, int flags, BOOL header_only)
 #endif
 	// bitmap has been loaded successfully!
 
+	unique_dib dib_storage(dib);
+
 	// convert to 32bpp and generate an alpha channel
 	// apply the AND mask only if the image is not 32 bpp
 	if(((flags & ICO_MAKEALPHA) == ICO_MAKEALPHA) && (bit_count < 32)) {
 		FIBITMAP *dib32 = FreeImage_ConvertTo32Bits(dib);
-		FreeImage_Unload(dib);
+		dib_storage.reset(dib32);
 
 		if (dib32 == NULL) {
 			return NULL;
@@ -369,9 +371,9 @@ LoadStandardIcon(FreeImageIO *io, fi_handle handle, int flags, BOOL header_only)
 		BYTE *line_and	= (BYTE *)malloc(width_and);
 
 		if( line_and == NULL ) {
-			FreeImage_Unload(dib32);
 			return NULL;
 		}
+		unique_mem line_and_storage(line_and);
 
 		//loop through each line of the AND-mask generating the alpha channel, invert XOR-mask
 		for(int y = 0; y < height; y++) {
@@ -387,12 +389,9 @@ LoadStandardIcon(FreeImageIO *io, fi_handle handle, int flags, BOOL header_only)
 				quad++;
 			}
 		}
-		free(line_and);
-
-		return dib32;
 	}
 
-	return dib;
+	return dib_storage.release();
 }
 
 static FIBITMAP * DLL_CALLCONV
@@ -415,6 +414,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if(icon_list == NULL) {
 				return NULL;
 			}
+			unique_mem icon_list_storage(icon_list);
+
 			io->seek_proc(handle, sizeof(ICONHEADER), SEEK_SET);
 			io->read_proc(icon_list, icon_header->idCount * sizeof(ICONDIRENTRY), 1, handle);
 #ifdef FREEIMAGE_BIGENDIAN
@@ -438,12 +439,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					dib = LoadStandardIcon(io, handle, flags, header_only);
 				}
 
-				free(icon_list);
-
 				return dib;
 
 			} else {
-				free(icon_list);
 				FreeImage_OutputMessageProc(s_format_id, "Page doesn't exist");
 			}
 		} else {

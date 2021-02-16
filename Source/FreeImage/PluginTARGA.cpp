@@ -86,6 +86,7 @@ typedef struct tagTGAFOOTER {
 #endif
 
 static const char *FI_MSG_ERROR_CORRUPTED = "Image data corrupted";
+static const char *FI_MSG_ERROR_UNSUPPORTED = "Image type unsupported";
 
 // ----------------------------------------------------------
 // Image type
@@ -109,14 +110,9 @@ class TargaThumbnail
 public:
 	TargaThumbnail() : _w(0), _h(0), _depth(0), _data(NULL) { 
 	}
-	~TargaThumbnail() { 
-		if(_data) {
-			free(_data); 
-		}
-	}
 
-	BOOL isNull() const { 
-		return (_data == NULL); 
+	bool isNull() const { 
+		return _data; 
 	}
 	
 	BOOL read(FreeImageIO *io, fi_handle handle, size_t size) {
@@ -124,9 +120,9 @@ public:
 		io->read_proc(&_h, 1, 1, handle);
 		
 		const size_t sizeofData = size - 2;
-		_data = (BYTE*)malloc(sizeofData);
+		_data.reset(malloc(sizeofData));
 		if(_data) {
-			return (io->read_proc(_data, 1, (unsigned)sizeofData, handle) == sizeofData);
+			return (io->read_proc(_data.get(), 1, (unsigned)sizeofData, handle) == sizeofData);
 		}
 		return FALSE;
 	}
@@ -141,7 +137,7 @@ private:
 	BYTE _w;
 	BYTE _h;
 	BYTE _depth;
-	BYTE* _data;
+	unique_mem _data;
 };
 
 #ifdef FREEIMAGE_BIGENDIAN
@@ -180,7 +176,7 @@ FIBITMAP* TargaThumbnail::toFIBITMAP() {
 		return NULL;
 	}
 
-	const BYTE* line = _data;
+	const BYTE* line = (BYTE*)_data.get();
 	const BYTE height = _h;
 	for (BYTE h = 0; h < height; ++h, line += line_size) {
 		BYTE* dst_line = FreeImage_GetScanLine(dib, height - 1 - h);
@@ -209,29 +205,23 @@ FIBITMAP* TargaThumbnail::toFIBITMAP() {
 class IOCache
 {
 public:
-	IOCache(FreeImageIO *io, fi_handle handle, size_t size) :
-		_ptr(NULL), _begin(NULL), _end(NULL), _size(size), _io(io), _handle(handle)	{
-			_begin = (BYTE*)malloc(size);
-			if (_begin) {
-			_end = _begin + _size;
-			_ptr = _end;	// will force refill on first access
+	IOCache(FreeImageIO* io, fi_handle handle, size_t size) :
+		_size(size), _storage(malloc(_size)), _ptr(NULL), _end(NULL), _io(io), _handle(handle) {
+		if (!_storage) {
+			throw FI_MSG_ERROR_MEMORY;
 		}
+		_end = (BYTE*)_storage.get() + _size;
+		_ptr = _end;	// will force refill on first access
 	}
 	
-	~IOCache() {
-		if (_begin != NULL) {
-			free(_begin);
-		}	
-	}
-		
-	BOOL isNull() { return _begin == NULL;}
-	
+	/// @todo Implement in terms of getBytes
 	inline
 	BYTE getByte() {
 		if (_ptr >= _end) {
 			// need refill
-			_ptr = _begin;
-			_io->read_proc(_ptr, sizeof(BYTE), (unsigned)_size, _handle);	//### EOF - no problem?
+			_ptr = (BYTE*)_storage.get();
+			// ### @todo update count, based on bytes read!
+			_io->read_proc(_storage.get(), sizeof(BYTE), (unsigned)_size, _handle);
 		}
 
 		BYTE result = *_ptr;
@@ -250,13 +240,14 @@ public:
 			// 'count' bytes might span two cache bounds,
 			// SEEK back to add the remains of the current cache again into the new one
 
-			long read = long(_ptr - _begin);
+			long read = long(_ptr - (BYTE*)_storage.get());
 			long remaining = long(_size - read);
 
 			_io->seek_proc(_handle, -remaining, SEEK_CUR);
 
-			_ptr = _begin;
-			_io->read_proc(_ptr, sizeof(BYTE), (unsigned)_size, _handle);	//### EOF - no problem?
+			_ptr = (BYTE*)_storage.get();
+			// ### @todo update count, based on bytes read!
+			_io->read_proc(_storage.get(), sizeof(BYTE), (unsigned)_size, _handle);	
 		}
 
 		BYTE *result = _ptr;
@@ -271,10 +262,10 @@ private:
 	IOCache(const IOCache& other); // deleted
 
 private:
-	BYTE *_ptr;
-	BYTE *_begin;
-	BYTE *_end;
 	const size_t _size;
+	unique_mem _storage;
+	BYTE *_ptr;
+	BYTE *_end;
 	const FreeImageIO *_io;	
 	const fi_handle _handle;	
 };
@@ -478,6 +469,8 @@ loadTrueColor(FIBITMAP* dib, int width, int height, int file_pixel_size, FreeIma
 		throw FI_MSG_ERROR_MEMORY;
 	}
 
+	unique_mem file_line_storage(file_line);
+
 	for (int y = 0; y < height; y++) {
 		BYTE *bits = FreeImage_GetScanLine(dib, y);
 		io->read_proc(file_line, file_pixel_size, width, handle);
@@ -498,8 +491,6 @@ loadTrueColor(FIBITMAP* dib, int width, int height, int file_pixel_size, FreeIma
 			bits += pixel_size;
 		}
 	}
-
-	free(file_line);
 }
 
 /**
@@ -592,11 +583,6 @@ loadRLE(FIBITMAP* dib, int width, int height, FreeImageIO* io, fi_handle handle,
 
 	// ...and allocate cache of this size (yields good results)
 	IOCache cache(io, handle, sz);
-	if(cache.isNull()) {
-		FreeImage_Unload(dib);
-		dib = NULL;
-		return;
-	}
 		
 	int x = 0, y = 0;
 
@@ -735,6 +721,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// skip comment
 		io->seek_proc(handle, header.id_length, SEEK_CUR);
 
+	  unique_dib dib_storage(NULL);
+
 		switch (header.is_pixel_depth) {
 			case 8 : {
 				dib = FreeImage_AllocateHeader(header_only, header.is_width, header.is_height, 8);
@@ -742,6 +730,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if (dib == NULL) {
 					throw FI_MSG_ERROR_DIB_MEMORY;
 				}
+
+				dib_storage.reset(dib);
 					
 				// read the palette (even if header only)
 
@@ -756,8 +746,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					// read the color map
 					BYTE *cmap = (BYTE*)malloc(csize * sizeof(BYTE));
 					if (cmap == NULL) {
-						throw FI_MSG_ERROR_DIB_MEMORY;
+						throw FI_MSG_ERROR_MEMORY;
 					}
+					unique_mem cmap_storage(cmap);
 					io->read_proc(cmap, sizeof(BYTE), csize, handle);
 
 					// build the palette
@@ -816,8 +807,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						break;
 
 					} // switch(header.cm_size)
-
-					free(cmap);
 				}
 				
 				// handle thumbnail
@@ -839,7 +828,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 
 				if(header_only) {
-					return dib;
+					return dib_storage.release();
 				}
 					
 				// read in the bitmap bits
@@ -863,8 +852,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 					default :
-						FreeImage_Unload(dib);
-						return NULL;
+						throw FI_MSG_ERROR_UNSUPPORTED;
 				}
 			}
 			break; // header.is_pixel_depth == 8
@@ -887,6 +875,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if (dib == NULL) {
 					throw FI_MSG_ERROR_DIB_MEMORY;
 				}
+
+				dib_storage.reset(dib);
 				
 				// handle thumbnail
 				
@@ -903,7 +893,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 						
 				if(header_only) {
-					return dib;
+					return dib_storage.release();
 				}
 
 				int line = CalculateLine(header.is_width, pixel_bits);
@@ -933,8 +923,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						// input line cache
 						BYTE *in_line = (BYTE*)malloc(header.is_width * sizeof(WORD));
 
-						if (!in_line)
+						if (!in_line) {
 							throw FI_MSG_ERROR_MEMORY;
+						}
+
+						unique_mem in_line_storage(in_line);
 
 						const int h = header.is_height;
 
@@ -951,8 +944,6 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 								val += src_pixel_size;
 							}
 						}
-
-						free(in_line);
 					}
 					break;
 
@@ -962,8 +953,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 					default :
-						FreeImage_Unload(dib);
-						return NULL;
+						throw FI_MSG_ERROR_UNSUPPORTED;
 				}
 			}
 			break; // header.is_pixel_depth == 15 or 16
@@ -975,6 +965,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if (dib == NULL) {
 					throw FI_MSG_ERROR_DIB_MEMORY;
 				}
+
+				dib_storage.reset(dib);
 				
 				FIBITMAP* th = thumbnail.toFIBITMAP();
 				if(th) {
@@ -983,7 +975,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 				
 				if(header_only) {
-					return dib;
+					return dib_storage.release();
 				}
 					
 				// read in the bitmap bits
@@ -1001,8 +993,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 					default :
-						FreeImage_Unload(dib);
-						return NULL;
+						throw FI_MSG_ERROR_UNSUPPORTED;
 				}
 			}
 			break;	// header.is_pixel_depth == 24
@@ -1019,6 +1010,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if (dib == NULL) {
 					throw FI_MSG_ERROR_DIB_MEMORY;
 				}
+
+				dib_storage.reset(dib);
 				
 				// handle thumbnail
 				
@@ -1034,8 +1027,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				}
 
 				if(header_only) {
-					return dib;
+					return dib_storage.release();
 				}
+
 					
 				// read in the bitmap bits
 
@@ -1052,8 +1046,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					break;
 
 					default :
-						FreeImage_Unload(dib);
-						return NULL;
+						throw FI_MSG_ERROR_UNSUPPORTED;
 				}
 			}
 			break; // header.is_pixel_depth == 32
@@ -1068,12 +1061,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			FreeImage_FlipHorizontal(dib);
 		}
 
-		return dib;
+		return dib_storage.release();
 
 	} catch (const char *message) {
-		if (dib) {
-			FreeImage_Unload(dib);
-		}
 
 		FreeImage_OutputMessageProc(s_format_id, message);
 
