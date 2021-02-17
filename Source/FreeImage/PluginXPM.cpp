@@ -282,7 +282,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 
 					if (!FreeImage_LookupX11Color(clr,  &rgba.r, &rgba.g, &rgba.b)) {
-						sprintf(msg, "Unknown color name '%s'", str);
+						sprintf(msg, "Unknown color name '%s'", str.c_str());
 						throw msg;
 					}
 				}
