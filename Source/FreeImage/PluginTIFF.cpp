@@ -1195,7 +1195,7 @@ IsValidBitsPerSample(uint16 photometric, uint16 bitspersample, uint16 samplesper
 }
 
 static TIFFLoadMethod  
-FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
+FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, unsigned flags) {
 	uint16 bitspersample	= (uint16)-1;
 	uint16 samplesperpixel	= (uint16)-1;
 	uint16 photometric		= (uint16)-1;
@@ -1273,7 +1273,7 @@ FindLoadMethod(TIFF *tif, FREE_IMAGE_TYPE image_type, int flags) {
 // ==========================================================
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data);
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data);
 
 /**
 Read embedded thumbnail
@@ -1313,8 +1313,7 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 			
 			// load the thumbnail
 			int page = 1;
-			int flags = TIFF_DEFAULT;
-			thumbnail = Load(io, handle, page, flags, data);
+			thumbnail = LoadAdv(io, handle, page, NULL, data);
 
 			// store the thumbnail (remember to release it before return)
 			FreeImage_SetThumbnail(dib, thumbnail);
@@ -1345,8 +1344,7 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 				if(TIFFSetSubDirectory(tiff, subIFD_offsets[0])) {
 					// load the thumbnail
 					int page = -1; 
-					int flags = TIFF_DEFAULT;
-					thumbnail = Load(io, handle, page, flags, data);
+					thumbnail = LoadAdv(io, handle, page, NULL, data);
 
 					// store the thumbnail (remember to release it before return)
 					FreeImage_SetThumbnail(dib, thumbnail);
@@ -1386,12 +1384,19 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 
 // --------------------------------------------------------------------------
 
+static const FreeImageLoadArgs default_args;
+
 static FIBITMAP * DLL_CALLCONV
 LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	if (!handle || !data ) {
 		return NULL;
 	}
-	const int flags = args->flags;
+
+	if(! args) {
+		args = &default_args;
+	}
+
+	const unsigned flags = args->flags;
 	FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
 	if (progress.isCanceled()) {
 		return NULL;
@@ -2398,14 +2403,6 @@ LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* ar
   
 }
 
-static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO* io, fi_handle handle, int page, int flags, void* data) {
-	FreeImageLoadArgs args;
-	memset(&args, 0, sizeof(FreeImageLoadArgs));
-	args.flags = flags;
-
-	return LoadAdv(io, handle, page, &args, data);
-}
 
 // --------------------------------------------------------------------------
 

@@ -621,9 +621,11 @@ FI_STRUCT (FIMEMORY) { void *data; };
 // Plugin routines ----------------------------------------------------------
 
 FI_STRUCT(FreeImageLoadArgs) {
-	int flags;
+	unsigned flags;      //< first 16 bits: same as old flags argument
+	unsigned option;     //< first 16 bits: 
+                         // FIF_JPEG: desired downscale size
 
-	unsigned cbOption;   //< lower 8 bits: number of times onProgress should be called while loading; the rest: RESERVED
+	unsigned cbOption;   //< first 8 bits: number of times onProgress should be called while loading
 	struct FreeImageCB* cb;
 
 	void* more;

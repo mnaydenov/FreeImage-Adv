@@ -375,8 +375,6 @@ FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data)
 // Plugin System Load/Save Functions
 // =====================================================================
 
-static const FreeImageLoadArgs default_args;
-
 FIBITMAP * DLL_CALLCONV
 FreeImage_LoadFromHandleAdv(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, const FreeImageLoadArgs* args) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
@@ -386,15 +384,21 @@ FreeImage_LoadFromHandleAdv(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle ha
 			if(node->m_plugin->loadAdv_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, TRUE);
 
-				FIBITMAP *bitmap = node->m_plugin->loadAdv_proc(io, handle, -1, args ? args : &default_args, data);
+				FIBITMAP *bitmap = node->m_plugin->loadAdv_proc(io, handle, -1, args, data);
 					
 				FreeImage_Close(node, io, handle, data);
 					
 				return bitmap;
 			} else if(node->m_plugin->load_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, TRUE);
-					
-				FIBITMAP *bitmap = node->m_plugin->load_proc(io, handle, -1, args ? args->flags : 0, data);
+
+				int flags = 0;
+				if(args) {
+					flags = args->flags;
+					flags |= args->option << 16;
+				}
+				
+				FIBITMAP *bitmap = node->m_plugin->load_proc(io, handle, -1, flags, data);
 					
 				FreeImage_Close(node, io, handle, data);
 					
@@ -446,29 +450,33 @@ FreeImage_LoadAdvU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, const FreeIma
 	return NULL;
 }
 
-FIBITMAP * DLL_CALLCONV
-FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
+static 
+FreeImageLoadArgs argsFromFlags(int flags) {
 	FreeImageLoadArgs args;
 	memset(&args, 0, sizeof(FreeImageLoadArgs));
-	args.flags = flags;
+	args.flags = unsigned(flags) & 0xffff;
+	args.option = unsigned(flags) >> 16;
+
+	return args;
+}
+
+FIBITMAP * DLL_CALLCONV
+FreeImage_LoadFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, int flags) {
+	const FreeImageLoadArgs args = argsFromFlags(flags);
 
 	return FreeImage_LoadFromHandleAdv(fif, io, handle, &args);
 }
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_Load(FREE_IMAGE_FORMAT fif, const char *filename, int flags) {
-	FreeImageLoadArgs args;
-	memset(&args, 0, sizeof(FreeImageLoadArgs));
-	args.flags = flags;
+	const FreeImageLoadArgs args = argsFromFlags(flags);
 
 	return FreeImage_LoadAdv(fif, filename, &args);
 }
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_LoadU(FREE_IMAGE_FORMAT fif, const wchar_t *filename, int flags) {
-	FreeImageLoadArgs args;
-	memset(&args, 0, sizeof(FreeImageLoadArgs));
-	args.flags = flags;
+	const FreeImageLoadArgs args = argsFromFlags(flags);
 
 	return FreeImage_LoadAdvU(fif, filename, &args);
 }
