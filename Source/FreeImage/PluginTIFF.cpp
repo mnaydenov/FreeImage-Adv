@@ -1405,10 +1405,10 @@ LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* ar
 	uint32 iccSize = 0;		// ICC profile length
 	void *iccBuf = NULL;	// ICC profile data		
 
+	const unsigned flags = args->flags;
 	const BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 	
 	try {	
-		const unsigned flags = args->flags;
 		FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
 		if(progress.isCanceled()) {
 			return NULL;
