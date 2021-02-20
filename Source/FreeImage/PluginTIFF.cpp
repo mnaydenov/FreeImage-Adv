@@ -1384,24 +1384,12 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 
 // --------------------------------------------------------------------------
 
-static const FreeImageLoadArgs default_args;
-
 static FIBITMAP * DLL_CALLCONV
 LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	if (!handle || !data ) {
 		return NULL;
 	}
 
-	if(! args) {
-		args = &default_args;
-	}
-
-	const unsigned flags = args->flags;
-	FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
-	if (progress.isCanceled()) {
-		return NULL;
-	}
-	
 	TIFF   *tif = NULL;
 	uint32 height = 0; 
 	uint32 width = 0; 
@@ -1420,6 +1408,12 @@ LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* ar
 	const BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 	
 	try {	
+		const unsigned flags = args->flags;
+		FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+		if(progress.isCanceled()) {
+			return NULL;
+		}
+
 		fi_TIFFIO *fio = (fi_TIFFIO*)data;
 		tif = fio->tif;
 

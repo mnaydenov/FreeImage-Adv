@@ -375,6 +375,8 @@ FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data)
 // Plugin System Load/Save Functions
 // =====================================================================
 
+static const FreeImageLoadArgs default_args;
+
 FIBITMAP * DLL_CALLCONV
 FreeImage_LoadFromHandleAdv(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, const FreeImageLoadArgs* args) {
 	if ((fif >= 0) && (fif < FreeImage_GetFIFCount())) {
@@ -384,7 +386,7 @@ FreeImage_LoadFromHandleAdv(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle ha
 			if(node->m_plugin->loadAdv_proc != NULL) {
 				void *data = FreeImage_Open(node, io, handle, TRUE);
 
-				FIBITMAP *bitmap = node->m_plugin->loadAdv_proc(io, handle, -1, args, data);
+				FIBITMAP *bitmap = node->m_plugin->loadAdv_proc(io, handle, -1, args ? args : &default_args, data);
 					
 				FreeImage_Close(node, io, handle, data);
 					
