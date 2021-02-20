@@ -7,7 +7,7 @@
 // - Jan L. Nauta (jln@magentammt.com)
 // - Markus Loibl (markus.loibl@epost.de)
 // - Karl-Heinz Bussian (khbussian@moss.de)
-// - Hervé Drolon (drolon@infonie.fr)
+// - Hervï¿½ Drolon (drolon@infonie.fr)
 // - Jascha Wetzel (jascha@mainia.de)
 // - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
@@ -82,6 +82,8 @@ typedef struct tagErrorManager {
 	struct jpeg_error_mgr pub;
 	/// for return to caller
 	jmp_buf setjmp_buffer;
+	/// callback support
+	FreeImageCB* cb;
 } ErrorManager;
 
 typedef struct tagSourceManager {
@@ -166,7 +168,7 @@ jpeg_output_message (j_common_ptr cinfo) {
 	// create the message
 	error_ptr->pub.format_message(cinfo, buffer);
 	// send it to user's message proc
-	FreeImage_OutputMessageProc(s_format_id, buffer);
+	FreeImage_OutputMessageProcCB(error_ptr->cb, s_format_id, buffer);
 }
 
 // ----------------------------------------------------------
@@ -718,7 +720,8 @@ read_markers(j_decompress_ptr cinfo, FIBITMAP *dib) {
 				}
 				if(memcmp(marker->data, "JFXX" , 5) == 0) {
 					if(!cinfo->saw_JFIF_marker || cinfo->JFIF_minor_version < 2) {
-						FreeImage_OutputMessageProc(s_format_id, "Warning: non-standard JFXX segment");
+						freeimage_error_ptr error_ptr = (freeimage_error_ptr)cinfo->err;
+						FreeImage_OutputMessageProcCB(error_ptr->cb, s_format_id, "Warning: non-standard JFXX segment");
 					}					
 					jpeg_read_jfxx(dib, marker->data, marker->data_length);
 				}
@@ -1151,9 +1154,11 @@ SupportsNoPixels() {
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	if (handle) {
 		FIBITMAP *dib = NULL;
+
+		const unsigned flags = args->flags;
 
 		BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
@@ -1164,6 +1169,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		ErrorManager fi_error_mgr;
 
 		try {
+
+			FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+			if(progress.isCanceled()) {
+				return NULL;
+			}
 
 			// step 1: allocate and initialize JPEG decompression object
 
@@ -1178,6 +1188,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// Clean up of the JPEG object is done by decompress_storage.
 				throw (const char*)NULL;
 			}
+			fi_error_mgr.cb = args->cb;
 
 			jpeg_create_decompress(&cinfo);
 
@@ -1199,7 +1210,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// step 4: set parameters for decompression
 
 			unsigned int scale_denom = 1;		// fraction by which to scale image
-			int	requested_size = flags >> 16;	// requested user size in pixels
+			const int	requested_size = args->option;	// requested user size in pixels
 			if(requested_size > 0) {
 				// the JPEG codec can perform x2, x4 or x8 scaling on loading
 				// try to find the more appropriate scaling according to user's need
@@ -1294,6 +1305,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// step 7a: while (scan lines remain to be read) jpeg_read_scanlines(...);
 
+			const bool shouldRotateExif = ((flags & JPEG_EXIFROTATE) == JPEG_EXIFROTATE);
+
+			FIProgress::Step step = progress.getStepProgress(cinfo.output_height, shouldRotateExif ? .9 : 1.);
+
 			if((cinfo.out_color_space == JCS_CMYK) && ((flags & JPEG_CMYK) != JPEG_CMYK)) {
 				// convert from CMYK to RGB
 
@@ -1318,6 +1333,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						dst[FI_RGBA_BLUE]  = (BYTE)((K * src[2]) / 255);	// Y -> B
 						src += 4;
 						dst += 3;
+					}
+
+					if(! step.progress()) {
+						return NULL;
 					}
 				}
 				
@@ -1350,6 +1369,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 						src += 4;
 						dst += 4;
 					}
+
+					if(! step.progress()) {
+						return NULL;
+					}
 				}
 
 			} else {
@@ -1359,6 +1382,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					JSAMPROW dst = FreeImage_GetScanLine(dib, cinfo.output_height - cinfo.output_scanline - 1);
 
 					jpeg_read_scanlines(&cinfo, &dst, 1);
+
+					if(! step.progress()) {
+						return NULL;
+					}
 				}
 
 				// step 7b: swap red and blue components (see LibJPEG/jmorecfg.h: #define RGB_RED, ...)
@@ -1377,7 +1404,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// step 9: release of JPEG decompression object is done by dib_storage (also called when aborting, but it is safe to call multiple times)
 
 			// check for automatic Exif rotation
-			if(!header_only && ((flags & JPEG_EXIFROTATE) == JPEG_EXIFROTATE)) {
+			if(!header_only && shouldRotateExif) {
+				if(progress.isCanceled()) {
+					return NULL;
+				}
+
 				RotateExif(&dib);
 			}
 
@@ -1388,7 +1419,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		} catch (const char *text) {
 
 			if(NULL != text) {
-				FreeImage_OutputMessageProc(s_format_id, text);
+				FreeImage_OutputMessageProcCB(args->cb, s_format_id, text);
 			}
 		}
 	}
@@ -1728,7 +1759,8 @@ InitJPEG(Plugin *plugin, int format_id) {
 	plugin->close_proc = NULL;
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
