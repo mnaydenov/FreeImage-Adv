@@ -770,7 +770,8 @@ struct FIProgress {
 		assert(! (_progress > endProgress_));
 
 		const fi_progress_t range = endProgress_ - _progress;
-		const fi_progress_t pdelta = range / _steps;
+		const fi_progress_t pdelta = range 
+			/ (stepsTotal / sdelta); //< ensure we never overshoot past FI_MAX_PROGRESS. `sdelta` is rounded down and we can end up w/ more steps the requested
 
 		return Step(&_cb, &_progress, sdelta, pdelta);
 	}
