@@ -107,14 +107,14 @@ SupportsNoPixels() {
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	if(!handle) {
 		return NULL;
 	}
 	try {
 		psdParser parser;
 
-		FIBITMAP *dib = parser.Load(io, handle, s_format_id, flags);
+		FIBITMAP *dib = parser.Load(io, handle, s_format_id, args);
 		
 		return dib;
 
@@ -158,7 +158,8 @@ InitPSD(Plugin *plugin, int format_id) {
 	plugin->close_proc = NULL;
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;

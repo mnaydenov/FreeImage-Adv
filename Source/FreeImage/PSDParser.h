@@ -319,7 +319,7 @@ private:
 	bool ReadLayerAndMaskInfoSection(FreeImageIO *io, fi_handle handle);
 	void ReadImageLine(BYTE* dst, const BYTE* src, unsigned lineSize, unsigned dstBpp, unsigned bytes);
 	void UnpackRLE(BYTE* dst, const BYTE* src, BYTE* dst_end, unsigned srcSize);
-	FIBITMAP* ReadImageData(FreeImageIO *io, fi_handle handle);
+	FIBITMAP* ReadImageData(FreeImageIO *io, fi_handle handle, FIProgress& progress);
 	bool WriteLayerAndMaskInfoSection(FreeImageIO *io, fi_handle handle);
 	void WriteImageLine(BYTE* dst, const BYTE* src, unsigned lineSize, unsigned srcBpp, unsigned bytes);
 	unsigned PackRLE(BYTE* line_start, const BYTE* src_line, unsigned srcSize);
@@ -328,7 +328,7 @@ private:
 public:
 	psdParser();
 	~psdParser();
-	FIBITMAP* Load(FreeImageIO *io, fi_handle handle, int s_format_id, int flags=0);
+	FIBITMAP* Load(FreeImageIO *io, fi_handle handle, int s_format_id, const FreeImageLoadArgs* args);
 	bool Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void *data);
 	/** Also used by the TIFF plugin */
 	bool ReadImageResources(FreeImageIO *io, fi_handle handle, LONG length=0);

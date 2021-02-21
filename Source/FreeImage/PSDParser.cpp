@@ -1336,7 +1336,7 @@ void psdParser::UnpackRLE(BYTE* line, const BYTE* rle_line, BYTE* line_end, unsi
 	}//< rle_line
 }
 
-FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
+FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle, FIProgress& progress) {
 	if (handle == NULL) {
 		return NULL;
 	}
@@ -1356,7 +1356,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 	// are only valid for layer data, not the composited data.
 	if(nCompression != PSDP_COMPRESSION_NONE &&
 	   nCompression != PSDP_COMPRESSION_RLE) {
-		FreeImage_OutputMessageProc(_fi_format_id, "Unsupported compression %d", nCompression);
+		FreeImage_OutputMessageProcCB(progress.callback(), _fi_format_id, "Unsupported compression %d", nCompression);
 		return NULL;
 	}
 
@@ -1370,7 +1370,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 	const unsigned lineSize = (_headerInfo._BitsPerChannel == 1) ? (nWidth + 7) / 8 : nWidth * bytes;
 
 	if(nCompression == PSDP_COMPRESSION_RLE && depth > 16) {
-		FreeImage_OutputMessageProc(_fi_format_id, "Unsupported RLE with depth %d", depth);
+		FreeImage_OutputMessageProcCB(progress.callback(), _fi_format_id, "Unsupported RLE with depth %d", depth);
 		return NULL;
 	}
 
@@ -1458,6 +1458,10 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 	BYTE* line_start = new BYTE[lineSize]; //< fileline cache
 	unique_arr<BYTE> line_start_storage(line_start);
 
+	FIProgress::Step step = progress.getStepProgress((nChannels < dstChannels ? nChannels : dstChannels) * nHeight
+		                     , (mode == PSDP_CMYK || mode == PSDP_MULTICHANNEL) && (_fi_flags & PSD_CMYK) == 0
+		                     || (mode == PSDP_LAB && (_fi_flags & PSD_LAB) == 0) ? .8 : .9);
+
 	switch ( nCompression ) {
 		case PSDP_COMPRESSION_NONE: // raw data
 		{
@@ -1473,6 +1477,10 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 				for(unsigned h = 0; h < nHeight; ++h, dst_line_start -= dstLineSize) {//<*** flipped
 					io->read_proc(line_start, lineSize, 1, handle);
 					ReadImageLine(dst_line_start, line_start, lineSize, dstBpp, bytes);
+
+					if(! step.progress()) {
+						return NULL;
+					}
 				} //< h
 			}//< ch
 
@@ -1548,6 +1556,10 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 
 					UnpackRLE(line_start, rle_line_start, line_start + lineSize, rleLineSize);
 					ReadImageLine(dst_line_start, line_start, lineSize, dstBpp, bytes);
+
+					if(! step.progress()) {
+						return NULL;
+					}
 				}//< h
 			}//< ch
 		}
@@ -1601,7 +1613,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 				FreeImage_GetICCProfile(bitmap)->flags |= FIICC_COLOR_IS_CMYK;
 			}
 		}
-		else {
+		else if(! progress.isCanceled()) {
 			// convert to RGB
 
 			ConvertCMYKtoRGBA(bitmap);
@@ -1616,26 +1628,26 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 					bitmap_storage.reset(t);
 				} // else: silently fail
 			}
+			progress.reportProgress(.9);
 		}
 	}
-	else if ( mode == PSDP_LAB && !((_fi_flags & PSD_LAB) == PSD_LAB)) {
+	else if ( mode == PSDP_LAB && !((_fi_flags & PSD_LAB) == PSD_LAB) && ! progress.isCanceled()) {
 		ConvertLABtoRGB(bitmap);
+		progress.reportProgress(.9);
 	}
-	else {
-		if (needPalette && FreeImage_GetPalette(bitmap)) {
+	else if (needPalette && FreeImage_GetPalette(bitmap)) {
 
-			if(mode == PSDP_BITMAP) {
-				CREATE_GREYSCALE_PALETTE_REVERSE(FreeImage_GetPalette(bitmap), 2);
-			}
-			else if(mode == PSDP_INDEXED) {
-				if(!_colourModeData._plColourData || _colourModeData._Length != 768 || _ColourCount < 0) {
-					FreeImage_OutputMessageProc(_fi_format_id, "Indexed image has no palette. Using the default grayscale one.");
-				} else {
-					_colourModeData.FillPalette(bitmap);
-				}
-			}
-			// GRAYSCALE, DUOTONE - use default grayscale palette
+		if(mode == PSDP_BITMAP) {
+			CREATE_GREYSCALE_PALETTE_REVERSE(FreeImage_GetPalette(bitmap), 2);
 		}
+		else if(mode == PSDP_INDEXED) {
+			if(!_colourModeData._plColourData || _colourModeData._Length != 768 || _ColourCount < 0) {
+				FreeImage_OutputMessageProcCB(progress.callback(), _fi_format_id, "Indexed image has no palette. Using the default grayscale one.");
+			} else {
+				_colourModeData.FillPalette(bitmap);
+			}
+		}
+		// else GRAYSCALE, DUOTONE - use default grayscale palette
 	}
 
 	return bitmap_storage.release();
@@ -1909,13 +1921,19 @@ bool psdParser::WriteImageData(FreeImageIO *io, fi_handle handle, FIBITMAP* dib)
 	return true;
 }
 
-FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id, int flags) {
+FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id, const FreeImageLoadArgs* args) {
 	FIBITMAP *Bitmap = NULL;
 
-	_fi_flags = flags;
+	_fi_flags = args->flags;
 	_fi_format_id = s_format_id;
 
 	try {
+
+		FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+		if(progress.isCanceled()) {
+			return NULL;
+		}
+
 		if (NULL == handle) {
 			throw("Cannot open file");
 		}
@@ -1936,9 +1954,17 @@ FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id, in
 			throw("Error in Mask Info");
 		}
 
-		Bitmap = ReadImageData(io, handle);
+		if(! progress.reportProgress(.2)) {
+			return NULL;
+		}
+
+		Bitmap = ReadImageData(io, handle, progress);
+		if(progress.isCanceled()) {
+			return NULL;
+		}
+
 		if (NULL == Bitmap) {
-			throw("Error in Image Data");
+			throw("Error reading image data");
 		}
 
 		// set resolution info
@@ -1955,7 +1981,7 @@ FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id, in
 		// set ICC profile
 		if(NULL != _iccProfile._ProfileData) {
 			FreeImage_CreateICCProfile(Bitmap, _iccProfile._ProfileData, _iccProfile._ProfileSize);
-			if ((flags & PSD_CMYK) == PSD_CMYK) {
+			if ((_fi_flags & PSD_CMYK) == PSD_CMYK) {
 				short mode = _headerInfo._ColourMode;
 				if((mode == PSDP_CMYK) || (mode == PSDP_MULTICHANNEL)) {
 					FreeImage_GetICCProfile(Bitmap)->flags |= FIICC_COLOR_IS_CMYK;
@@ -1984,10 +2010,10 @@ FIBITMAP* psdParser::Load(FreeImageIO *io, fi_handle handle, int s_format_id, in
 		}
 
 	} catch(const char *text) {
-		FreeImage_OutputMessageProc(s_format_id, text);
+		FreeImage_OutputMessageProcCB(args->cb, s_format_id, text);
 	}
 	catch(const std::exception& e) {
-		FreeImage_OutputMessageProc(s_format_id, "%s", e.what());
+		FreeImage_OutputMessageProcCB(args->cb, s_format_id, "%s", e.what());
 	}
 
 	return Bitmap;

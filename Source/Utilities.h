@@ -784,6 +784,8 @@ struct FIProgress {
 		return _cb.onProgress(progress);
 	}
 
+	FreeImageCBWrapper callback() const { return _cb; }
+
 private:
 	fi_progress_t _progress;
 	short _steps;
