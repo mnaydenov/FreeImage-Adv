@@ -1638,7 +1638,7 @@ FIBITMAP* psdParser::ReadImageData(FreeImageIO *io, fi_handle handle) {
 		}
 	}
 
-	return bitmap;
+	return bitmap_storage.release();
 }
 
 bool psdParser::WriteLayerAndMaskInfoSection(FreeImageIO *io, fi_handle handle)	{
