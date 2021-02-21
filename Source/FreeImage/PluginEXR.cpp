@@ -174,7 +174,6 @@ SupportsNoPixels() {
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	bool bUseRgbaInterface = false;
-	FIBITMAP *dib = NULL;	
 
 	if(!handle) {
 		return NULL;
@@ -304,7 +303,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		}
 
 		// allocate a new dib
-		dib = FreeImage_AllocateHeaderT(header_only, image_type, width, height, 0);
+		FIBITMAP* dib = FreeImage_AllocateHeaderT(header_only, image_type, width, height, 0);
 		if(!dib) THROW (Iex::NullExc, FI_MSG_ERROR_MEMORY);
 
 		// try to load the preview image
@@ -345,6 +344,8 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// header only mode
 			return dib;
 		}
+
+		unique_dib dib_storage(dib);
 
 		// load pixels
 		// --------------------------------------------------------------
@@ -431,16 +432,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		// lastly, flip dib lines
 		FreeImage_FlipVertical(dib);
 
+		return dib_storage.release();
 	}
 	catch(Iex::BaseExc & e) {
-		if(dib != NULL) {
-			FreeImage_Unload(dib);
-		}
 		FreeImage_OutputMessageProc(s_format_id, e.what());
 		return NULL;
 	}
 
-	return dib;
 }
 
 /**
