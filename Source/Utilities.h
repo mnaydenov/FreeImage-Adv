@@ -740,7 +740,7 @@ struct FIProgress {
 
 	explicit FIProgress(unsigned cbOption, FreeImageCB* cb, FREE_IMAGE_OPERATION op, unsigned which, bool errorsViaExceptions = true)
 		: _progress(0)
-		, _steps(cbOption ? (cbOption & 0xF) : 20)
+		, _steps((cbOption & 0xF) ? (cbOption & 0xF) : 20)
 		, _cb(cb)
 		, _initialExceptions(uncaught_exceptions())
 	{
@@ -762,6 +762,7 @@ struct FIProgress {
 
 	Step getStepProgress(fi_progress_t stepsTotal, double endProgress) {
 		assert(! (endProgress < 0) && ! (endProgress > 1.0));
+		assert(_steps);
 
 		const fi_progress_t sdelta = stepsTotal / _steps;
 

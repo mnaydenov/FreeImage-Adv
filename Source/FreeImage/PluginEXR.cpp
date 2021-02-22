@@ -2,7 +2,7 @@
 // EXR Loader and writer
 //
 // Design and implementation by 
-// - Hervé Drolon (drolon@infonie.fr)
+// - Hervï¿½ Drolon (drolon@infonie.fr)
 // - Mihail Naydenov (mnaydenov@users.sourceforge.net)
 //
 // This file is part of FreeImage 3
@@ -172,7 +172,7 @@ SupportsNoPixels() {
 // --------------------------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	bool bUseRgbaInterface = false;
 
 	if(!handle) {
@@ -180,7 +180,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	}
 
 	try {
-		BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
+		FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+		if(progress.isCanceled()) {
+			return NULL;
+		}
+		BOOL header_only = (args->flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 		// save the stream starting point
 		const long stream_start = io->tell_proc(handle);
@@ -228,14 +232,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			if(components > 4) {
 				if(channels.findChannel("R") && channels.findChannel("G") && channels.findChannel("B") && channels.findChannel("A")) {
 					std::string msg = "Warning: converting color model " + exr_color_model + " to RGBA color model";
-					FreeImage_OutputMessageProc(s_format_id, msg.c_str());
+					FreeImage_OutputMessageProcCB(args->cb, s_format_id, msg.c_str());
 					bHandled = true;
 				}
 			}
 			else if(components > 3) {
 				if(channels.findChannel("R") && channels.findChannel("G") && channels.findChannel("B")) {
 					std::string msg = "Warning: converting color model " + exr_color_model + " to RGB color model";
-					FreeImage_OutputMessageProc(s_format_id, msg.c_str());
+					FreeImage_OutputMessageProcCB(args->cb, s_format_id, msg.c_str());
 					bHandled = true;
 				}
 			}
@@ -264,7 +268,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				components = 1;
 			} else {
 				std::string msg = "Warning: loading color model " + exr_color_model + " as Y color model";
-				FreeImage_OutputMessageProc(s_format_id, msg.c_str());
+				FreeImage_OutputMessageProcCB(args->cb, s_format_id, msg.c_str());
 				image_type = FIT_FLOAT;
 				// ignore the other channel
 				components = 1;
@@ -282,14 +286,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				if(channels.findChannel("A")) {
 					if(components > 4) {
 						std::string msg = "Warning: converting color model " + exr_color_model + " to RGBA color model";
-						FreeImage_OutputMessageProc(s_format_id, msg.c_str());
+						FreeImage_OutputMessageProcCB(args->cb, s_format_id, msg.c_str());
 					}
 					image_type = FIT_RGBAF;
 					// ignore other layers if there is more than one alpha layer
 					components = 4;
 				} else {
 					std::string msg = "Warning: converting color model " + exr_color_model + " to RGB color model";
-					FreeImage_OutputMessageProc(s_format_id, msg.c_str());
+					FreeImage_OutputMessageProcCB(args->cb, s_format_id, msg.c_str());
 
 					image_type = FIT_RGBF;
 					// ignore other channels
@@ -347,6 +351,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		unique_dib dib_storage(dib);
 
+		if(! progress.reportProgress(.1)) {
+			return NULL;
+		}
+
 		// load pixels
 		// --------------------------------------------------------------
 
@@ -358,7 +366,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		
 		if(bUseRgbaInterface) {
 			// use the RGBA interface (used when loading RY BY Y images )
-
+			/// @todo allow user-provided chunk size
 			const int chunk_size = 16;
 
 			BYTE *scanline = (BYTE*)bits;
@@ -370,6 +378,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// read the file in chunks
 			Imath::Box2i dw = dataWindow;
 			Imf::Array2D<Imf::Rgba> chunk(chunk_size, width);
+
+			FIProgress::Step step = progress.getStepProgress(fi_progress_t(std::ceil(float(dw.max.y - dw.min.y) / chunk_size)), .99);
+
 			while (dw.min.y <= dw.max.y) {
 				// read a chunk
 				rgbaFile.setFrameBuffer (&chunk[0][0] - dw.min.x - dw.min.y * width, 1, width);
@@ -387,6 +398,10 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 					}
 					// next line
 					scanline += pitch;
+
+					if(! step.progress()) {
+						return NULL;
+					}
 				}
 				// next chunk
 				dw.min.y += chunk_size;
@@ -426,7 +441,31 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// read the file
 			file.setFrameBuffer(frameBuffer);
-			file.readPixels(dataWindow.min.y, dataWindow.max.y);
+
+			if(! progress.callback()) {
+				file.readPixels(dataWindow.min.y, dataWindow.max.y);
+			} else {
+				/// @todo allow user-provided chunk size
+				const int chunk_size = 16;
+				Imath::Box2i dw = dataWindow;
+
+				FIProgress::Step step = progress.getStepProgress(fi_progress_t(std::ceil(float(dw.max.y - dw.min.y) / chunk_size)), .99);
+
+				while (dw.min.y <= dw.max.y) {
+					file.readPixels(dw.min.y, MIN(dw.min.y + chunk_size - 1, dw.max.y));
+
+					if(! step.progress()) {
+						return NULL;
+					} 
+
+					// next chunk
+					dw.min.y += chunk_size;
+				}
+			}
+		}
+
+		if(progress.isCanceled()) {
+			return NULL;
 		}
 
 		// lastly, flip dib lines
@@ -760,7 +799,8 @@ InitEXR(Plugin *plugin, int format_id) {
 	plugin->close_proc = NULL;
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
