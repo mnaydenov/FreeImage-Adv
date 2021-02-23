@@ -218,7 +218,7 @@ Load uncompressed image pixels for 1-, 4-, 8-, 16-, 24- and 32-bit dib
 @return Returns the final loaded image
 */
 static FIBITMAP* 
-LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP* dib, int height, unsigned pitch, unsigned bit_count) throw() {
+LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP* dib, int height, unsigned pitch, unsigned bit_count, FIProgress& progress) throw() {
 	BOOL ok = TRUE;
 	unsigned count = 0;
 
@@ -231,11 +231,16 @@ LoadPixelData(FreeImageIO *io, fi_handle handle, FIBITMAP* dib, int height, unsi
 		}
 	} else {
 		int positiveHeight = abs(height);
+		FIProgress::Step step = progress.getStepProgress(positiveHeight, 1);
 		for (int c = 0; c < positiveHeight; ++c) {
 			count = io->read_proc((void *)FreeImage_GetScanLine(dib, positiveHeight - c - 1), pitch, 1, handle);
 			if(count != 1) {
 				ok = FALSE;
 				break;
+			}
+			if(! step.progress()) {
+				FreeImage_Unload(dib);
+				return NULL;
 			}
 		}
 	}
@@ -282,7 +287,7 @@ Load image pixels for 4-bit RLE compressed dib
 @return Returns the final loaded image
 */
 static FIBITMAP* 
-LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, unsigned bit_count, unique_dib& dib_storage) {
+LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, unsigned bit_count, unique_dib& dib_storage, FIProgress& progress) {
 	static const char* errmsg = "Error encountered while decoding RLE4 BMP data";
 
 	if(4 != bit_count) {
@@ -295,7 +300,9 @@ LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 
 	height = abs(height);
 
-	BYTE *pixels = (BYTE*)malloc(width * height * sizeof(BYTE));
+	FIProgress::Step step = progress.getStepProgress(height, .99);
+
+	BYTE *const pixels = (BYTE*)malloc(width * height * sizeof(BYTE));
 	if (!pixels) {
 		throw FI_MSG_ERROR_MEMORY;
 	}
@@ -304,12 +311,19 @@ LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 	memset(pixels, 0, width * height * sizeof(BYTE));
 
 	BYTE *q = pixels;
-	BYTE *end = pixels + height * width;
+	BYTE *const end = pixels + height * width;
 
 	for (int scanline = 0; scanline < height; ) {
-		if (q < pixels || q  >= end) {
+		assert(! (q < pixels));
+
+		if (q >= end) {
+			if(! step.progress()) {
+				dib_storage.reset();
+				return NULL;
+			}
 			break;
 		}
+
 		if(io->read_proc(&status_byte, sizeof(BYTE), 1, handle) != 1) {
 			throw errmsg;
 		}
@@ -333,6 +347,10 @@ LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 				case RLE_ENDOFLINE:
 				{
 					// End of line
+					if(! step.progress()) {
+						dib_storage.reset();
+						return NULL;
+					}
 					bits = 0;
 					scanline++;
 					q = pixels + scanline * width;
@@ -361,6 +379,16 @@ LoadPixelDataRLE4(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 					bits += delta_x;
 					scanline += delta_y;
 					q = pixels + scanline*width+bits;
+
+					while(delta_y) {
+
+						if(! step.progress()) {
+							dib_storage.reset();
+							return NULL;
+						}
+
+						delta_y--;
+					}
 				}
 				break;
 
@@ -423,7 +451,7 @@ Load image pixels for 8-bit RLE compressed dib
 @return Returns the final loaded image
 */
 static FIBITMAP* 
-LoadPixelDataRLE8(FreeImageIO *io, fi_handle handle, int width, int height, unsigned bit_count, unique_dib& dib_storage) {
+LoadPixelDataRLE8(FreeImageIO *io, fi_handle handle, int width, int height, unsigned bit_count, unique_dib& dib_storage, FIProgress& progress) {
 	static const char* errmsg = "Error encountered while decoding RLE8 BMP data";
 
 	if(8 != bit_count) {
@@ -441,6 +469,8 @@ LoadPixelDataRLE8(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 	BYTE delta_y = 0;
 
 	height = abs(height);
+
+	FIProgress::Step step = progress.getStepProgress(height, 1);
 	
 	while(scanline < height) {
 
@@ -457,6 +487,10 @@ LoadPixelDataRLE8(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 				case RLE_ENDOFLINE:
 					bits = 0;
 					scanline++;
+					if(! step.progress()) {
+						dib_storage.reset();
+						return NULL;
+					}
 					break;
 
 				case RLE_ENDOFBITMAP:
@@ -475,6 +509,16 @@ LoadPixelDataRLE8(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 					// apply them
 					bits += delta_x;
 					scanline += delta_y;
+
+					while(delta_y) {
+
+						if(! step.progress()) {
+							dib_storage.reset();
+							return NULL;
+						}
+
+						delta_y--;
+					}
 					break;
 
 				default:
@@ -520,7 +564,7 @@ LoadPixelDataRLE8(FreeImageIO *io, fi_handle handle, int width, int height, unsi
 // --------------------------------------------------------------------------
 
 static FIBITMAP *
-LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset, int type) {
+LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset, int type, FIProgress& progress) {
 
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
@@ -606,13 +650,13 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 			switch (compression) {
 				case BI_RGB :
-					return LoadPixelData(io, handle, dib_storage.release(), height, pitch, bit_count);
+					return LoadPixelData(io, handle, dib_storage.release(), height, pitch, bit_count, progress);
 
 				case BI_RLE4 :
-					return LoadPixelDataRLE4(io, handle, width, height, bit_count, dib_storage);
+					return LoadPixelDataRLE4(io, handle, width, height, bit_count, dib_storage, progress);
 
 				case BI_RLE8 :
-					return LoadPixelDataRLE8(io, handle, width, height, bit_count, dib_storage);
+					return LoadPixelDataRLE8(io, handle, width, height, bit_count, dib_storage, progress);
 
 				default :
 					throw FI_MSG_ERROR_UNSUPPORTED_COMPRESSION;
@@ -662,7 +706,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 			io->seek_proc(handle, bitmap_bits_offset, SEEK_SET);
 
 			// load pixel data and swap as needed if OS is Big Endian
-			return LoadPixelData(io, handle, dib, height, pitch, bit_count);
+			return LoadPixelData(io, handle, dib, height, pitch, bit_count, progress);
 		}
 		break; // 16-bit RGB
 
@@ -714,7 +758,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 
 			// read in the bitmap bits
 			// load pixel data and swap as needed if OS is Big Endian
-			LoadPixelData(io, handle, dib, height, pitch, bit_count);
+			LoadPixelData(io, handle, dib, height, pitch, bit_count, progress);
 
 			// check if the bitmap contains transparency, if so enable it in the header
 
@@ -731,7 +775,7 @@ LoadWindowsBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bit
 // --------------------------------------------------------------------------
 
 static FIBITMAP *
-LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset) {
+LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset, FIProgress& progress) {
 
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
@@ -828,13 +872,13 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 			switch (compression) {
 				case BI_RGB :
 					// load pixel data 
-					return LoadPixelData(io, handle, dib_storage.release(), height, pitch, bit_count);
+					return LoadPixelData(io, handle, dib_storage.release(), height, pitch, bit_count, progress);
 
 				case BI_RLE4 :
-					return LoadPixelDataRLE4(io, handle, width, height, bit_count, dib_storage);
+					return LoadPixelDataRLE4(io, handle, width, height, bit_count, dib_storage, progress);
 
 				case BI_RLE8 :
-					return LoadPixelDataRLE8(io, handle, width, height, bit_count, dib_storage);
+					return LoadPixelDataRLE8(io, handle, width, height, bit_count, dib_storage, progress);
 
 				default :		
 					throw FI_MSG_ERROR_UNSUPPORTED_COMPRESSION;
@@ -872,7 +916,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 			}
 
 			// load pixel data and swap as needed if OS is Big Endian
-			return LoadPixelData(io, handle, dib, height, pitch, bit_count);
+			return LoadPixelData(io, handle, dib, height, pitch, bit_count, progress);
 		}
 
 		case 24 :
@@ -902,7 +946,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 				
 			// read in the bitmap bits
 			// load pixel data and swap as needed if OS is Big Endian
-			LoadPixelData(io, handle, dib, height, pitch, bit_count);
+			LoadPixelData(io, handle, dib, height, pitch, bit_count, progress);
 
 			// check if the bitmap contains transparency, if so enable it in the header
 
@@ -918,7 +962,7 @@ LoadOS22XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 // --------------------------------------------------------------------------
 
 static FIBITMAP *
-LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset) {
+LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_offset, FIProgress& progress) {
 
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
@@ -985,7 +1029,7 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 			// read the pixel data
 
 			// load pixel data
-			return LoadPixelData(io, handle, dib, height, pitch, bit_count);
+			return LoadPixelData(io, handle, dib, height, pitch, bit_count, progress);
 		}
 
 		case 16 :
@@ -1006,7 +1050,7 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 			}
 
 			// load pixel data and swap as needed if OS is Big Endian
-			return LoadPixelData(io, handle, dib, height, pitch, bit_count);
+			return LoadPixelData(io, handle, dib, height, pitch, bit_count, progress);
 		}
 
 		case 24 :
@@ -1031,7 +1075,7 @@ LoadOS21XBMP(FreeImageIO *io, fi_handle handle, int flags, unsigned bitmap_bits_
 			// A 24 or 32 bit DIB may contain a palette for faster color reduction
 
 			// load pixel data and swap as needed if OS is Big Endian
-			LoadPixelData(io, handle, dib, height, pitch, bit_count);
+			LoadPixelData(io, handle, dib, height, pitch, bit_count, progress);
 
 			// check if the bitmap contains transparency, if so enable it in the header
 
@@ -1115,12 +1159,17 @@ SupportsNoPixels() {
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	if(handle == NULL) {
 		return NULL;
 	}
 
 	try {
+		const int flags = args->flags;
+		FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+		if(progress.isCanceled()) {
+			return NULL;
+		}
 		BITMAPFILEHEADER bitmapfileheader;
 		DWORD type = 0;
 
@@ -1156,18 +1205,18 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		switch(type) {
 			case 12:
 				// OS/2 and also all Windows versions since Windows 3.0
-				return LoadOS21XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
+				return LoadOS21XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits, progress);
 
 			case 64:
 				// OS/2
-				return LoadOS22XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits);
+				return LoadOS22XBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits, progress);
 
 			case 40:	// BITMAPINFOHEADER - all Windows versions since Windows 3.0
 			case 52:	// BITMAPV2INFOHEADER (undocumented, partially supported)
 			case 56:	// BITMAPV3INFOHEADER (undocumented, partially supported)
 			case 108:	// BITMAPV4HEADER - all Windows versions since Windows 95/NT4 (partially supported)
 			case 124:	// BITMAPV5HEADER - Windows 98/2000 and newer (partially supported)
-				return LoadWindowsBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits, type);
+				return LoadWindowsBMP(io, handle, flags, offset_in_file + bitmapfileheader.bfOffBits, type, progress);
 
 			default:
 				FreeImage_OutputMessageProc(s_format_id, "Unknown bmp subtype with id %d", type);
@@ -1554,7 +1603,8 @@ InitBMP(Plugin *plugin, int format_id) {
 	plugin->close_proc = NULL;
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
