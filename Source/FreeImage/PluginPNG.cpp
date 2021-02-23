@@ -83,7 +83,7 @@ _FlushProc(png_structp png_ptr) {
 
 static void
 error_handler(png_structp png_ptr, const char *error) {
-	FreeImage_OutputMessageProc(s_format_id, error);
+	FreeImage_OutputMessageProcCB(static_cast<FreeImageCB*>(png_get_error_ptr(png_ptr)), s_format_id, error);
 	png_longjmp(png_ptr, 1);
 }
 
@@ -322,7 +322,7 @@ Set conversion instructions as needed.
 @return Returns TRUE if successful, returns FALSE otherwise
 @see png_read_update_info
 */
-static BOOL 
+static unsigned 
 ConfigureDecoder(png_structp png_ptr, png_infop info_ptr, int flags, FREE_IMAGE_TYPE *output_image_type) {
 	// get original image info
 	const int color_type = png_get_color_type(png_ptr, info_ptr);
@@ -459,8 +459,7 @@ ConfigureDecoder(png_structp png_ptr, png_infop info_ptr, int flags, FREE_IMAGE_
 
 	// check for unknown or invalid formats
 	if(image_type == FIT_UNKNOWN) {
-		*output_image_type = image_type;
-		return FALSE;
+		throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
 	}
 
 #ifndef FREEIMAGE_BIGENDIAN
@@ -491,17 +490,19 @@ ConfigureDecoder(png_structp png_ptr, png_infop info_ptr, int flags, FREE_IMAGE_
 		}
 	}
 
+	const int passes = png_set_interlace_handling(png_ptr); //*** must be called before png_read_update_info
+
 	// all transformations have been registered; now update info_ptr data		
 	png_read_update_info(png_ptr, info_ptr);
 
 	// return the output image type
 	*output_image_type = image_type;
 
-	return TRUE;
+	return passes;
 }
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 	struct unique_png
 	{
 		unique_png(png_structpp png_ptr_ptr, png_infopp info_ptr_ptr) 
@@ -534,9 +535,14 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	fio.s_io = io;
     
 	if (handle) {
+		const unsigned flags = args->flags;
 		BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 		try {		
+			FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+			if(progress.isCanceled()) {
+				return NULL;
+			}
 			// check to see if the file is in fact a PNG file
 
 			BYTE png_check[PNG_BYTES_TO_CHECK];
@@ -544,23 +550,23 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			io->read_proc(png_check, PNG_BYTES_TO_CHECK, 1, handle);
 
 			if (png_sig_cmp(png_check, (png_size_t)0, PNG_BYTES_TO_CHECK) != 0) {
-				return NULL;	// Bad signature
+				throw FI_MSG_ERROR_MAGIC_NUMBER;	
 			}
 			
 			// create the chunk manage structure
 
-			png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, error_handler, warning_handler);
+			png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, args->cb, error_handler, warning_handler);
 
 			if (!png_ptr) {
-				return NULL;			
+				throw "Failed to create read struct";			
 			}
 
 			// create the info structure
 
-		    info_ptr = png_create_info_struct(png_ptr);
+			info_ptr = png_create_info_struct(png_ptr);
 
 			if (!info_ptr) {
-				return NULL;
+				throw "Failed to create info struct";;
 			}
 
 			// init the IO
@@ -570,7 +576,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			// PNG errors will be redirected here
 
 			if (setjmp(png_jmpbuf(png_ptr))) {
-				// assume error_handler was called before by the PNG library
+				// assume error_handler was called already by the PNG library
 				throw((const char*)NULL);
 			}
 
@@ -585,11 +591,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// configure the decoder
 
-			FREE_IMAGE_TYPE image_type = FIT_BITMAP;
+			FREE_IMAGE_TYPE image_type = FIT_UNKNOWN;
 
-			if(!ConfigureDecoder(png_ptr, info_ptr, flags, &image_type)) {
-				throw FI_MSG_ERROR_UNSUPPORTED_FORMAT;
-			}
+			const unsigned passes = ConfigureDecoder(png_ptr, info_ptr, flags, &image_type);
 
 			// update image info
 
@@ -754,14 +758,34 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 
 			// read in the bitmap bits via the pointer table
-			// allow loading of PNG with minor errors (such as images with several IDAT chunks)
 
 			for (png_uint_32 k = 0; k < height; k++) {
 				row_pointers[height - 1 - k] = FreeImage_GetScanLine(dib, k);
 			}
 
+			// allow loading of PNG with minor errors (such as images with several IDAT chunks)
+
 			png_set_benign_errors(png_ptr, 1);
-			png_read_image(png_ptr, row_pointers);
+
+			// read image
+
+			if(! args->cb) {
+				png_read_image(png_ptr, row_pointers);
+			} else {
+				FIProgress::Step step = progress.getStepProgress(fi_progress_t(height) * passes, .95);
+
+				for(unsigned p = 0; p < passes; p++) {
+					png_bytepp rp = row_pointers;
+					for(unsigned y = 0; y < height; y++) {
+						png_read_row(png_ptr, *rp, NULL);
+						rp++;
+
+						if(! step.progress()) {
+							return NULL;
+						}
+					}
+				}
+			}
 
 			// check if the bitmap contains transparency, if so enable it in the header
 
@@ -785,7 +809,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		} catch (const char *text) {
 			if (NULL != text) {
-				FreeImage_OutputMessageProc(s_format_id, text);
+				FreeImage_OutputMessageProcCB(args->cb, s_format_id, text);
 			}
 			
 			return NULL;
@@ -1102,7 +1126,8 @@ InitPNG(Plugin *plugin, int format_id) {
 	plugin->close_proc = NULL;
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
