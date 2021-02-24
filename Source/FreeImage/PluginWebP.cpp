@@ -214,7 +214,7 @@ DecodeImage(WebPData *webp_image, int flags) {
 	const uint8_t* data = webp_image->bytes;	// raw image data
 	const size_t data_size = webp_image->size;	// raw image size
 
-    VP8StatusCode webp_status = VP8_STATUS_OK;
+  VP8StatusCode webp_status = VP8_STATUS_OK;
 
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
@@ -225,109 +225,99 @@ DecodeImage(WebPData *webp_image, int flags) {
 	// Features gathered from the bitstream
 	WebPBitstreamFeatures* const bitstream = &decoder_config.input;
 
-	try {
-		// Initialize the configuration as empty
-		// This function must always be called first, unless WebPGetFeatures() is to be called
-		if(!WebPInitDecoderConfig(&decoder_config)) {
-			throw "Library version mismatch";
-		}
+	unique_ptr<WebPDecBuffer, void(*)(WebPDecBuffer*)> output_buffer_storage(output_buffer, &WebPFreeDecBuffer);
 
-		// Retrieve features from the bitstream
-		// The bitstream structure is filled with information gathered from the bitstream
-		webp_status = WebPGetFeatures(data, data_size, bitstream);
-		if(webp_status != VP8_STATUS_OK) {
-			throw FI_MSG_ERROR_PARSING;
-		}
-
-		// Allocate output dib
-
-		unsigned bpp = bitstream->has_alpha ? 32 : 24;	
-		unsigned width = (unsigned)bitstream->width;
-		unsigned height = (unsigned)bitstream->height;
-
-		dib = FreeImage_AllocateHeader(header_only, width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
-		if(!dib) {
-			throw FI_MSG_ERROR_DIB_MEMORY;
-		}
-
-		if(header_only) {
-			WebPFreeDecBuffer(output_buffer);
-			return dib;
-		}
-
-		// --- Set decoding options ---
-
-		// use multi-threaded decoding
-		decoder_config.options.use_threads = 1;
-		// set output color space
-		output_buffer->colorspace = bitstream->has_alpha ? MODE_BGRA : MODE_BGR;
-
-		// ---
-
-		// decode the input stream, taking 'config' into account. 
-		
-		webp_status = WebPDecode(data, data_size, &decoder_config);
-		if(webp_status != VP8_STATUS_OK) {
-			throw FI_MSG_ERROR_PARSING;
-		}
-
-		// fill the dib with the decoded data
-
-		const BYTE *src_bitmap = output_buffer->u.RGBA.rgba;
-		const unsigned src_pitch = (unsigned)output_buffer->u.RGBA.stride;
-
-		switch(bpp) {
-			case 24:
-				for(unsigned y = 0; y < height; y++) {
-					const BYTE *src_bits = src_bitmap + y * src_pitch;						
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height-1-y);
-					for(unsigned x = 0; x < width; x++) {
-						dst_bits[FI_RGBA_BLUE]	= src_bits[0];	// B
-						dst_bits[FI_RGBA_GREEN]	= src_bits[1];	// G
-						dst_bits[FI_RGBA_RED]	= src_bits[2];	// R
-						src_bits += 3;
-						dst_bits += 3;
-					}
-				}
-				break;
-			case 32:
-				for(unsigned y = 0; y < height; y++) {
-					const BYTE *src_bits = src_bitmap + y * src_pitch;						
-					BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height-1-y);
-					for(unsigned x = 0; x < width; x++) {
-						dst_bits[FI_RGBA_BLUE]	= src_bits[0];	// B
-						dst_bits[FI_RGBA_GREEN]	= src_bits[1];	// G
-						dst_bits[FI_RGBA_RED]	= src_bits[2];	// R
-						dst_bits[FI_RGBA_ALPHA]	= src_bits[3];	// A
-						src_bits += 4;
-						dst_bits += 4;
-					}
-				}
-				break;
-		}
-
-		// Free the decoder
-		WebPFreeDecBuffer(output_buffer);
-
-		return dib;
-
-	} catch (const char *text) {
-		if(dib) {
-			FreeImage_Unload(dib);
-		}
-		WebPFreeDecBuffer(output_buffer);
-
-		if(NULL != text) {
-			FreeImage_OutputMessageProc(s_format_id, text);
-		}
-
-		return NULL;
+	// Initialize the configuration as empty
+	// This function must always be called first, unless WebPGetFeatures() is to be called
+	if(!WebPInitDecoderConfig(&decoder_config)) {
+		throw "Library version mismatch";
 	}
+
+	// Retrieve features from the bitstream
+	// The bitstream structure is filled with information gathered from the bitstream
+	webp_status = WebPGetFeatures(data, data_size, bitstream);
+	if(webp_status != VP8_STATUS_OK) {
+		throw FI_MSG_ERROR_PARSING;
+	}
+
+	// Allocate output dib
+
+	unsigned bpp = bitstream->has_alpha ? 32 : 24;	
+	unsigned width = (unsigned)bitstream->width;
+	unsigned height = (unsigned)bitstream->height;
+
+	dib = FreeImage_AllocateHeader(header_only, width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
+	if(!dib) {
+		throw FI_MSG_ERROR_DIB_MEMORY;
+	}
+
+	if(header_only) {
+		return dib;
+	}
+
+	unique_dib dib_storage(dib);
+
+	// --- Set decoding options ---
+
+	// use multi-threaded decoding
+	decoder_config.options.use_threads = 1;
+	// set output color space
+	output_buffer->colorspace = bitstream->has_alpha ? MODE_BGRA : MODE_BGR;
+
+	// ---
+
+	// decode the input stream, taking 'config' into account. 
+		
+	webp_status = WebPDecode(data, data_size, &decoder_config);
+	if(webp_status != VP8_STATUS_OK) {
+		throw FI_MSG_ERROR_PARSING;
+	}
+
+	// fill the dib with the decoded data
+
+	const BYTE *src_bitmap = output_buffer->u.RGBA.rgba;
+	const unsigned src_pitch = (unsigned)output_buffer->u.RGBA.stride;
+
+	switch(bpp) {
+		case 24:
+			for(unsigned y = 0; y < height; y++) {
+				const BYTE *src_bits = src_bitmap + y * src_pitch;						
+				BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height-1-y);
+				for(unsigned x = 0; x < width; x++) {
+					dst_bits[FI_RGBA_BLUE]	= src_bits[0];	// B
+					dst_bits[FI_RGBA_GREEN]	= src_bits[1];	// G
+					dst_bits[FI_RGBA_RED]	= src_bits[2];	// R
+					src_bits += 3;
+					dst_bits += 3;
+				}
+			}
+			break;
+		case 32:
+			for(unsigned y = 0; y < height; y++) {
+				const BYTE *src_bits = src_bitmap + y * src_pitch;						
+				BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height-1-y);
+				for(unsigned x = 0; x < width; x++) {
+					dst_bits[FI_RGBA_BLUE]	= src_bits[0];	// B
+					dst_bits[FI_RGBA_GREEN]	= src_bits[1];	// G
+					dst_bits[FI_RGBA_RED]	= src_bits[2];	// R
+					dst_bits[FI_RGBA_ALPHA]	= src_bits[3];	// A
+					src_bits += 4;
+					dst_bits += 4;
+				}
+			}
+			break;
+	}
+
+	return dib_storage.release();
 }
 
 static FIBITMAP * DLL_CALLCONV
 Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	WebPMux *mux = NULL;
+	if(! data) {
+		return NULL;
+	}
+
+	WebPMux *mux = (WebPMux*)data;
 	WebPMuxFrameInfo webp_frame = { 0 };	// raw image
 	WebPData color_profile;	// ICC raw data
 	WebPData xmp_metadata;	// XMP raw data
@@ -340,77 +330,73 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	}
 
 	try {
-		// get the MUX object
-		mux = (WebPMux*)data;
-		if(!mux) {
-			throw (1);
-		}
 		
 		// gets the feature flags from the mux object
 		uint32_t webp_flags = 0;
 		error_status = WebPMuxGetFeatures(mux, &webp_flags);
 		if(error_status != WEBP_MUX_OK) {
-			throw (1);
+			throw "WebPMuxGetFeatures returned with an error";
 		}
 
 		// get image data
 		error_status = WebPMuxGetFrame(mux, 1, &webp_frame);
+		if(error_status != WEBP_MUX_OK) {
+			throw "WebPMuxGetFrame returned with an error";
+		}
+		unique_ptr<WebPData, void(*)(WebPData*)> output_buffer_storage(&webp_frame.bitstream, &WebPDataClear);
 
-		if(error_status == WEBP_MUX_OK) {
-			// decode the data (can be limited to the header if flags uses FIF_LOAD_NOPIXELS)
-			dib = DecodeImage(&webp_frame.bitstream, flags);
-			if(!dib) {
-				throw (1);
-			}
+		// decode the data (can be limited to the header if flags uses FIF_LOAD_NOPIXELS)
+		dib = DecodeImage(&webp_frame.bitstream, flags);
 			
-			// get ICC profile
-			if(webp_flags & ICCP_FLAG) {
-				error_status = WebPMuxGetChunk(mux, "ICCP", &color_profile);
-				if(error_status == WEBP_MUX_OK) {
-					FreeImage_CreateICCProfile(dib, (void*)color_profile.bytes, (long)color_profile.size);
-				}
+		// get ICC profile
+		if(webp_flags & ICCP_FLAG) {
+			error_status = WebPMuxGetChunk(mux, "ICCP", &color_profile);
+			if(error_status == WEBP_MUX_OK) {
+				FreeImage_CreateICCProfile(dib, (void*)color_profile.bytes, (long)color_profile.size);
 			}
+		}
 
-			// get XMP metadata
-			if(webp_flags & XMP_FLAG) {
-				error_status = WebPMuxGetChunk(mux, "XMP ", &xmp_metadata);
-				if(error_status == WEBP_MUX_OK) {
-					// create a tag
-					FITAG *tag = FreeImage_CreateTag();
-					if(tag) {
-						FreeImage_SetTagKey(tag, g_TagLib_XMPFieldName);
-						FreeImage_SetTagLength(tag, (DWORD)xmp_metadata.size);
-						FreeImage_SetTagCount(tag, (DWORD)xmp_metadata.size);
-						FreeImage_SetTagType(tag, FIDT_ASCII);
-						FreeImage_SetTagValue(tag, xmp_metadata.bytes);
-						
-						// store the tag
-						FreeImage_SetMetadata(FIMD_XMP, dib, FreeImage_GetTagKey(tag), tag);
+		// get XMP metadata
+		if(webp_flags & XMP_FLAG) {
+			error_status = WebPMuxGetChunk(mux, "XMP ", &xmp_metadata);
+			if(error_status != WEBP_MUX_OK) {
+				FreeImage_OutputMessageProc(s_format_id, "Warning: XMP falied to load");
+			} else {
+				// create a tag
+				FITAG *tag = FreeImage_CreateTag();
+				if(tag) {
+					FreeImage_SetTagKey(tag, g_TagLib_XMPFieldName);
+					FreeImage_SetTagLength(tag, (DWORD)xmp_metadata.size);
+					FreeImage_SetTagCount(tag, (DWORD)xmp_metadata.size);
+					FreeImage_SetTagType(tag, FIDT_ASCII);
+					FreeImage_SetTagValue(tag, xmp_metadata.bytes);
 
-						// destroy the tag
-						FreeImage_DeleteTag(tag);
-					}
-				}
-			}
+					// store the tag
+					FreeImage_SetMetadata(FIMD_XMP, dib, FreeImage_GetTagKey(tag), tag);
 
-			// get Exif metadata
-			if(webp_flags & EXIF_FLAG) {
-				error_status = WebPMuxGetChunk(mux, "EXIF", &exif_metadata);
-				if(error_status == WEBP_MUX_OK) {
-					// read the Exif raw data as a blob
-					jpeg_read_exif_profile_raw(dib, exif_metadata.bytes, (unsigned)exif_metadata.size);
-					// read and decode the Exif data
-					jpeg_read_exif_profile(dib, exif_metadata.bytes, (unsigned)exif_metadata.size);
+					// destroy the tag
+					FreeImage_DeleteTag(tag);
 				}
 			}
 		}
 
-		WebPDataClear(&webp_frame.bitstream);
+		// get Exif metadata
+		if(webp_flags & EXIF_FLAG) {
+			error_status = WebPMuxGetChunk(mux, "EXIF", &exif_metadata);
+			if(error_status != WEBP_MUX_OK) {
+				FreeImage_OutputMessageProc(s_format_id, "Warning: EXIF falied to load");
+			} else {
+				// read the Exif raw data as a blob
+				jpeg_read_exif_profile_raw(dib, exif_metadata.bytes, (unsigned)exif_metadata.size);
+				// read and decode the Exif data
+				jpeg_read_exif_profile(dib, exif_metadata.bytes, (unsigned)exif_metadata.size);
+			}
+		}
+
 
 		return dib;
-
-	} catch(int) {
-		WebPDataClear(&webp_frame.bitstream);
+	} catch(const char* text) {
+		FreeImage_OutputMessageProc(s_format_id, text);
 		return NULL;
 	}
 }
