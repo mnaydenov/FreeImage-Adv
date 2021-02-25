@@ -760,6 +760,8 @@ struct FIProgress {
 
 	bool isCanceled() const { return ! _cb.shouldContinue; }
 
+	unsigned short desiredSteps() const { return _steps; }
+
 	Step getStepProgress(fi_progress_t stepsTotal, double endProgress) {
 		assert(! (endProgress < 0) && ! (endProgress > 1.0));
 		assert(_steps);
@@ -789,7 +791,7 @@ struct FIProgress {
 
 private:
 	fi_progress_t _progress;
-	short _steps;
+	unsigned short _steps;
 	FreeImageCBWrapper _cb;
 
 	int _initialExceptions;

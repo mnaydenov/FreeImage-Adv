@@ -41,35 +41,57 @@ static int s_format_id;
 /**
 Read the whole file into memory
 */
-static BOOL
-ReadFileToWebPData(FreeImageIO *io, fi_handle handle, WebPData * const bitstream) {
+static void
+ReadFileToWebPData(FreeImageIO *io, fi_handle handle, WebPData * const bitstream, FIProgress& progress) {
+	WebPDataInit(bitstream);
 
-  try {
-	  // Read the input file and put it in memory
-	  long start_pos = io->tell_proc(handle);
-	  io->seek_proc(handle, 0, SEEK_END);
-	  size_t file_length = (size_t)(io->tell_proc(handle) - start_pos);
-	  io->seek_proc(handle, start_pos, SEEK_SET);
-	  unique_mem raw_data_storage(malloc(file_length));
-	  if(!raw_data_storage) {
-		  throw FI_MSG_ERROR_MEMORY;
-	  }
+	// Read the input file and put it in memory
+	long start_pos = io->tell_proc(handle);
+	io->seek_proc(handle, 0, SEEK_END);
+	size_t file_length = (size_t)(io->tell_proc(handle) - start_pos);
+	io->seek_proc(handle, start_pos, SEEK_SET);
+	unique_mem raw_data_storage(malloc(file_length));
+	if(!raw_data_storage) {
+		throw FI_MSG_ERROR_MEMORY;
+	}
 
-	  if(io->read_proc(raw_data_storage.get(), 1, file_length, handle) != file_length) {
-		  throw "Error while reading input stream";
-	  }
-	  
-	  // copy pointers (must be released later using free)
-	  bitstream->bytes = (uint8_t*)raw_data_storage.release();
-	  bitstream->size = file_length;
+	if(! progress.callback() || ! (file_length > progress.desiredSteps())) {
+		if(io->read_proc(raw_data_storage.get(), 1, file_length, handle) != file_length) {
+			throw "Error while reading input stream";
+		}
+	} else {
+		const size_t strip_size = file_length / progress.desiredSteps();
+		const size_t strip_count = file_length / strip_size;
+		const size_t leftover = file_length - (strip_count * strip_size);
 
-	  return TRUE;
+		FIProgress::Step step = progress.getStepProgress(fi_progress_t(strip_count) + (leftover ? 1 : 0), .5);
+		
+		uint8_t* begin = (uint8_t*)raw_data_storage.get();
+		uint8_t*const end = (uint8_t*)raw_data_storage.get() + (strip_count * strip_size);
+		for(; begin != end; begin += strip_size) {
+			if(io->read_proc(begin, 1, strip_size, handle) != strip_size) {
+				throw "Error while reading input stream";
+			}
 
-  } catch(const char *text) {
-		memset(bitstream, 0, sizeof(WebPData));
-		FreeImage_OutputMessageProc(s_format_id, text);
-	  return FALSE;
-  }
+			if(! step.progress()) {
+				return;
+			}
+		}
+
+		if(leftover) {
+			if(io->read_proc(begin, 1, leftover, handle) != leftover) {
+				throw "Error while reading input stream";
+			}
+
+			if(! step.progress()) {
+				return;
+			}
+		}
+	}
+
+	// copy pointers (must be released later using free)
+	bitstream->bytes = (uint8_t*)raw_data_storage.release();
+	bitstream->size = file_length;
 }
 
 // ----------------------------------------------------------
@@ -161,24 +183,8 @@ SupportsNoPixels() {
 static void * DLL_CALLCONV
 Open(FreeImageIO *io, fi_handle handle, BOOL read) {
 	WebPMux *mux = NULL;
-	int copy_data = 1;	// 1 : copy data into the mux, 0 : keep a link to local data
 
-	if(read) {
-		// create the MUX object from the input stream
-		WebPData bitstream;
-		// read the input file and put it in memory
-		if(!ReadFileToWebPData(io, handle, &bitstream)) {
-			return NULL;
-		}
-		// create the MUX object
-		mux = WebPMuxCreate(&bitstream, copy_data);
-		// no longer needed since copy_data == 1
-		free((void*)bitstream.bytes);
-		if(mux == NULL) {
-			FreeImage_OutputMessageProc(s_format_id, "Failed to create mux object from file");
-			return NULL;
-		}
-	} else {
+	if(! read) {
 		// creates an empty mux object
 		mux = WebPMuxNew();
 		if(mux == NULL) {
@@ -208,7 +214,7 @@ Decode a WebP image and returns a FIBITMAP image
 @return Returns a dib if successfull, returns NULL otherwise
 */
 static FIBITMAP *
-DecodeImage(WebPData *webp_image, int flags) {
+DecodeImage(WebPData *webp_image, const FreeImageLoadArgs* args, FIProgress& progress) {
 	FIBITMAP *dib = NULL;
 
 	const uint8_t* data = webp_image->bytes;	// raw image data
@@ -216,7 +222,7 @@ DecodeImage(WebPData *webp_image, int flags) {
 
   VP8StatusCode webp_status = VP8_STATUS_OK;
 
-	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
+	BOOL header_only = (args->flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	// Main object storing the configuration for advanced decoding
 	WebPDecoderConfig decoder_config;
@@ -242,9 +248,9 @@ DecodeImage(WebPData *webp_image, int flags) {
 
 	// Allocate output dib
 
-	unsigned bpp = bitstream->has_alpha ? 32 : 24;	
-	unsigned width = (unsigned)bitstream->width;
-	unsigned height = (unsigned)bitstream->height;
+	const unsigned bpp = bitstream->has_alpha ? 32 : 24;	
+	const unsigned width = (unsigned)bitstream->width;
+	const unsigned height = (unsigned)bitstream->height;
 
 	dib = FreeImage_AllocateHeader(header_only, width, height, bpp, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK);
 	if(!dib) {
@@ -260,33 +266,35 @@ DecodeImage(WebPData *webp_image, int flags) {
 	// --- Set decoding options ---
 
 	// use multi-threaded decoding
+	// @todo let user control threading
 	decoder_config.options.use_threads = 1;
 	// set output color space
 	output_buffer->colorspace = bitstream->has_alpha ? MODE_BGRA : MODE_BGR;
 
-	// ---
+	if(! progress.callback()) {
 
-	// decode the input stream, taking 'config' into account. 
-		
-	webp_status = WebPDecode(data, data_size, &decoder_config);
-	if(webp_status != VP8_STATUS_OK) {
-		throw FI_MSG_ERROR_PARSING;
-	}
+		// decode the input stream, taking 'config' into account. 
 
-	// fill the dib with the decoded data
+		webp_status = WebPDecode(data, data_size, &decoder_config);
+		if(webp_status != VP8_STATUS_OK) {
+			throw FI_MSG_ERROR_PARSING;
+		}
 
-	const BYTE *src_bitmap = output_buffer->u.RGBA.rgba;
-	const unsigned src_pitch = (unsigned)output_buffer->u.RGBA.stride;
+		// fill the dib with the decoded data
+		// @todo use external memory
 
-	switch(bpp) {
+		const BYTE* src_bitmap = output_buffer->u.RGBA.rgba;
+		const unsigned src_pitch = (unsigned)output_buffer->u.RGBA.stride;
+
+		switch(bpp) {
 		case 24:
 			for(unsigned y = 0; y < height; y++) {
-				const BYTE *src_bits = src_bitmap + y * src_pitch;						
-				BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height-1-y);
+				const BYTE* src_bits = src_bitmap + y * src_pitch;
+				BYTE* dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height - 1 - y);
 				for(unsigned x = 0; x < width; x++) {
-					dst_bits[FI_RGBA_BLUE]	= src_bits[0];	// B
-					dst_bits[FI_RGBA_GREEN]	= src_bits[1];	// G
-					dst_bits[FI_RGBA_RED]	= src_bits[2];	// R
+					dst_bits[FI_RGBA_BLUE] = src_bits[0];	// B
+					dst_bits[FI_RGBA_GREEN] = src_bits[1];	// G
+					dst_bits[FI_RGBA_RED] = src_bits[2];	// R
 					src_bits += 3;
 					dst_bits += 3;
 				}
@@ -294,30 +302,73 @@ DecodeImage(WebPData *webp_image, int flags) {
 			break;
 		case 32:
 			for(unsigned y = 0; y < height; y++) {
-				const BYTE *src_bits = src_bitmap + y * src_pitch;						
-				BYTE *dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height-1-y);
+				const BYTE* src_bits = src_bitmap + y * src_pitch;
+				BYTE* dst_bits = (BYTE*)FreeImage_GetScanLine(dib, height - 1 - y);
 				for(unsigned x = 0; x < width; x++) {
-					dst_bits[FI_RGBA_BLUE]	= src_bits[0];	// B
-					dst_bits[FI_RGBA_GREEN]	= src_bits[1];	// G
-					dst_bits[FI_RGBA_RED]	= src_bits[2];	// R
-					dst_bits[FI_RGBA_ALPHA]	= src_bits[3];	// A
+					dst_bits[FI_RGBA_BLUE] = src_bits[0];	// B
+					dst_bits[FI_RGBA_GREEN] = src_bits[1];	// G
+					dst_bits[FI_RGBA_RED] = src_bits[2];	// R
+					dst_bits[FI_RGBA_ALPHA] = src_bits[3];	// A
 					src_bits += 4;
 					dst_bits += 4;
 				}
 			}
 			break;
+		}
+
+	} else {
+		output_buffer->u.RGBA.size = FreeImage_GetPitch(dib) * FreeImage_GetHeight(dib);
+		output_buffer->u.RGBA.rgba = FreeImage_GetBits(dib) + output_buffer->u.RGBA.size - FreeImage_GetPitch(dib);
+		output_buffer->u.RGBA.stride = -FreeImage_GetPitch(dib);
+		output_buffer->is_external_memory = 1;
+
+		WebPIDecoder* idec = WebPINewDecoder(output_buffer);
+		if(!idec)
+			throw "WebPINewDecoder creation failed";
+		unique_ptr<WebPIDecoder, void(*)(WebPIDecoder*)> idec_storage(idec, &WebPIDelete);
+
+		const size_t line_size = width * (bpp / 8);
+		const size_t line_count = data_size / line_size;
+		const size_t leftover = data_size - (line_count * line_size);
+
+		FIProgress::Step step = progress.getStepProgress(fi_progress_t(line_count) + (leftover ? 1 : 0), 1);
+
+		uint8_t* begin = (uint8_t*)data;
+		uint8_t*const end = (uint8_t*)data + (line_count * line_size);
+		for(; begin != end; begin += line_size) {
+			// ... (get additional data in some new_data[] buffer)
+			VP8StatusCode status = WebPIAppend(idec, begin, line_size);
+			if(status != VP8_STATUS_OK && status != VP8_STATUS_SUSPENDED) {
+				throw FI_MSG_ERROR_PARSING;
+			}
+			// The above call decodes the current available buffer.
+			// Part of the image can now be refreshed by calling
+			// WebPIDecGetRGB()/WebPIDecGetYUVA() etc.
+
+			if(! step.progress()) {
+				return NULL;
+			}
+		}
+		if(leftover) {
+			VP8StatusCode status = WebPIAppend(idec, begin, leftover);
+			if(status != VP8_STATUS_OK && status != VP8_STATUS_SUSPENDED) {
+				throw FI_MSG_ERROR_PARSING;
+			}
+
+			if(! step.progress()) {
+				return NULL;
+			}
+		}
 	}
 
-	return dib_storage.release();
+		
+		return dib_storage.release();
 }
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
-	if(! data) {
-		return NULL;
-	}
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data) {
 
-	WebPMux *mux = (WebPMux*)data;
+	WebPMux *mux;
 	WebPMuxFrameInfo webp_frame = { 0 };	// raw image
 	WebPData color_profile;	// ICC raw data
 	WebPData xmp_metadata;	// XMP raw data
@@ -330,7 +381,32 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 	}
 
 	try {
-		
+		FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+		if(progress.isCanceled()) {
+			return NULL;
+		}
+
+		typedef unique_ptr<WebPData, void(*)(WebPData*)> unique_webpdata;
+
+		// create the MUX object from the input stream
+		WebPData bitstream;
+		unique_webpdata bitstream_storage(&bitstream, &WebPDataClear);
+		// read the input file and put it in memory
+		ReadFileToWebPData(io, handle, &bitstream, progress);
+
+		if(progress.isCanceled()) { //< ReadFileToWebPData can cancel
+			return NULL;
+		}
+
+		// create the MUX object
+		mux = WebPMuxCreate(&bitstream, 0);
+
+		if(mux == NULL) {
+			FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Failed to create mux object from file");
+			return NULL;
+		}
+		unique_ptr<WebPMux, void(*)(WebPMux*)> mux_storage(mux, &WebPMuxDelete);
+
 		// gets the feature flags from the mux object
 		uint32_t webp_flags = 0;
 		error_status = WebPMuxGetFeatures(mux, &webp_flags);
@@ -343,11 +419,15 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if(error_status != WEBP_MUX_OK) {
 			throw "WebPMuxGetFrame returned with an error";
 		}
-		unique_ptr<WebPData, void(*)(WebPData*)> output_buffer_storage(&webp_frame.bitstream, &WebPDataClear);
+		unique_webpdata output_buffer_storage(&webp_frame.bitstream, &WebPDataClear);
 
 		// decode the data (can be limited to the header if flags uses FIF_LOAD_NOPIXELS)
-		dib = DecodeImage(&webp_frame.bitstream, flags);
-			
+		dib = DecodeImage(&webp_frame.bitstream, args, progress);
+
+		if(progress.isCanceled()) { //< DecodeImage can cancel
+			return NULL;
+		}
+		
 		// get ICC profile
 		if(webp_flags & ICCP_FLAG) {
 			error_status = WebPMuxGetChunk(mux, "ICCP", &color_profile);
@@ -360,7 +440,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if(webp_flags & XMP_FLAG) {
 			error_status = WebPMuxGetChunk(mux, "XMP ", &xmp_metadata);
 			if(error_status != WEBP_MUX_OK) {
-				FreeImage_OutputMessageProc(s_format_id, "Warning: XMP falied to load");
+				FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Warning: XMP falied to load");
 			} else {
 				// create a tag
 				FITAG *tag = FreeImage_CreateTag();
@@ -384,7 +464,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		if(webp_flags & EXIF_FLAG) {
 			error_status = WebPMuxGetChunk(mux, "EXIF", &exif_metadata);
 			if(error_status != WEBP_MUX_OK) {
-				FreeImage_OutputMessageProc(s_format_id, "Warning: EXIF falied to load");
+				FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Warning: EXIF falied to load");
 			} else {
 				// read the Exif raw data as a blob
 				jpeg_read_exif_profile_raw(dib, exif_metadata.bytes, (unsigned)exif_metadata.size);
@@ -396,7 +476,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		return dib;
 	} catch(const char* text) {
-		FreeImage_OutputMessageProc(s_format_id, text);
+		FreeImage_OutputMessageProcCB(args->cb, s_format_id, text);
 		return NULL;
 	}
 }
@@ -666,7 +746,8 @@ InitWEBP(Plugin *plugin, int format_id) {
 	plugin->close_proc = Close;
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = Save;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
