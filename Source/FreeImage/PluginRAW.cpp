@@ -200,19 +200,25 @@ Convert a processed raw image to a FIBITMAP
 @see libraw_LoadEmbeddedPreview
 */
 static FIBITMAP * 
-libraw_ConvertProcessedImageToDib(libraw_processed_image_t *image) {
+libraw_ConvertProcessedImageToDib(libraw_processed_image_t *image, FIProgress& progress) {
 	FIBITMAP *dib = NULL;
+	unique_dib dib_storage(NULL);
 
 	try {
-		unsigned width = image->width;
-		unsigned height = image->height;
-		unsigned bpp = image->bits;
+		const unsigned width = image->width;
+		const unsigned height = image->height;
+		const unsigned bpp = image->bits;
+
+		FIProgress::Step step = progress.getStepProgress(height, 1);
+
 		if(bpp == 16) {
 			// allocate output dib
 			dib = FreeImage_AllocateT(FIT_RGB16, width, height);
 			if(!dib) {
 				throw FI_MSG_ERROR_DIB_MEMORY;
 			}
+			dib_storage.reset(dib);
+
 			// write data
 			WORD *raw_data = (WORD*)image->data;
 			for(unsigned y = 0; y < height; y++) {
@@ -223,6 +229,10 @@ libraw_ConvertProcessedImageToDib(libraw_processed_image_t *image) {
 					output[x].blue  = raw_data[2];
 					raw_data += 3;
 				}
+
+				if(! step.progress()) {
+					return NULL;
+				}
 			}
 		} else if(bpp == 8) {
 			// allocate output dib
@@ -230,6 +240,8 @@ libraw_ConvertProcessedImageToDib(libraw_processed_image_t *image) {
 			if(!dib) {
 				throw FI_MSG_ERROR_DIB_MEMORY;
 			}
+			dib_storage.reset(dib);
+
 			// write data
 			BYTE *raw_data = (BYTE*)image->data;
 			for(unsigned y = 0; y < height; y++) {
@@ -240,14 +252,17 @@ libraw_ConvertProcessedImageToDib(libraw_processed_image_t *image) {
 					output[x].rgbtBlue  = raw_data[2];
 					raw_data += 3;
 				}
+
+				if(! step.progress()) {
+					return NULL;
+				}
 			}
 		}
 		
-		return dib;
+		return dib_storage.release();
 
 	} catch(const char *text) {
-		FreeImage_Unload(dib);
-		FreeImage_OutputMessageProc(s_format_id, text);
+		FreeImage_OutputMessageProcCB(progress.callback(), s_format_id, text);
 		return NULL;
 	}
 }
@@ -259,7 +274,7 @@ Get the embedded JPEG preview image from RAW picture with included Exif Data.
 @return Returns the loaded dib if successfull, returns NULL otherwise
 */
 static FIBITMAP * 
-libraw_LoadEmbeddedPreview(LibRaw *RawProcessor, int flags) {
+libraw_LoadEmbeddedPreview(LibRaw *RawProcessor, bool loadNoPixels, FIProgress& progress) {
 	FIBITMAP *dib = NULL;
 	
 
@@ -280,20 +295,26 @@ libraw_LoadEmbeddedPreview(LibRaw *RawProcessor, int flags) {
 			FIMEMORY *hmem = FreeImage_OpenMemory((BYTE*)thumb_image->data, (DWORD)thumb_image->data_size);
 			// get the file type
 			FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromMemory(hmem, 0);
+			FreeImageLoadArgs args;
+			memset(&args, 0, sizeof(args));
 			if(fif == FIF_JPEG) {
 				// rotate according to Exif orientation
-				flags |= JPEG_EXIFROTATE;
+				args.flags |= JPEG_EXIFROTATE;
 			}
+			if(loadNoPixels) {
+				args.flags |= FIF_LOAD_NOPIXELS;
+			}
+			args.cb = progress.callback();
 			// load an image from the memory stream
-			dib = FreeImage_LoadFromMemory(fif, hmem, flags);
+			dib = FreeImage_LoadFromMemoryAdv(fif, hmem, &args);
 			// close the stream
 			FreeImage_CloseMemory(hmem);
-		} else if((flags & FIF_LOAD_NOPIXELS) != FIF_LOAD_NOPIXELS) {
+		} else if(! loadNoPixels) {
 			// convert processed data to output dib
-			dib = libraw_ConvertProcessedImageToDib(thumb_image);
+			dib = libraw_ConvertProcessedImageToDib(thumb_image, progress);
 		}
 	} else {
-		FreeImage_OutputMessageProc(s_format_id, "LibRaw : failed to run dcraw_make_mem_thumb");
+		FreeImage_OutputMessageProcCB(progress.callback(), s_format_id, "LibRaw : failed to run dcraw_make_mem_thumb");
 	}
 
 	return dib;
@@ -666,12 +687,17 @@ SupportsNoPixels() {
 // ----------------------------------------------------------
 
 static FIBITMAP * DLL_CALLCONV
-Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
+LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* args, void *data){
 	FIBITMAP *dib = NULL;
 
+	const unsigned flags = args->flags;
 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
 
 	try {
+		FIProgress progress(args->cbOption, args->cb, FI_OP_LOAD, s_format_id);
+		if(progress.isCanceled()) {
+			return NULL;
+		}
 		// do not declare RawProcessor on the stack as it may be huge (300 KB)
 		LibRaw *RawProcessor = new(std::nothrow) LibRaw;
 		if(!RawProcessor) {
@@ -710,7 +736,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 		}
 		else if((flags & RAW_PREVIEW) == RAW_PREVIEW) {
 			// try to get the embedded JPEG
-			dib = libraw_LoadEmbeddedPreview(RawProcessor, 0);
+			dib = libraw_LoadEmbeddedPreview(RawProcessor, false, progress);
 			if(!dib) {
 				// no JPEG preview: try to load as 8-bit/sample (i.e. RGB 24-bit)
 				dib = libraw_LoadRawData(RawProcessor, 8);
@@ -732,7 +758,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 		// try to get JPEG embedded Exif metadata
 		if(dib && !((flags & RAW_PREVIEW) == RAW_PREVIEW)) {
-			FIBITMAP *metadata_dib = libraw_LoadEmbeddedPreview(RawProcessor, FIF_LOAD_NOPIXELS);
+			FIBITMAP *metadata_dib = libraw_LoadEmbeddedPreview(RawProcessor, true, progress);
 			if(metadata_dib) {
 				FreeImage_CloneMetadata(dib, metadata_dib);
 				FreeImage_Unload(metadata_dib);
@@ -767,7 +793,8 @@ InitRAW(Plugin *plugin, int format_id) {
 	plugin->close_proc = NULL;
 	plugin->pagecount_proc = NULL;
 	plugin->pagecapability_proc = NULL;
-	plugin->load_proc = Load;
+	plugin->load_proc = NULL;
+	plugin->loadAdv_proc = LoadAdv;
 	plugin->save_proc = NULL;
 	plugin->validate_proc = Validate;
 	plugin->mime_proc = MimeType;
