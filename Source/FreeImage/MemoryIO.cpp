@@ -91,6 +91,17 @@ FreeImage_LoadFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, int flags) {
 	return NULL;
 }
 
+FIBITMAP * DLL_CALLCONV
+FreeImage_LoadFromMemoryAdv(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, const FreeImageLoadArgs* args ) {
+	if (stream && stream->data) {
+		FreeImageIO io;
+		SetMemoryIO(&io);
+
+		return FreeImage_LoadFromHandleAdv(fif, &io, (fi_handle)stream, args);
+	}
+
+	return NULL;
+}
 
 BOOL DLL_CALLCONV
 FreeImage_SaveToMemory(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FIMEMORY *stream, int flags) {

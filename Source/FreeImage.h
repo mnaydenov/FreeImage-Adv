@@ -873,6 +873,7 @@ DLL_API BOOL DLL_CALLCONV FreeImage_SaveToHandle(FREE_IMAGE_FORMAT fif, FIBITMAP
 DLL_API FIMEMORY *DLL_CALLCONV FreeImage_OpenMemory(BYTE *data FI_DEFAULT(0), DWORD size_in_bytes FI_DEFAULT(0));
 DLL_API void DLL_CALLCONV FreeImage_CloseMemory(FIMEMORY *stream);
 DLL_API FIBITMAP *DLL_CALLCONV FreeImage_LoadFromMemory(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, int flags FI_DEFAULT(0));
+DLL_API FIBITMAP *DLL_CALLCONV FreeImage_LoadFromMemoryAdv(FREE_IMAGE_FORMAT fif, FIMEMORY *stream, const FreeImageLoadArgs* args FI_DEFAULT(0));
 DLL_API BOOL DLL_CALLCONV FreeImage_SaveToMemory(FREE_IMAGE_FORMAT fif, FIBITMAP *dib, FIMEMORY *stream, int flags FI_DEFAULT(0));
 DLL_API long DLL_CALLCONV FreeImage_TellMemory(FIMEMORY *stream);
 DLL_API BOOL DLL_CALLCONV FreeImage_SeekMemory(FIMEMORY *stream, long offset, int origin);
