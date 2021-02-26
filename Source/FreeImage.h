@@ -622,8 +622,7 @@ FI_STRUCT (FIMEMORY) { void *data; };
 
 FI_STRUCT(FreeImageLoadArgs) {
 	unsigned flags;      //< first 16 bits: same as old flags argument
-	unsigned option;     //< first 16 bits: 
-                         // FIF_JPEG: desired downscale size
+	unsigned option;     //< first 16 bits: FIF_JPEG: desired downscale size
 
 	unsigned cbOption;   //< first 8 bits: number of times onProgress should be called while loading
 	struct FreeImageCB* cb;
@@ -833,6 +832,8 @@ FI_STRUCT(FreeImageCB) {
 	FI_OnProgressProc onProgress;
 	FI_OnFinishedProc onFinished;
 	FI_OnMessageProc onMessage;
+
+	void* more;
 };
 
 
