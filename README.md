@@ -1,6 +1,6 @@
 ## Branches of interest
 
- - `RAII`: (WIP) Same as `master` + RAII patches for memory management.
+ - `RAII`: Same as `master` + RAII patches for memory management.
  - `master`: Same as `master-sourceforge-cmake` + ASan patches.
  - `master-sourceforge-cmake`: Same as `master-sourceforge` + CMake support.
  - `master-sourceforge`: Clone of https://sourceforge.net/projects/freeimage/ (trunk Jan. 2021)
