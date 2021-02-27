@@ -82,7 +82,7 @@ typedef enum {
 Default error routine.  change this to change error handling 
 */
 static BOOL  
-rgbe_Error(FreeImageCB* cb, rgbe_error_code error_code, const char *msg) {
+rgbe_Error(const FreeImageCB* cb, rgbe_error_code error_code, const char *msg) {
 	switch (error_code) {
 		case rgbe_read_error:
 			FreeImage_OutputMessageProcCB(cb, s_format_id, "RGBE read error");
@@ -168,7 +168,7 @@ rgbe_RGBEToFloat(FIRGBF *rgbf, BYTE rgbe[4]) {
 Minimal header reading. Modify if you want to parse more information 
 */
 static BOOL 
-rgbe_ReadHeader(FreeImageIO *io, fi_handle handle, unsigned *width, unsigned *height, rgbeHeaderInfo *header_info, FreeImageCB* cb) {
+rgbe_ReadHeader(FreeImageIO *io, fi_handle handle, unsigned *width, unsigned *height, rgbeHeaderInfo *header_info, const FreeImageCB* cb) {
 	char buf[HDR_MAXLINE];
 	float tempf;
 	int i;
@@ -312,7 +312,7 @@ Simple read routine. Will not correctly handle run length encoding
 @todo THIS IS SLOW, reading an `rgbe` at a time!
 */
 static BOOL 
-rgbe_ReadPixels(FreeImageIO *io, fi_handle handle, FIRGBF *data, unsigned numpixels, FreeImageCB* cb) {
+rgbe_ReadPixels(FreeImageIO *io, fi_handle handle, FIRGBF *data, unsigned numpixels, const FreeImageCB* cb) {
   BYTE rgbe[4];
 
   for(unsigned x = 0; x < numpixels; x++) {
@@ -345,7 +345,7 @@ rgbe_WritePixels(FreeImageIO *io, fi_handle handle, FIRGBF *data, unsigned numpi
 }
 
 static BOOL 
-rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanline_width, unsigned num_scanlines, FreeImageCB* cb) {
+rgbe_ReadPixels_RLE(FreeImageIO *io, fi_handle handle, FIRGBF *data, int scanline_width, unsigned num_scanlines, const FreeImageCB* cb) {
 	BYTE rgbe[4], *ptr, *ptr_end;
 	int i, count;
 	BYTE buf[2];

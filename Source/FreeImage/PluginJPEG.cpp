@@ -83,7 +83,7 @@ typedef struct tagErrorManager {
 	/// for return to caller
 	jmp_buf setjmp_buffer;
 	/// callback support
-	FreeImageCB* cb;
+	const FreeImageCB* cb;
 } ErrorManager;
 
 typedef struct tagSourceManager {

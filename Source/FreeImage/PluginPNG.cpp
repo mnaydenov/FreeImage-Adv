@@ -555,7 +555,7 @@ LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* ar
 			
 			// create the chunk manage structure
 
-			png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, args->cb, error_handler, warning_handler);
+			png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, const_cast<FreeImageCB*>(args->cb), error_handler, warning_handler);
 
 			if (!png_ptr) {
 				throw "Failed to create read struct";			
