@@ -670,7 +670,7 @@ const fi_progress_t FI_MAX_PROGRESS = fi_progress_t(1) << 53; //< max int value,
 
 struct FreeImageCBWrapper
 {
-	FreeImageCBWrapper(FreeImageCB* cb) 
+	FreeImageCBWrapper(const FreeImageCB* cb) 
 		: shouldContinue(true)
 		, _cb(cb)
 	{}
@@ -699,10 +699,10 @@ struct FreeImageCBWrapper
 		return _cb->onFinished(_cb->user, isSuccessful, NULL);
 	}
 
-	operator FreeImageCB* () { return _cb; }
+	operator const FreeImageCB* () { return _cb; }
 
 	bool shouldContinue;
-  FreeImageCB* _cb;
+  const FreeImageCB* _cb;
 };
 
 struct FIProgress {
@@ -738,7 +738,7 @@ struct FIProgress {
 		FreeImageCBWrapper* _cb;
 	};
 
-	explicit FIProgress(unsigned cbOption, FreeImageCB* cb, FREE_IMAGE_OPERATION op, unsigned which, bool errorsViaExceptions = true)
+	explicit FIProgress(unsigned cbOption, const FreeImageCB* cb, FREE_IMAGE_OPERATION op, unsigned which, bool errorsViaExceptions = true)
 		: _progress(0)
 		, _steps((cbOption & 0xFF) ? (cbOption & 0xFF) : 20)
 		, _cb(cb)
