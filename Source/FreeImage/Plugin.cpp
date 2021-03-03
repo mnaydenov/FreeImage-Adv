@@ -375,7 +375,7 @@ FreeImage_Close(PluginNode *node, FreeImageIO *io, fi_handle handle, void *data)
 // Plugin System Load/Save Functions
 // =====================================================================
 
-static const FreeImageLoadArgs default_args;
+static const FreeImageLoadArgs default_args = FreeImageLoadArgs();
 
 FIBITMAP * DLL_CALLCONV
 FreeImage_LoadFromHandleAdv(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_handle handle, const FreeImageLoadArgs* args) {

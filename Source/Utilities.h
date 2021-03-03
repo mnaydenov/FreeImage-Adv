@@ -607,7 +607,7 @@ template<class T>
 class unique_arr : public unique_ptr<T, void(*)(T*)>
 {
 public:
-	explicit unique_arr(pointer p) : unique_ptr<T, void(*)(T*)>(p, &detail::array_deleter<T>)
+	explicit unique_arr(T* p) : unique_ptr<T, void(*)(T*)>(p, &detail::array_deleter<T>)
 	{}
 
 	T& operator[](size_t i) { return this->get()[i]; }
@@ -617,7 +617,7 @@ template<class T>
 class unique_obj : public unique_ptr<T, void(*)(T*)>
 {
 public:
-	explicit unique_obj(pointer p) : unique_ptr<T, void(*)(T*)>(p, &detail::deleter<T>)
+	explicit unique_obj(T* p) : unique_ptr<T, void(*)(T*)>(p, &detail::deleter<T>)
 	{}
 };
 
@@ -747,7 +747,7 @@ struct FIProgress {
 #ifdef __cpp_lib_uncaught_exceptions
 #else
 		if (errorsViaExceptions && _initialExceptions && cb) {
-			FreeImage_OutputMessageProcCB(cb, which, "Warning: FIProgress created while in stack unwind. Un-Successful finish will incorrectly be reported as Successful.")
+			FreeImage_OutputMessageProcCB(cb, which, "Warning: FIProgress created while in stack unwind. Un-Successful finish will incorrectly be reported as Successful.");
 	  }
 #endif
 	  _cb.onStarted(op, which);
