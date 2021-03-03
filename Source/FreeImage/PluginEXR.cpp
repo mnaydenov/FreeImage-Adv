@@ -22,6 +22,7 @@
 
 #include "FreeImage.h"
 #include "Utilities.h"
+#include <cmath>
 
 #ifdef _MSC_VER
 // OpenEXR has many problems with MSVC warnings (why not just correct them ?), just ignore one of them
