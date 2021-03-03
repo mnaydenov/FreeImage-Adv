@@ -148,8 +148,61 @@ getCropString(char* crop, int* left, int* top, int* right, int* bottom, int widt
 	return TRUE;
 }
 
+static void
+adjustExif(jpeg_decompress_struct& srcinfo, FI_AdjustExifProc exifcb, void* exifcb_user) {
+
+	if(!exifcb)
+		return;
+
+  jpeg_saved_marker_ptr first_marker = srcinfo.marker_list;
+
+	for (jpeg_saved_marker_ptr& marker = srcinfo.marker_list; marker != NULL; marker = marker->next)
+	{
+		if ( marker->marker == (JPEG_APP0+1)) {
+			BYTE exif_signature[6] = { 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 };
+			BYTE* profile = (BYTE*)marker->data;
+			DWORD size = marker->data_length;
+			// verify the identifying string
+			if(memcmp(exif_signature, profile, sizeof(exif_signature)) != 0) {
+				// not an Exif profile
+        break;
+			}
+
+			exifcb(exifcb_user, &profile, &size);
+
+			if(profile != (BYTE*)marker->data || size != marker->data_length) {
+				if(profile == NULL || size == 0) {
+					marker->data = NULL;
+					marker->data_length = 0;
+					break;
+				}
+				assert(memcmp(exif_signature, profile, sizeof(exif_signature)) == 0);
+				jpeg_saved_marker_ptr new_marker = (jpeg_saved_marker_ptr)
+				                                   (*srcinfo.mem->alloc_large) ((j_common_ptr) &srcinfo, JPOOL_IMAGE,
+				                                       SIZEOF(struct jpeg_marker_struct) + size);
+				new_marker->next = marker->next;
+				new_marker->marker = marker->marker;
+				new_marker->original_length = marker->original_length;
+				new_marker->data_length = size;
+				/* data area is just beyond the jpeg_marker_struct */
+				new_marker->data = (JOCTET FAR *) (new_marker + 1);
+				memcpy(new_marker->data, profile, size);
+
+        if(first_marker == marker)
+          marker = first_marker = new_marker;
+        else
+          marker = new_marker;
+			}
+			break;
+		}
+
+	}//< for markers
+
+  srcinfo.marker_list = first_marker;
+}
+
 static BOOL
-JPEGTransformFromHandle(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* dst_io, fi_handle dst_handle, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect) {
+JPEGTransformFromHandle(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* dst_io, fi_handle dst_handle, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect, FI_AdjustExifProc exifcb=NULL, void* exifcb_user=NULL) {
 	const BOOL onlyReturnCropRect = (dst_io == NULL) || (dst_handle == NULL);
 	const long stream_start = onlyReturnCropRect ? 0 : dst_io->tell_proc(dst_handle);
 	BOOL swappedDim = FALSE;
@@ -248,6 +301,9 @@ JPEGTransformFromHandle(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* 
 
 		// Read the file header
 		jpeg_read_header(&srcinfo, TRUE);
+
+		// Find and adjust the exif
+		adjustExif(srcinfo, exifcb, exifcb_user);
 
 		// crop option
 		char crop[64];
@@ -365,6 +421,11 @@ JPEGTransformFromHandle(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* 
 // ----------------------------------------------------------
 //   FreeImage interface
 // ----------------------------------------------------------
+
+BOOL DLL_CALLCONV
+FreeImage_JPEGTransformFromHandleAdv(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* dst_io, fi_handle dst_handle, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect, FI_AdjustExifProc exifcb, void* exifcb_user) {
+	return JPEGTransformFromHandle(src_io, src_handle, dst_io, dst_handle, operation, left, top, right, bottom, perfect, exifcb, exifcb_user);
+}
 
 BOOL DLL_CALLCONV
 FreeImage_JPEGTransformFromHandle(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* dst_io, fi_handle dst_handle, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect) {
@@ -549,7 +610,7 @@ FreeImage_JPEGCropU(const wchar_t *src_file, const wchar_t *dst_file, int left, 
 }
 
 BOOL DLL_CALLCONV
-FreeImage_JPEGTransformCombined(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect) {
+FreeImage_JPEGTransformCombinedAdv(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect, FI_AdjustExifProc exifcb, void* exifcb_user) {
 	FreeImageIO io;
 	fi_handle src;
 	fi_handle dst;
@@ -558,7 +619,7 @@ FreeImage_JPEGTransformCombined(const char *src_file, const char *dst_file, FREE
 		return FALSE;
 	}
 	
-	BOOL ret = FreeImage_JPEGTransformFromHandle(&io, src, &io, dst, operation, left, top, right, bottom, perfect);
+	BOOL ret = FreeImage_JPEGTransformFromHandleAdv(&io, src, &io, dst, operation, left, top, right, bottom, perfect, exifcb, exifcb_user);
 
 	closeStdIO(src, dst);
 
@@ -566,7 +627,7 @@ FreeImage_JPEGTransformCombined(const char *src_file, const char *dst_file, FREE
 }
 
 BOOL DLL_CALLCONV
-FreeImage_JPEGTransformCombinedU(const wchar_t *src_file, const wchar_t *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect) {
+FreeImage_JPEGTransformCombinedAdvU(const wchar_t *src_file, const wchar_t *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect, FI_AdjustExifProc exifcb, void* exifcb_user) {
 	FreeImageIO io;
 	fi_handle src;
 	fi_handle dst;
@@ -575,11 +636,21 @@ FreeImage_JPEGTransformCombinedU(const wchar_t *src_file, const wchar_t *dst_fil
 		return FALSE;
 	}
 	
-	BOOL ret = FreeImage_JPEGTransformFromHandle(&io, src, &io, dst, operation, left, top, right, bottom, perfect);
+	BOOL ret = FreeImage_JPEGTransformFromHandleAdv(&io, src, &io, dst, operation, left, top, right, bottom, perfect, exifcb, exifcb_user);
 
 	closeStdIO(src, dst);
 
 	return ret;
+}
+
+BOOL DLL_CALLCONV
+FreeImage_JPEGTransformCombined(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect) {
+	return FreeImage_JPEGTransformCombinedAdv(src_file, dst_file, operation, left, top, right, bottom, perfect, NULL, NULL);
+}
+
+BOOL DLL_CALLCONV
+FreeImage_JPEGTransformCombinedU(const wchar_t *src_file, const wchar_t *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect) {
+	return FreeImage_JPEGTransformCombinedAdvU(src_file, dst_file, operation, left, top, right, bottom, perfect, NULL, NULL);
 }
 
 // --------------------------------------------------------------------------

@@ -821,10 +821,10 @@ FI_ENUM (FREE_IMAGE_OPERATION) {
 	FI_OP_USER = 255
 };
 
-typedef BOOL(DLL_CALLCONV* FI_OnStartedProc)(void* user, FREE_IMAGE_OPERATION operation, unsigned which, void* more);
-typedef BOOL(DLL_CALLCONV* FI_OnProgressProc)(void* user, double progress, void* more);
-typedef void (DLL_CALLCONV* FI_OnFinishedProc)(void* user, const BOOL* success, void* more);
-typedef void (DLL_CALLCONV* FI_OnMessageProc)(void* user, const char* msg, void* more);
+typedef BOOL(DLL_CALLCONV *FI_OnStartedProc)(void* user, FREE_IMAGE_OPERATION operation, unsigned which, void* more);
+typedef BOOL(DLL_CALLCONV *FI_OnProgressProc)(void* user, double progress, void* more);
+typedef void (DLL_CALLCONV *FI_OnFinishedProc)(void* user, const BOOL* success, void* more);
+typedef void (DLL_CALLCONV *FI_OnMessageProc)(void* user, const char* msg, void* more);
 
 FI_STRUCT(FreeImageCB) {
 	void* user;
@@ -835,6 +835,8 @@ FI_STRUCT(FreeImageCB) {
 
 	void* more;
 };
+
+typedef void (DLL_CALLCONV *FI_AdjustExifProc)(void* user, BYTE** exifp, DWORD* size);
 
 
 // Message output functions -------------------------------------------------
@@ -1141,8 +1143,11 @@ DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformU(const wchar_t *src_file, cons
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGCrop(const char *src_file, const char *dst_file, int left, int top, int right, int bottom);
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGCropU(const wchar_t *src_file, const wchar_t *dst_file, int left, int top, int right, int bottom);
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformFromHandle(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* dst_io, fi_handle dst_handle, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect FI_DEFAULT(TRUE));
+DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformFromHandleAdv(FreeImageIO* src_io, fi_handle src_handle, FreeImageIO* dst_io, fi_handle dst_handle, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect, FI_AdjustExifProc exifcb, void* exifcb_user);
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformCombined(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect FI_DEFAULT(TRUE));
+DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformCombinedAdv(const char *src_file, const char *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect, FI_AdjustExifProc exifcb, void* exifcb_user);
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformCombinedU(const wchar_t *src_file, const wchar_t *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect FI_DEFAULT(TRUE));
+DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformCombinedAdvU(const wchar_t *src_file, const wchar_t *dst_file, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect, FI_AdjustExifProc exifcb, void* exifcb_user);
 DLL_API BOOL DLL_CALLCONV FreeImage_JPEGTransformCombinedFromMemory(FIMEMORY* src_stream, FIMEMORY* dst_stream, FREE_IMAGE_JPEG_OPERATION operation, int* left, int* top, int* right, int* bottom, BOOL perfect FI_DEFAULT(TRUE));
 
 
