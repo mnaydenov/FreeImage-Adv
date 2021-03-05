@@ -466,10 +466,15 @@ LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* ar
 			if(error_status != WEBP_MUX_OK) {
 				FreeImage_OutputMessageProcCB(args->cb, s_format_id, "Warning: EXIF falied to load");
 			} else {
-				// read the Exif raw data as a blob
-				jpeg_read_exif_profile_raw(dib, exif_metadata.bytes, (unsigned)exif_metadata.size);
-				// read and decode the Exif data
-				jpeg_read_exif_profile(dib, exif_metadata.bytes, (unsigned)exif_metadata.size);
+				 BYTE exif_signature[6] = { 0x45, 0x78, 0x69, 0x66, 0x00, 0x00 };
+				 unique_mem buff_storage(malloc(exif_metadata.size + 6));
+				 BYTE*const buff = (BYTE*)buff_storage.get();
+				 memcpy(buff, exif_signature, 6);
+				 memcpy(buff + 6, exif_metadata.bytes, exif_metadata.size);
+				 // read the Exif raw data as a blob
+				 jpeg_read_exif_profile_raw(dib, buff, (unsigned)exif_metadata.size + 6);
+				 // read and decode the Exif data
+				 jpeg_read_exif_profile(dib, buff, (unsigned)exif_metadata.size + 6);
 			}
 		}
 
