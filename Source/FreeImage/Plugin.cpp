@@ -701,7 +701,7 @@ FreeImage_FIFSupportsReading(FREE_IMAGE_FORMAT fif) {
 	if (s_plugins != NULL) {
 		PluginNode *node = s_plugins->FindNodeFromFIF(fif);
 
-		return (node != NULL) ? node->m_plugin->load_proc != NULL : FALSE;
+		return (node != NULL) ? (node->m_plugin->loadAdv_proc != NULL || node->m_plugin->load_proc != NULL) : FALSE;
 	}
 
 	return FALSE;
