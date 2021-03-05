@@ -374,6 +374,16 @@ FreeImage_OpenMultiBitmapFromHandle(FREE_IMAGE_FORMAT fif, FreeImageIO *io, fi_h
 	return NULL;
 }
 
+static 
+FreeImageLoadArgs argsFromFlags(int flags) {
+	FreeImageLoadArgs args;
+	memset(&args, 0, sizeof(FreeImageLoadArgs));
+	args.flags = unsigned(flags) & 0xffff;
+	args.option = unsigned(flags) >> 16;
+
+	return args;
+}
+
 BOOL DLL_CALLCONV
 FreeImage_SaveMultiBitmapToHandle(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, FreeImageIO *io, fi_handle handle, int flags) {
 	if(!bitmap || !bitmap->data || !io || !handle) {
@@ -414,7 +424,10 @@ FreeImage_SaveMultiBitmapToHandle(FREE_IMAGE_FORMAT fif, FIMULTIBITMAP *bitmap, 
 							for (int j = i->getStart(); j <= i->getEnd(); j++) {
 								
 								// load the original source data
-								FIBITMAP *dib = header->node->m_plugin->load_proc(&header->io, header->handle, j, header->load_flags, data_read);
+								FreeImageLoadArgs args = argsFromFlags(flags);
+								FIBITMAP *dib = header->node->m_plugin->loadAdv_proc != NULL
+									? header->node->m_plugin->loadAdv_proc(&header->io, header->handle, j, &args, data_read) 
+									: header->node->m_plugin->load_proc(&header->io, header->handle, j, header->load_flags, data_read);
 								
 								// save the data
 								success = node->m_plugin->save_proc(io, dib, handle, count, flags, data);
@@ -705,7 +718,12 @@ FreeImage_LockPage(FIMULTIBITMAP *bitmap, int page) {
 		// load the bitmap data
 		
 		if (data != NULL) {
-			FIBITMAP *dib = (header->node->m_plugin->load_proc != NULL) ? header->node->m_plugin->load_proc(&header->io, header->handle, page, header->load_flags, data) : NULL;
+			const unsigned flags = header->load_flags;
+			FreeImageLoadArgs args = argsFromFlags(flags);
+			FIBITMAP *dib = (header->node->m_plugin->loadAdv_proc != NULL) ? header->node->m_plugin->loadAdv_proc(&header->io, header->handle, page, &args, data) : NULL;
+			if(! dib) {
+				dib = (header->node->m_plugin->load_proc != NULL) ? header->node->m_plugin->load_proc(&header->io, header->handle, page, flags, data) : NULL;
+			}
 
 			// close the file
 			
