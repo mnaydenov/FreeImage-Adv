@@ -1378,7 +1378,9 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			// check for automatic Exif rotation
 			if(!header_only && ((flags & JPEG_EXIFROTATE) == JPEG_EXIFROTATE)) {
+				dib_storage.release();
 				RotateExif(&dib);
+        dib_storage.reset(dib);
 			}
 
 			// everything went well. return the loaded dib
