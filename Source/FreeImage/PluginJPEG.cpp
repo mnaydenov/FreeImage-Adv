@@ -1409,7 +1409,9 @@ LoadAdv(FreeImageIO *io, fi_handle handle, int page, const FreeImageLoadArgs* ar
 					return NULL;
 				}
 
+				dib_storage.release();
 				RotateExif(&dib);
+        dib_storage.reset(dib);
 			}
 
 			// everything went well. return the loaded dib
