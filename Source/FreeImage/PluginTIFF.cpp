@@ -1313,7 +1313,9 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 			
 			// load the thumbnail
 			int page = 1;
-			thumbnail = LoadAdv(io, handle, page, NULL, data);
+      FreeImageLoadArgs args;
+      memset(&args, 0, sizeof(FreeImageLoadArgs));
+			thumbnail = LoadAdv(io, handle, page, &args, data);
 
 			// store the thumbnail (remember to release it before return)
 			FreeImage_SetThumbnail(dib, thumbnail);
@@ -1344,7 +1346,9 @@ ReadThumbnail(FreeImageIO *io, fi_handle handle, void *data, TIFF *tiff, FIBITMA
 				if(TIFFSetSubDirectory(tiff, subIFD_offsets[0])) {
 					// load the thumbnail
 					int page = -1; 
-					thumbnail = LoadAdv(io, handle, page, NULL, data);
+          FreeImageLoadArgs args;
+          memset(&args, 0, sizeof(FreeImageLoadArgs));
+					thumbnail = LoadAdv(io, handle, page, &args, data);
 
 					// store the thumbnail (remember to release it before return)
 					FreeImage_SetThumbnail(dib, thumbnail);
