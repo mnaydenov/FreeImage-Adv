@@ -1,11 +1,17 @@
 ## Branches of interest
-
+ - `callback-other`: Same as `callbacks` with some minor addition, probably not suited for inclusion in the core library.
  - `callbacks`: (WIP) Same as `RAII` + callbacks support, allowing progress monitoring and cancelation (partial).
  - `RAII`: (WIP) Same as `master` + RAII patches for memory management.
  - `master`: Same as `master-sourceforge-cmake` + ASan patches.
  - `master-sourceforge-cmake`: Same as `master-sourceforge` + CMake support.
  - `master-sourceforge`: Clone of https://sourceforge.net/projects/freeimage/ (trunk Jan. 2021)
 ---
+## Additions to `callbacks` branch
+ - `FreeImage_JPEGTransformCombinedAdv` accepts a `FI_AdjustExifProc` which will can be used to modify the EXIF data upon transform operation.
+ - HACK WebP: Prepend "exif00" to the exif payload, so that both FreeImage and libexif can process it as if the data was loaded from jpeg's APP1.
+
+> This branch is used in the [Fragment image viewer](https://www.fragmentapp.info), version 1.8.2 and above.
+
 # Callbacks
 ## What is changed
  - Added new `FreeImageCB` struct, containing callback functions for start, progress, finish and message output for an operation.
