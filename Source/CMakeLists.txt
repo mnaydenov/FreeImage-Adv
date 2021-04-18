@@ -11,13 +11,17 @@ cmake_minimum_required(VERSION 3.12)    #< Highest, used by sub-projects (LibJXR
 
 project(FreeImage VERSION 3.18.1)
 
-set(CMAKE_SKIP_INSTALL_RULES ON)       #< TODO Handle install
-set(SKIP_INSTALL_ALL ON)               #< 
+set(CMAKE_SKIP_INSTALL_RULES ON)         #< TODO Handle install
+set(SKIP_INSTALL_ALL ON)                 #<
 
-set(SKIP_BUILD_TESTS ON)               #< Extra, added to some sub-projects
-set(SKIP_CODEGEN ON)                   #< 
+set(SKIP_BUILD_TESTS ON)                 #< Extra, added to some sub-projects
+set(SKIP_CODEGEN ON)                     #<
 
-set(BUILD_SHARED_LIBS ON)              #< Default to shared library
+set(BUILD_SHARED_LIBS ON)                #< Default to shared library
+
+if(UNIX)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 if(NOT $CACHE{BUILD_SHARED_LIBS} STREQUAL "")        #< cmake(3.14): use DEFINED CACHE{BUILD_SHARED_LIBS}  
   set(BUILD_SHARED_LIBS $CACHE{BUILD_SHARED_LIBS})
@@ -53,7 +57,7 @@ add_subdirectory(ZLib)
 set(ZLIB_LIBRARY zlib)
 set(ZLIB_FOUND   TRUE)
 set(ZLIB_LIBRARIES    ${ZLIB_LIBRARY})
-set(ZLIB_INCLUDE_DIR ${zlib_SOURCE_DIR} CACHE PATH "")      # CACHE needed
+set(ZLIB_INCLUDE_DIR ${zlib_SOURCE_DIR} CACHE PATH "")   # CACHE needed
 set(ZLIB_INCLUDE_DIRS ${ZLIB_INCLUDE_DIR} ${zlib_BINARY_DIR})
 
 target_include_directories(zlib INTERFACE ${ZLIB_INCLUDE_DIRS})   #< zlib only sets this, upon installation. 
@@ -93,6 +97,7 @@ option_enable(PNG_BUILD_ZLIB)
 option_disable(PNG_SHARED)
 option_enable(PNG_STATIC)
 option_disable(PNG_TESTS)
+set(PNG_INTEL_SSE "off" CACHE STRING "")   # LibPNG is picky about this one
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/LibPNG/pnglibconf.h)
   message(STATUS "Renaming pnglibconf.h => pnglibconf.h.old")
@@ -113,7 +118,7 @@ message(
 option_disable(NAMESPACE_VERSIONING)   
 
 add_subdirectory(OpenEXR)                #< Corresponds to IlmBase
-add_subdirectory(OpenEXR/IlmImf)    
+add_subdirectory(OpenEXR/IlmImf)
 
 
 message(
@@ -172,7 +177,7 @@ macro(extra_dist)
 endmacro()
 
 list(APPEND TIFF_INCLUDES ${ZLIB_INCLUDE_DIRS})
-list(APPEND TIFF_INCLUDES ${JPEG_INCLUDE_DIR})
+list(APPEND TIFF_INCLUDES ${JPEG_INCLUDE_DIRS})
 
 list(APPEND TIFF_LIBRARY_DEPS ${ZLIB_LIBRARIES})
 list(APPEND TIFF_LIBRARY_DEPS ${JPEG_LIBRARIES})
@@ -343,7 +348,7 @@ set(jpegtransform_src    #< Yes, we are naughty, but Lossless Jpeg Transformatio
   "LibJPEG/transupp.c"   #< TODO: Investigate/negotiate these to be officially part of LibJpeg/JpegTurbo/Mozjpeg 
 )
 
-add_library(freeimage 
+add_library(freeimage
   ${freeimage_src}
   ${freeimagetoolkit_src}
   ${freeimagemetadata_src}
@@ -352,6 +357,7 @@ add_library(freeimage
 
 if(${BUILD_SHARED_LIBS})
  target_compile_definitions(freeimage PUBLIC FREEIMAGE_EXPORTS)
+ set_target_properties(freeimage PROPERTIES CXX_VISIBILITY_PRESET hidden)
 else()
  target_compile_definitions(freeimage PUBLIC FREEIMAGE_LIB)
 endif()
@@ -360,10 +366,10 @@ target_compile_definitions(freeimage PRIVATE OPJ_STATIC)  # ### else __declspec(
 
 target_include_directories(freeimage PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(freeimage 
+target_link_libraries(freeimage
   zlib
   jpeg
-  png_static 
+  png_static
   webp
   libwebpmux
   raw
@@ -373,7 +379,7 @@ target_link_libraries(freeimage
   jxr
 )
 
-target_include_directories(freeimage PRIVATE 
+target_include_directories(freeimage PRIVATE
   ${ZLIB_INCLUDE_DIRS}
   ${libpng_BINARY_DIR}
   ${ilmbase_BINARY_DIR}/config # ### PRIVATE in OpenEXR, yet "ImathNamespace.h" includes "IlmBaseConfig.h" ?!?
