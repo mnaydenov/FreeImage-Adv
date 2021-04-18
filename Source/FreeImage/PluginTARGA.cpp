@@ -112,7 +112,7 @@ public:
 	}
 
 	bool isNull() const { 
-		return _data; 
+    return bool(_data);
 	}
 	
 	BOOL read(FreeImageIO *io, fi_handle handle, size_t size) {
