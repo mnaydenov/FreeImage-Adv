@@ -115,8 +115,8 @@ public:
 		}
 	}
 
-	BOOL isNull() const { 
-		return (_data == NULL); 
+	bool isNull() const { 
+    return bool(_data);
 	}
 	
 	BOOL read(FreeImageIO *io, fi_handle handle, size_t size) {
