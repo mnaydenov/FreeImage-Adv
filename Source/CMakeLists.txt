@@ -165,6 +165,14 @@ message(
 
 set(CXX_SUPPORT OFF)
 
+if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang") #< TODO Evaluate on non-apple platforms
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/LibTIFF4/VERSION)
+    message(STATUS "Renaming VERSION => VERSION.org")
+    message(STATUS "         VERSION is wrongfully #include-d in place of the standard 'version' header")
+    file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/LibTIFF4/VERSION ${CMAKE_CURRENT_SOURCE_DIR}/LibTIFF4/VERSION.org)
+  endif()
+endif()
+
 # ### What follows is verbatim from the main CMakeLists.txt of the LibTiff(4.1.0) project 
 
 macro(extra_dist)
