@@ -22,6 +22,10 @@
 #define HAVE_IO_H 1
 #endif
 
+#ifdef __APPLE__
+#define HAVE_UNISTD_H 1
+#endif
+
 /* Define to 1 if you have the <search.h> header file. */
 #define HAVE_SEARCH_H 1
 
