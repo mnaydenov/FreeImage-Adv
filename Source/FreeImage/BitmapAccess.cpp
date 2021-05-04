@@ -783,7 +783,10 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 			if (((FreeImage_GetICCProfile(dib)->flags) & FIICC_COLOR_IS_CMYK) == FIICC_COLOR_IS_CMYK) {
 				return FIC_CMYK;
 			}
-
+      // ### Below is commented because color type should not depend on pixel contents.
+      // (It leads to unpredictable behaviour and even crashes where portions ot the image, like views,
+      // might end up having a different color type.
+/*
 			if( FreeImage_HasPixels(dib) ) {
 				// check for fully opaque alpha layer
 				for (unsigned y = 0; y < FreeImage_GetHeight(dib); y++) {
@@ -797,10 +800,10 @@ FreeImage_GetColorType(FIBITMAP *dib) {
 				}
 				return FIC_RGB;
 			}
-
+*/
 			return FIC_RGBALPHA;
 		}
-				
+
 		default :
 			return FIC_MINISBLACK;
 	}
