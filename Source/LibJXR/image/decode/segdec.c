@@ -57,7 +57,11 @@ static U32 _FORCEINLINE _load4(void* pv)
 #ifdef _BIG__ENDIAN_
     return (*(U32*)pv);
 #else // _BIG__ENDIAN_
+#  if (defined(_WIN32) && !defined(UNDER_CE)) || defined(__MINGW64_TOOLCHAIN__) || (defined(UNDER_CE) && defined(_ARM_))
+// WinCE ARM and Desktop x86
+#  else
     extern U32 _byteswap_ulong(U32 bits);
+#  endif
 #if defined(_M_IA64) || defined(_ARM_)
     U32  v;
     v = ((U16 *) pv)[0];
